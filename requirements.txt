@@ -1,0 +1,5 @@
+#flow-ctrl>=1.0.0
+PyYAML>=6.0
+click>=8.0.0
+pytest>=7.0.0
+setuptools
