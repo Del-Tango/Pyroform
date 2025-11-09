@@ -1,0 +1,42 @@
+{
+  "name": "Advanced System Management Workflow",
+  "description": "Complete system lifecycle management",
+  "auto_confirm": false,
+  "config_file": "/etc/pyroform/config.yaml",
+  "generate_report": true,
+  "report_file": "/var/log/pyroform/workflow_report.json",
+
+  "steps": [
+    {
+      "action": "validate",
+      "input_path": "/etc/pyroform/production.yaml",
+      "description": "Validate production configuration"
+    },
+    {
+      "action": "scorch",
+      "input_path": "/etc/pyroform/production.yaml",
+      "dry_run": true,
+      "description": "Dry-run cleanup of unused resources"
+    },
+    {
+      "action": "scorch",
+      "input_path": "/etc/pyroform/production.yaml",
+      "description": "Cleanup unused resources"
+    },
+    {
+      "action": "configure",
+      "input_path": "/etc/pyroform/production.yaml",
+      "description": "Apply production configuration"
+    },
+    {
+      "action": "mount",
+      "input_path": "/etc/pyroform/production.yaml",
+      "description": "Mount production devices"
+    },
+    {
+      "action": "validate",
+      "input_path": "/etc/pyroform/production.yaml",
+      "description": "Verify production state"
+    }
+  ]
+}
