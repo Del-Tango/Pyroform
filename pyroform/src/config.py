@@ -1,4 +1,4 @@
-# pyroform/src/config.py
+
 class PyroformConfig:
     def __init__(self, config_file: Path = None):
         self.settings = self._load_config(config_file)

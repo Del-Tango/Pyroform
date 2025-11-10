@@ -1,6 +1,5 @@
 import pytest
 import tempfile
-import json
 from pathlib import Path
 
 
@@ -21,16 +20,9 @@ def basic_pyro_config():
                 "label": "test_user",
                 "Name": "testuser",
                 "Password": "testpass123",
-                "Groups": ["testgroup"]
+                "Groups": ["testgroup"],
             }
         ],
-        "Groups": [
-            {
-                "label": "test_group",
-                "Name": "testgroup",
-                "Users": ["testuser"]
-            }
-        ],
-        "Devices": []
+        "Groups": [{"label": "test_group", "Name": "testgroup", "Users": ["testuser"]}],
+        "Devices": [],
     }
-

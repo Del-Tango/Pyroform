@@ -1,8 +1,9 @@
 """
 Pyroform Data Models
 """
+
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
+from typing import List
 from enum import Enum
 
 
@@ -54,43 +55,6 @@ class PyroConfig:
         self.groups = self.groups or []
         self.devices = self.devices or []
 
+
 # CODE DUMP
 
-# pyroform/src/models.py
-#   from dataclasses import dataclass
-#   from typing import List, Optional, Dict, Any
-#   from enum import Enum
-
-#   class ActionType(Enum):
-#       CONFIGURE = "configure"
-#       SCORCH = "scorch"
-#       MOUNT = "mount"
-#       VALIDATE = "validate"
-
-#   @dataclass
-#   class User:
-#       label: str
-#       name: str
-#       password: str
-#       groups: List[str]
-
-#   @dataclass
-#   class Group:
-#       label: str
-#       name: str
-#       users: List[str]
-
-#   @dataclass
-#   class Device:
-#       label: str
-#       path: str
-#       partition: int
-#       mountpoint: str
-#       state: List[str]  # dir|fl,path,owner,group,permissions
-
-#   @dataclass
-#   class PyroConfig:
-#       label: str
-#       users: List[User]
-#       groups: List[Group]
-#       devices: List[Device]
