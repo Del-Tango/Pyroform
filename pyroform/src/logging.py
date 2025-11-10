@@ -62,6 +62,3 @@ def setup_logging(log_file: Path = None, debug: bool = False) -> None:
 
 # CODE DUMP
 
-#   def setup_logging(log_file: Path = None, debug: bool = False):
-#       """Configure comprehensive logging"""
-#       pass
