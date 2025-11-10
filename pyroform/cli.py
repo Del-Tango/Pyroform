@@ -378,7 +378,7 @@ def _execute_action(
         if not silent:
             if success:
                 click.echo(
-                    f"✓ {action_type.value.capitalize()} action completed successfully"
+                    f"{action_type.value.capitalize()} action completed successfully"
                 )
             else:
                 click.echo(f"✗ {action_type.value.capitalize()} action failed")
@@ -463,7 +463,7 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
             )
             pf._generate_workflow_report(workflow_results, report_file)
 
-        click.echo("✓ Workflow completed successfully")
+        click.echo("Workflow completed successfully")
         return True
 
     except Exception as e:

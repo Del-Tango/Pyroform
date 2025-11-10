@@ -1,0 +1,44 @@
+# advanced_config.yaml
+Label: "Production Server Configuration"
+Users:
+  - label: "web_user"
+    Name: "webuser"
+    Password: "webpass789"
+    Groups: ["webgroup", "sudo"]
+
+  - label: "db_user"
+    Name: "dbuser"
+    Password: "dbpass321"
+    Groups: ["dbgroup", "users"]
+
+Groups:
+  - label: "web_group"
+    Name: "webgroup"
+    Users: ["webuser"]
+
+  - label: "db_group"
+    Name: "dbgroup"
+    Users: ["dbuser"]
+
+  - label: "sudo_group"
+    Name: "sudo"
+    Users: ["webuser"]
+
+Devices:
+  - label: "data_disk"
+    Path: "/dev/sdb1"
+    Partition: 1
+    Mountpoint: "/mnt/data"
+    State:
+      - "dir,/mnt/data/web,webuser,webgroup,755"
+      - "dir,/mnt/data/db,dbuser,dbgroup,750"
+      - "fl,/mnt/data/web/config.json,webuser,webgroup,644"
+      - "fl,/mnt/data/db/credentials.conf,dbuser,dbgroup,600"
+
+  - label: "backup_disk"
+    Path: "/dev/sdc1"
+    Partition: 1
+    Mountpoint: "/mnt/backup"
+    State:
+      - "dir,/mnt/backup/daily,root,root,755"
+      - "dir,/mnt/backup/weekly,root,root,755"
