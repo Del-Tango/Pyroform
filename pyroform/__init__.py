@@ -7,9 +7,9 @@ generates on the fly FlowCTRL sketch files based on input pyro file(s),
 and runs them using the flow_ctrl library.
 """
 
-__version__ = "0.1.0"
-__author__ = "Pyroform Team"
-__description__ = "Linux Configurator tool written in Python3"
+__version__ = "1.0.0"
+__author__ = "Alveare Solutions"
+__description__ = "Linux Configurator tool"
 
 # Import key classes for easy access
 from .src.models import PyroConfig, User, Group, Device, ActionType
