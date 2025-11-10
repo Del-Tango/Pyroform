@@ -281,46 +281,46 @@ steps:
 #### Basic Configuration
 ```bash
 # Configure system from single file
-~$ pyroform main -C -i /path/to/config.yaml -y
+~$ pyroform -C -i /path/to/config.yaml -y
 
 # Configure from directory of config files
-~$ pyroform main -C -i /etc/pyroform/configs/ -y -r
+~$ pyroform -C -i /etc/pyroform/configs/ -y -r
 
 # Dry run to see what would be changed
-~$ pyroform main -C -i config.yaml --dry-run
+~$ pyroform -C -i config.yaml --dry-run
 
 # With custom config and output
-~$ pyroform main -C -i config.yaml -c pyroform_config.yaml -o /tmp/output/ -y
+~$ pyroform -C -i config.yaml -c pyroform_config.yaml -o /tmp/output/ -y
 ```
 
 #### Mount Operations
 ```bash
 # Mount devices only
-~$ pyroform main -M -i storage_config.yaml -y
+~$ pyroform -M -i storage_config.yaml -y
 
 # Mount with validation
-~$ pyroform main -M -i storage_config.yaml -V -i storage_config.yaml -y
+~$ pyroform -M -i storage_config.yaml -V -i storage_config.yaml -y
 ```
 
 #### System Validation
 ```bash
 # Validate system against configuration
-~$ pyroform main -V -i desired_config.yaml
+~$ pyroform -V -i desired_config.yaml
 
 # Validate with detailed report
-~$ pyroform main -V -i desired_config.yaml -r -o validation_report.json
+~$ pyroform -V -i desired_config.yaml -r -o validation_report.json
 ```
 
 #### Scorch (Cleanup) Operations
 ```bash
 # Dry run scorch (see what would be removed)
-~$ pyroform main -S -i config.yaml --dry-run
+~$ pyroform -S -i config.yaml --dry-run
 
 # Execute scorch with confirmation
-~$ pyroform main -S -i config.yaml
+~$ pyroform  -S -i config.yaml
 
 # Auto-confirm scorch (dangerous!)
-~$ pyroform main -S -i config.yaml -y
+~$ pyroform -S -i config.yaml -y
 ```
 
 #### Workflow Execution
@@ -336,10 +336,9 @@ steps:
 ```bash
 # Show help
 ~$ pyroform --help
-~$ pyroform main --help
 
 # Show version
-~$ pyroform main -v
+~$ pyroform --version
 ```
 
 ## Python Library Usage
@@ -465,25 +464,25 @@ def robust_configure(max_retries=3):
 Always test with dry-run mode first:
 ```bash
 # Safe preview of changes
-~$ pyroform main -C -i config.yaml --dry-run -r
+~$ pyroform -C -i config.yaml --dry-run -r
 
 # Preview scorch operations
-~$ pyroform main -S -i config.yaml --dry-run -r
+~$ pyroform -S -i config.yaml --dry-run -r
 ```
 
 ### Validation Workflow
 ```bash
 # 1. Validate current state
-~$ pyroform main -V -i desired_state.yaml -o pre_validation.json
+~$ pyroform -V -i desired_state.yaml -o pre_validation.json
 
 # 2. Preview changes (dry run)
-~$ pyroform main -C -i desired_state.yaml --dry-run -r
+~$ pyroform -C -i desired_state.yaml --dry-run -r
 
 # 3. Apply changes
-~$ pyroform main -C -i desired_state.yaml -y -r
+~$ pyroform -C -i desired_state.yaml -y -r
 
 # 4. Validate final state
-~$ pyroform main -V -i desired_state.yaml -o post_validation.json
+~$ pyroform -V -i desired_state.yaml -o post_validation.json
 ```
 
 ### Report Generation
@@ -525,6 +524,7 @@ Pyroform generates comprehensive JSON reports for all actions:
 ## Troubleshooting
 
 ### Common Issues
+
 - Permission Denied: Run with appropriate privileges
 - Invalid Configuration: Use validation to identify issues
 - Missing Dependencies: Ensure FlowCTRL is installed
@@ -534,7 +534,7 @@ Pyroform generates comprehensive JSON reports for all actions:
 
 Enable debug mode for detailed logging:
 ```bash
-~$ pyroform main -C -i config.yaml -d -l /var/log/pyroform/debug.log
+~$ pyroform -C -i config.yaml -d -l /var/log/pyroform/debug.log
 ```
 
 ## Development
@@ -542,8 +542,10 @@ Running Tests
 ```bash
 # Unit tests
 ~$ python -m unittest discover pyroform/tst/unit/
+
 # Integration tests
 ~$ python -m pytest pyroform/tst/integration/ -v
+
 # Integration tests with coverage
 ~$ python -m pytest pyroform/tst/integration/ -v --cov=pyroform
 ```
