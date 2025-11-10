@@ -1,0 +1,248 @@
+# Pyroform Configuration File
+# This file configures the Pyroform Linux configuration management tool
+
+# Global settings
+safety_checks: true
+default_output_dir: "/tmp/pyroform"
+log_level: "INFO"
+auto_confirm: false
+dry_run: false
+backup_before_changes: true
+
+# FlowCTRL engine configuration
+flowctrl:
+  state_file: "/var/lib/pyroform/state.json"
+  logging:
+    level: "INFO"
+    file: "/var/log/pyroform/flowctrl.log"
+    max_size_mb: 10
+    backup_count: 5
+  execution:
+    max_retries: 3
+    timeout: 300
+    continue_on_failure: false
+    parallel_execution: true
+    max_parallel: 5
+  reporting:
+    generate_reports: true
+    report_dir: "/var/log/pyroform/reports"
+    format: "json"  # json, yaml, or both
+
+# Scorch engine configuration (cleanup operations)
+scorch:
+  safety_check: true
+  dry_run_by_default: true
+  protected_users:
+    - "root"
+    - "daemon"
+    - "bin"
+    - "sys"
+    - "sync"
+    - "games"
+    - "man"
+    - "lp"
+    - "mail"
+    - "news"
+    - "uucp"
+    - "proxy"
+    - "www-data"
+    - "backup"
+    - "list"
+    - "irc"
+    - "gnats"
+    - "nobody"
+    - "systemd-*"
+  protected_groups:
+    - "root"
+    - "daemon"
+    - "bin"
+    - "sys"
+    - "adm"
+    - "tty"
+    - "disk"
+    - "lp"
+    - "mail"
+    - "news"
+    - "uucp"
+    - "man"
+    - "proxy"
+    - "kmem"
+    - "dialout"
+    - "fax"
+    - "voice"
+    - "cdrom"
+    - "floppy"
+    - "tape"
+    - "sudo"
+    - "audio"
+    - "dip"
+    - "www-data"
+    - "backup"
+    - "operator"
+    - "list"
+    - "irc"
+    - "src"
+    - "gnats"
+    - "shadow"
+    - "utmp"
+    - "video"
+    - "sasl"
+    - "plugdev"
+    - "staff"
+    - "games"
+    - "users"
+    - "nogroup"
+  protected_mounts:
+    - "/"
+    - "/boot"
+    - "/home"
+    - "/var"
+    - "/tmp"
+    - "/proc"
+    - "/sys"
+    - "/dev"
+    - "/run"
+    - "/mnt/cdrom"
+  protected_paths:
+    - "/etc/"
+    - "/bin/"
+    - "/sbin/"
+    - "/lib/"
+    - "/usr/"
+    - "/boot/"
+    - "/proc/"
+    - "/sys/"
+    - "/dev/"
+    - "/run/"
+  removal_strategy: "conservative"  # conservative, moderate, aggressive
+
+# Validation engine configuration
+validation:
+  check_users: true
+  check_groups: true
+  check_mounts: true
+  check_files: true
+  check_permissions: true
+  check_ownership: true
+  validate_passwords: false
+  strict_mode: false
+  ignore_patterns:
+    - "/tmp/*"
+    - "/var/tmp/*"
+    - "/proc/*"
+    - "/sys/*"
+    - "/dev/*"
+
+# User and group management
+user_management:
+  default_shell: "/bin/bash"
+  create_home: true
+  home_permissions: "755"
+  skel_directory: "/etc/skel"
+  password_encryption: "sha-512"  # sha-512, md5, des
+  min_uid: 1000
+  max_uid: 60000
+  min_gid: 1000
+  max_gid: 60000
+
+# Filesystem and mount management
+filesystem:
+  default_permissions:
+    directory: "755"
+    file: "644"
+    executable: "755"
+  default_ownership:
+    user: "root"
+    group: "root"
+  mount_options:
+    default: "defaults"
+    ext4: "defaults,noatime"
+    xfs: "defaults,noatime"
+    nfs: "defaults,soft,intr"
+    tmpfs: "defaults,size=1G"
+
+# Network configuration (for future use)
+network:
+  dns_servers:
+    - "8.8.8.8"
+    - "8.8.4.4"
+    - "1.1.1.1"
+  timeout: 30
+  retry_attempts: 3
+
+# Package management (for future use)
+packages:
+  package_manager: "apt"  # apt, yum, dnf, zypper
+  update_cache: true
+  upgrade_system: false
+
+# Backup configuration
+backup:
+  enabled: true
+  directory: "/var/backups/pyroform"
+  retention_days: 30
+  compression: "gzip"  # gzip, bzip2, xz
+  include:
+    - "/etc/passwd"
+    - "/etc/group"
+    - "/etc/shadow"
+    - "/etc/fstab"
+  exclude:
+    - "/tmp/*"
+    - "/proc/*"
+    - "/sys/*"
+
+# Plugin system (for future extensibility)
+plugins:
+  enabled: true
+  directory: "/usr/lib/pyroform/plugins"
+  load_default: true
+
+# Performance tuning
+performance:
+  max_workers: 10
+  chunk_size: 100
+  timeout_multiplier: 1.5
+  memory_limit_mb: 512
+
+# Security settings
+security:
+  audit_mode: false
+  checksum_verification: true
+  signature_verification: false
+  allowed_commands:
+    - "useradd"
+    - "userdel"
+    - "usermod"
+    - "groupadd"
+    - "groupdel"
+    - "groupmod"
+    - "mkdir"
+    - "chmod"
+    - "chown"
+    - "mount"
+    - "umount"
+    - "touch"
+  forbidden_commands:
+    - "rm -rf /"
+    - "dd if=* of=/dev/*"
+    - "mkfs*"
+    - "fdisk*"
+    - ":(){ :|:& };:"
+
+# Notification settings
+notifications:
+  enabled: false
+  method: "email"  # email, slack, webhook
+  email:
+    smtp_server: "localhost"
+    smtp_port: 25
+    from_address: "pyroform@localhost"
+    to_addresses:
+      - "admin@example.com"
+  slack:
+    webhook_url: ""
+    channel: "#alerts"
+  webhook:
+    url: ""
+    timeout: 10

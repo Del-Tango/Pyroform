@@ -1,0 +1,76 @@
+{
+  "Label": "Production Application Server",
+  "Description": "Complete production environment with multiple services",
+
+  "Users": [
+    {
+      "label": "app_user_primary",
+      "Name": "appuser",
+      "Password": "$6$rounds=656000$encryptedpass",
+      "Groups": ["app", "docker", "logs"]
+    },
+    {
+      "label": "db_service_user",
+      "Name": "dbuser",
+      "Password": "!!",
+      "Groups": ["db", "backup"]
+    },
+    {
+      "label": "monitoring_user",
+      "Name": "monitor",
+      "Password": "$6$encrypted",
+      "Groups": ["monitoring", "logs"]
+    }
+  ],
+
+  "Groups": [
+    {
+      "label": "application_group",
+      "Name": "app",
+      "Users": ["appuser", "dbuser"]
+    },
+    {
+      "label": "database_group",
+      "Name": "db",
+      "Users": ["dbuser"]
+    },
+    {
+      "label": "monitoring_group",
+      "Name": "monitoring",
+      "Users": ["monitor", "appuser"]
+    },
+    {
+      "label": "log_access_group",
+      "Name": "logs",
+      "Users": ["appuser", "monitor", "dbuser"]
+    }
+  ],
+
+  "Devices": [
+    {
+      "label": "application_disk",
+      "Path": "/dev/sdc1",
+      "Partition": 1,
+      "Mountpoint": "/opt/application",
+      "State": [
+        "dir,/opt/application,appuser,app,755",
+        "dir,/opt/application/data,appuser,app,775",
+        "dir,/opt/application/logs,appuser,app,755",
+        "dir,/opt/application/backups,dbuser,db,750",
+        "fl,/opt/application/config.env,appuser,app,640",
+        "fl,/opt/application/start.sh,appuser,app,755"
+      ]
+    },
+    {
+      "label": "database_disk",
+      "Path": "/dev/sdd1",
+      "Partition": 1,
+      "Mountpoint": "/var/lib/postgresql",
+      "State": [
+        "dir,/var/lib/postgresql,postgres,postgres,755",
+        "dir,/var/lib/postgresql/15,postgres,postgres,700",
+        "dir,/var/lib/postgresql/backups,dbuser,db,750"
+      ]
+    }
+  ]
+}

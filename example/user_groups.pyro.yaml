@@ -1,0 +1,36 @@
+# Pyro Input File - User and Group Management Only
+Label: "Department User Configuration"
+
+Users:
+  - label: "developer_1"
+    Name: "alice"
+    Password: "$6$encrypted"
+    Groups: ["developers", "docker", "git"]
+
+  - label: "developer_2"
+    Name: "bob"
+    Password: "$6$encrypted"
+    Groups: ["developers", "docker"]
+
+  - label: "admin_user"
+    Name: "charlie"
+    Password: "$6$encrypted"
+    Groups: ["admins", "developers", "wheel"]
+
+  - label: "service_account"
+    Name: "svc_app"
+    Password: "!!"
+    Groups: ["service"]
+
+Groups:
+  - label: "dev_team"
+    Name: "developers"
+    Users: ["alice", "bob", "charlie"]
+
+  - label: "admin_team"
+    Name: "admins"
+    Users: ["charlie"]
+
+  - label: "service_accounts"
+    Name: "service"
+    Users: ["svc_app"]

@@ -1,0 +1,36 @@
+# Pyro Input File - Desired System Configuration
+# This defines WHAT the system should look like
+
+Label: "Basic Web Server Configuration"
+Description: "Basic configuration for a web server with app user and data mount"
+
+Users:
+  - label: "web_app_user"
+    Name: "webapp"
+    Password: "$6$encryptedpassword"
+    Groups: ["web", "appusers"]
+
+  - label: "service_user"
+    Name: "serviceacc"
+    Password: "!!"  # Locked account
+    Groups: ["service"]
+
+Groups:
+  - label: "web_group"
+    Name: "web"
+    Users: ["webapp"]
+
+  - label: "app_group"
+    Name: "appusers"
+    Users: ["webapp", "serviceacc"]
+
+Devices:
+  - label: "data_disk"
+    Path: "/dev/sdb1"
+    Partition: 1
+    Mountpoint: "/var/www/data"
+    State:
+      - "dir,/var/www/data,webapp,web,755"
+      - "dir,/var/www/data/uploads,webapp,web,775"
+      - "dir,/var/www/data/logs,webapp,web,755"
+      - "fl,/var/www/data/config.json,webapp,web,644"

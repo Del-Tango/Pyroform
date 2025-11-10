@@ -1,0 +1,35 @@
+# Development and Testing Configuration
+# For development environments - less restrictive
+
+safety_checks: false
+default_output_dir: "/tmp/pyroform_dev"
+log_level: "DEBUG"
+auto_confirm: true
+dry_run: true  # Always dry-run in dev
+
+flowctrl:
+  state_file: "/tmp/pyroform_dev_state.json"
+  logging:
+    level: "DEBUG"
+    file: "/tmp/pyroform_dev.log"
+  execution:
+    max_retries: 1
+    timeout: 60
+    continue_on_failure: true
+  reporting:
+    generate_reports: true
+    report_dir: "/tmp/pyroform_dev/reports"
+
+scorch:
+  safety_check: false  # Disable safety checks in dev
+  dry_run_by_default: true
+  protected_users: ["root"]
+  protected_groups: ["root"]
+  removal_strategy: "aggressive"
+
+validation:
+  check_users: true
+  check_groups: true
+  check_mounts: false  # Less strict in dev
+  check_files: true
+  strict_mode: false
