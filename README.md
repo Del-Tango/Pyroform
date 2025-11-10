@@ -1,8 +1,8 @@
 # Pyroform
 
-## Overview
+### Overview
 
-Pyroform is a comprehensive Linux configuration management tool written in Python3 that transforms declarative configuration files into system-level changes. It receives input files containing users, groups, device mountpoints, files, and directories with owners and permissions, then generates and executes FlowCTRL sketch files to apply these configurations.
+Pyroform is a Linux configuration management tool written in Python3 that transforms declarative configuration files into system-level changes. It receives input files containing users, groups, device mountpoints, files, and directories with owners and permissions, then generates and executes FlowCTRL sketch files to apply these configurations.
 
 ## Features
 
@@ -131,7 +131,7 @@ CLI -> U: Show completion status
 
 From Source
 ```bash
-~$ git clone <repository-url>
+~$ git clone git@github.com:Del-Tango/Pyroform.git
 ~$ cd Pyroform
 ~$ ./build.sh --setup
 ~$ ./build.sh BUILD INSTALL
@@ -156,11 +156,10 @@ auto_confirm: false
 dry_run: false
 ```
 
-### Pyro Configuration Examples
+### Pyro Examples
 
 #### Basic User/Group Configuration (JSON)
 ```json
-
 {
   "Label": "Basic Server Setup",
   "Users": [
@@ -297,50 +296,50 @@ steps:
 #### Mount Operations
 ```bash
 # Mount devices only
-pyroform main -M -i storage_config.yaml -y
+~$ pyroform main -M -i storage_config.yaml -y
 
 # Mount with validation
-pyroform main -M -i storage_config.yaml -V -i storage_config.yaml -y
+~$ pyroform main -M -i storage_config.yaml -V -i storage_config.yaml -y
 ```
 
 #### System Validation
 ```bash
 # Validate system against configuration
-pyroform main -V -i desired_config.yaml
+~$ pyroform main -V -i desired_config.yaml
 
 # Validate with detailed report
-pyroform main -V -i desired_config.yaml -r -o validation_report.json
+~$ pyroform main -V -i desired_config.yaml -r -o validation_report.json
 ```
 
 #### Scorch (Cleanup) Operations
 ```bash
 # Dry run scorch (see what would be removed)
-pyroform main -S -i config.yaml --dry-run
+~$ pyroform main -S -i config.yaml --dry-run
 
 # Execute scorch with confirmation
-pyroform main -S -i config.yaml
+~$ pyroform main -S -i config.yaml
 
 # Auto-confirm scorch (dangerous!)
-pyroform main -S -i config.yaml -y
+~$ pyroform main -S -i config.yaml -y
 ```
 
 #### Workflow Execution
 ```bash
 # Execute complete workflow
-pyroform workflow -w deployment_workflow.yaml
+~$ pyroform workflow -w deployment_workflow.yaml
 
 # Execute workflow with debug output
-pyroform workflow -w deployment_workflow.yaml -d
+~$ pyroform workflow -w deployment_workflow.yaml -d
 ```
 
 #### Getting Help and Version
 ```bash
 # Show help
-pyroform --help
-pyroform main --help
+~$ pyroform --help
+~$ pyroform main --help
 
 # Show version
-pyroform main -v
+~$ pyroform main -v
 ```
 
 ## Python Library Usage
@@ -466,25 +465,25 @@ def robust_configure(max_retries=3):
 Always test with dry-run mode first:
 ```bash
 # Safe preview of changes
-pyroform main -C -i config.yaml --dry-run -r
+~$ pyroform main -C -i config.yaml --dry-run -r
 
 # Preview scorch operations
-pyroform main -S -i config.yaml --dry-run -r
+~$ pyroform main -S -i config.yaml --dry-run -r
 ```
 
 ### Validation Workflow
 ```bash
 # 1. Validate current state
-pyroform main -V -i desired_state.yaml -o pre_validation.json
+~$ pyroform main -V -i desired_state.yaml -o pre_validation.json
 
 # 2. Preview changes (dry run)
-pyroform main -C -i desired_state.yaml --dry-run -r
+~$ pyroform main -C -i desired_state.yaml --dry-run -r
 
 # 3. Apply changes
-pyroform main -C -i desired_state.yaml -y -r
+~$ pyroform main -C -i desired_state.yaml -y -r
 
 # 4. Validate final state
-pyroform main -V -i desired_state.yaml -o post_validation.json
+~$ pyroform main -V -i desired_state.yaml -o post_validation.json
 ```
 
 ### Report Generation
@@ -542,10 +541,9 @@ Enable debug mode for detailed logging:
 Running Tests
 ```bash
 # Unit tests
-python -m pytest pyroform/tst/unit/ -v
+~$ python -m unittest discover pyroform/tst/unit/
 # Integration tests
-python -m pytest pyroform/tst/integration/ -v
-# All tests with coverage
-python -m pytest pyroform/tst/ -v --cov=pyroform
+~$ python -m pytest pyroform/tst/integration/ -v
+# Integration tests with coverage
+~$ python -m pytest pyroform/tst/integration/ -v --cov=pyroform
 ```
-
