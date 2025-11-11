@@ -1,9 +1,10 @@
-ID: TC-1 / CLI Help and Version
-Priority: High
-Description: Verify CLI help system and version information
-Preconditions: Pyroform installed in test environment
+# CLI Help and Version
 
-Test Steps:
+- Priority: High
+- Description: Verify CLI help system and version information
+- Preconditions: Pyroform installed in test environment
+
+## Test Steps:
 
 1. Run version command
 ```bash
@@ -19,7 +20,7 @@ Test Steps:
 ~$ pyroform workflow --help
 ```
 
-Expected Results:
+## Expected Results:
 
 - Version displays correctly (e.g., "Pyroform version 1.0.0")
 - Main help shows banner and available commands

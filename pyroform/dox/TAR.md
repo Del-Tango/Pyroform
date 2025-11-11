@@ -10,16 +10,22 @@ Environment: Clean Docker container with Debian image.
 
 [ TC 1 ]:
 
-Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
-Tester: D:Ta
-Date: 11/11/2025
-Pyroform Version: 1.0.0
-Status: [X] PASS [ ] FAIL [ ] BLOCKED
+# CLI Help and Version
 
-Archive:
+- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Tester: D:Ta
+- Date: 11/11/2025
+- Pyroform Version: 1.0.0
+- Status: [X] PASS [ ] FAIL [ ] BLOCKED
 
-1. Display Version
+# Remarks
 
+- Help messages on action sub-commands would be betters suited if they addressed only the action in question.
+
+# Archive:
+
+## 1. Display Version
+```text
     bash-5.2# pyroform --version
 
         ___________________________________________________________________________
@@ -29,9 +35,10 @@ Archive:
                         Regards, the Alveare Solutions #!/Society -x
 
     Pyroform version 1.0.0
+```
 
-2. Display Help
-
+## 2. Display Help
+```text
     bash-5.2# pyroform --help
 
         ___________________________________________________________________________
@@ -235,26 +242,28 @@ Archive:
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
     --help                  Show this message and exit.
-
+```
 
 --------------------------------------------------------------------------------
 
 [ TC 2 ]:
 
-Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
-Tester: D:Ta
-Date: 11/11/2025
-Pyroform Version: 1.0.0
-Status: [x] PASS [ ] FAIL [ ] BLOCKED
+# Invalid CLI Usage
 
-Remarks
+- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Tester: D:Ta
+- Date: 11/11/2025
+- Pyroform Version: 1.0.0
+- Status: [x] PASS [ ] FAIL [ ] BLOCKED
+
+# Remarks
 
 - Case 4 should have better error messages. In it's current form can be missleading.
 
-Archive
+# Archive
 
-1. No arguments
-
+## 1. No arguments
+```text
     bash-5.2# pyroform
 
         ___________________________________________________________________________
@@ -270,9 +279,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-2. Invalid action
-
+## 2. Invalid action
+```text
     bash-5.2# pyroform invalid-command
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -281,9 +291,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-3. Invalid option flag
-
+## 3. Invalid option flag
+```text
     bash-5.2# pyroform configure --invalid-flag
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -292,9 +303,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-4. Incomplete command
-
+## 4. Incomplete command
+```text
     bash-5.2# pyroform configure
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -303,9 +315,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-5. Multiple actions
-
+## 5. Multiple actions
+```text
     bash-5.2# pyroform --configure --scorch
 
         ___________________________________________________________________________
@@ -321,13 +334,13 @@ Archive
 
     bash-5.2# echo $?
     2
-
+```
 
 --------------------------------------------------------------------------------
 
 [ TC 3 ]:
 
-# TC-3 / YAML Configuration Parsing
+# YAML Configuration Parsing
 
 - Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
 - Tester: D:Ta

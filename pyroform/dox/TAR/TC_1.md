@@ -1,13 +1,19 @@
-Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
-Tester: D:Ta
-Date: 11/11/2025
-Pyroform Version: 1.0.0
-Status: [X] PASS [ ] FAIL [ ] BLOCKED
+# CLI Help and Version
 
-Archive:
+- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Tester: D:Ta
+- Date: 11/11/2025
+- Pyroform Version: 1.0.0
+- Status: [X] PASS [ ] FAIL [ ] BLOCKED
 
-1. Display Version
+# Remarks
 
+- Help messages on action sub-commands would be betters suited if they addressed only the action in question.
+
+# Archive:
+
+## 1. Display Version
+```text
     bash-5.2# pyroform --version
 
         ___________________________________________________________________________
@@ -17,9 +23,10 @@ Archive:
                         Regards, the Alveare Solutions #!/Society -x
 
     Pyroform version 1.0.0
+```
 
-2. Display Help
-
+## 2. Display Help
+```text
     bash-5.2# pyroform --help
 
         ___________________________________________________________________________
@@ -223,4 +230,4 @@ Archive:
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
     --help                  Show this message and exit.
-
+```

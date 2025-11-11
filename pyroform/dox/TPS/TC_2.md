@@ -1,9 +1,10 @@
-ID: TC-2 / Invalid CLI Usage
-Priority: High
-Description: Verify error handling for invalid CLI usage
-Preconditions: Pyroform installed in test environment
+# Invalid CLI Usage
 
-Test Steps:
+- Priority: High
+- Description: Verify error handling for invalid CLI usage
+- Preconditions: Pyroform installed in test environment
+
+## Test Steps:
 
 1. Run command with no arguments
 ```bash
@@ -31,7 +32,7 @@ Test Steps:
 ~$ echo $?
 ```
 
-Expected Results:
+## Expected Results:
 
 - Appropriate error messages for invalid usage
 - Clear guidance on correct usage

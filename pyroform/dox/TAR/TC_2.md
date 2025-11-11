@@ -1,17 +1,19 @@
-Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
-Tester: D:Ta
-Date: 11/11/2025
-Pyroform Version: 1.0.0
-Status: [x] PASS [ ] FAIL [ ] BLOCKED
+# Invalid CLI Usage
 
-Remarks
+- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Tester: D:Ta
+- Date: 11/11/2025
+- Pyroform Version: 1.0.0
+- Status: [x] PASS [ ] FAIL [ ] BLOCKED
+
+# Remarks
 
 - Case 4 should have better error messages. In it's current form can be missleading.
 
-Archive
+# Archive
 
-1. No arguments
-
+## 1. No arguments
+```text
     bash-5.2# pyroform
 
         ___________________________________________________________________________
@@ -27,9 +29,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-2. Invalid action
-
+## 2. Invalid action
+```text
     bash-5.2# pyroform invalid-command
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -38,9 +41,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-3. Invalid option flag
-
+## 3. Invalid option flag
+```text
     bash-5.2# pyroform configure --invalid-flag
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -49,9 +53,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-4. Incomplete command
-
+## 4. Incomplete command
+```text
     bash-5.2# pyroform configure
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -60,9 +65,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-5. Multiple actions
-
+## 5. Multiple actions
+```text
     bash-5.2# pyroform --configure --scorch
 
         ___________________________________________________________________________
@@ -78,4 +84,4 @@ Archive
 
     bash-5.2# echo $?
     2
-
+```

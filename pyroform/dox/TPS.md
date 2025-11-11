@@ -10,12 +10,13 @@ Environment: Clean Linux test environment (Debian VM / Docker container recommen
 
 [ TC 1 ]:
 
-ID: TC-1 / CLI Help and Version
-Priority: High
-Description: Verify CLI help system and version information
-Preconditions: Pyroform installed in test environment
+# CLI Help and Version
 
-Test Steps:
+- Priority: High
+- Description: Verify CLI help system and version information
+- Preconditions: Pyroform installed in test environment
+
+## Test Steps:
 
 1. Run version command
 ```bash
@@ -31,7 +32,7 @@ Test Steps:
 ~$ pyroform workflow --help
 ```
 
-Expected Results:
+## Expected Results:
 
 - Version displays correctly (e.g., "Pyroform version 1.0.0")
 - Main help shows banner and available commands
@@ -42,12 +43,13 @@ Expected Results:
 
 [ TC 2 ]:
 
-ID: TC-2 / Invalid CLI Usage
-Priority: High
-Description: Verify error handling for invalid CLI usage
-Preconditions: Pyroform installed in test environment
+# Invalid CLI Usage
 
-Test Steps:
+- Priority: High
+- Description: Verify error handling for invalid CLI usage
+- Preconditions: Pyroform installed in test environment
+
+## Test Steps:
 
 1. Run command with no arguments
 ```bash
@@ -75,7 +77,7 @@ Test Steps:
 ~$ echo $?
 ```
 
-Expected Results:
+## Expected Results:
 
 - Appropriate error messages for invalid usage
 - Clear guidance on correct usage
@@ -85,12 +87,13 @@ Expected Results:
 
 [ TC 3 ]:
 
-ID: TC-3 / YAML Configuration Parsing
-Priority: High
-Description: Test YAML configuration file parsing
-Preconditions:
+# YAML Configuration Parsing
 
-Test Data (test_config.pyro.yaml):
+- Priority: High
+- Description: Test YAML configuration file parsing
+- Preconditions:
+
+## Test Data (test_config.pyro.yaml):
 ```yaml
 Label: "Test Configuration"
 Users:
@@ -110,7 +113,7 @@ Devices:
     State: []
 ```
 
-Test Steps:
+## Test Steps:
 
 1. Create test_config.yaml with above content and run commands
 2. Run validation command
@@ -122,7 +125,7 @@ Test Steps:
 ~$ pyroform configure -i test_config.yaml --dry-run
 ```
 
-Expected Results:
+## Expected Results:
 
 - YAML file parsed without errors
 - Configuration object created correctly

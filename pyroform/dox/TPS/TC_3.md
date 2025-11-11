@@ -1,9 +1,10 @@
-ID: TC-3 / YAML Configuration Parsing
-Priority: High
-Description: Test YAML configuration file parsing
-Preconditions:
+# YAML Configuration Parsing
 
-Test Data (test_config.pyro.yaml):
+- Priority: High
+- Description: Test YAML configuration file parsing
+- Preconditions:
+
+## Test Data (test_config.pyro.yaml):
 ```yaml
 Label: "Test Configuration"
 Users:
@@ -23,7 +24,7 @@ Devices:
     State: []
 ```
 
-Test Steps:
+## Test Steps:
 
 1. Create test_config.yaml with above content and run commands
 2. Run validation command
@@ -35,7 +36,7 @@ Test Steps:
 ~$ pyroform configure -i test_config.yaml --dry-run
 ```
 
-Expected Results:
+## Expected Results:
 
 - YAML file parsed without errors
 - Configuration object created correctly

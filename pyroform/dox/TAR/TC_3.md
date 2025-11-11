@@ -1,4 +1,4 @@
-# TC-3 / YAML Configuration Parsing
+# YAML Configuration Parsing
 
 - Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
 - Tester: D:Ta
