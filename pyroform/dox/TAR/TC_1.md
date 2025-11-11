@@ -1,5 +1,4 @@
 # CLI Help and Version
-
 - Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
 - Tester: D:Ta
 - Date: 11/11/2025

@@ -88,9 +88,16 @@ function parse_args() {
 
 function print_section_header() {
     local file="$1"
+    local dir="${2:-}"
     local name
+    local title
     name=$(basename "$file" | cut -d '.' -f 1 | tr '_' ' ')
-    echo "# [ $name ]"
+    if [ ! -z "$dir" ]; then
+        title=$(head -n 1 "${dir}/${file}")
+    else
+        title=$(head -n 1 "${file}")
+    fi
+    echo "# [ $name ]: ${title#\# }"
     echo
 }
 
@@ -101,21 +108,24 @@ function build_output() {
         echo
 
         if $ADD_PREFIX && [[ -f "$TARGET_DIR/$PREFIX_FL" ]]; then
-            print_section_header "$PREFIX_FL"
-            cat "$TARGET_DIR/$PREFIX_FL"
+            print_section_header "$PREFIX_FL" "$TARGET_DIR"
+#           cat "$TARGET_DIR/$PREFIX_FL"
+            tail -n +2 "$TARGET_DIR/$PREFIX_FL"
             echo "$SEPARATOR"
         fi
 
         for file in $(ls "$TARGET_DIR"/"$ITEM_PREFIX"*.md 2>/dev/null | sort -V); do
             [[ -e "$file" ]] || continue
             print_section_header "$file"
-            cat "$file"
+#           cat "$file"
+            tail -n +2 "$file"
             echo "$SEPARATOR"
         done
 
         if $ADD_SUFFIX && [[ -f "$TARGET_DIR/$SUFFIX_FL" ]]; then
-            print_section_header "$SUFFIX_FL"
-            cat "$TARGET_DIR/$SUFFIX_FL"
+            print_section_header "$SUFFIX_FL" "$TARGET_DIR"
+#           cat "$TARGET_DIR/$SUFFIX_FL"
+            tail -n +2 "$TARGET_DIR/$SUFFIX_FL"
         fi
     } > "$OUTPUT_FL"
 

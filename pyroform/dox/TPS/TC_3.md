@@ -1,5 +1,4 @@
 # YAML Configuration Parsing
-
 - Priority: High
 - Description: Test YAML configuration file parsing
 - Preconditions:

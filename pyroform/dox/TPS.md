@@ -1,16 +1,14 @@
 # Test Performance Specification
 
-# [ Description ]
+# [ Description ]: Test Performance Specification
 
-Objective: Manual testing of Pyroform functionality across all components and actions.
-Scope: CLI interface, configuration parsing, system operations, error handling, and safety features.
-Environment: Clean Linux test environment (Debian VM / Docker container recommended)
+- Objective: Manual testing of Pyroform functionality across all components and actions.
+- Scope: CLI interface, configuration parsing, system operations, error handling, and safety features.
+- Environment: Clean Linux test environment (Debian VM / Docker container recommended)
 
 --------------------------------------------------------------------------------
 
-# [ TC 1 ]
-
-# CLI Help and Version
+# [ TC 1 ]: CLI Help and Version
 
 - Priority: High
 - Description: Verify CLI help system and version information
@@ -42,9 +40,7 @@ Environment: Clean Linux test environment (Debian VM / Docker container recommen
 
 --------------------------------------------------------------------------------
 
-# [ TC 2 ]
-
-# Invalid CLI Usage
+# [ TC 2 ]: Invalid CLI Usage
 
 - Priority: High
 - Description: Verify error handling for invalid CLI usage
@@ -87,9 +83,7 @@ Environment: Clean Linux test environment (Debian VM / Docker container recommen
 
 --------------------------------------------------------------------------------
 
-# [ TC 3 ]
-
-# YAML Configuration Parsing
+# [ TC 3 ]: YAML Configuration Parsing
 
 - Priority: High
 - Description: Test YAML configuration file parsing
@@ -136,9 +130,8 @@ Devices:
 
 --------------------------------------------------------------------------------
 
-# [ TC 4 ]
+# [ TC 4 ]: ID: TC-4 / JSON Configuration Parsing
 
-ID: TC-4 / JSON Configuration Parsing
 Priority: High
 Description: Test JSON configuration file parsing
 Preconditions:
@@ -183,9 +176,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 5 ]
+# [ TC 5 ]: ID: TC-5 / Invalid Configuration Files
 
-ID: TC-5 / Invalid Configuration Files
 Priority: Medium
 Description: Test error handling for invalid configuration files
 Preconditions:
@@ -209,9 +201,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 6 ]
+# [ TC 6 ]: ID: TC-6 / User Creation (Dry Run)
 
-ID: TC-6 / User Creation (Dry Run)
 Priority: High
 Description: Test user creation in dry-run mode
 Preconditions:
@@ -255,9 +246,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 7 ]
+# [ TC 7 ]: ID: TC-7 / Actual User Creation
 
-ID: TC-7 / Actual User Creation
 Priority: High
 Description: Test actual user and group creation
 Preconditions: Test users don't exist on system
@@ -285,9 +275,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 8 ]
+# [ TC 8 ]: ID: TC-8 / Directory Structure Creation
 
-ID: TC-8 / Directory Structure Creation
 Priority: High
 Description: Test directory creation and permission setting
 Preconditions: Users from previous test exist
@@ -330,9 +319,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 9 ]
+# [ TC 9 ]: ID: TC-9 / Scorch Dry Run
 
-ID: TC-9 / Scorch Dry Run
 Priority: High
 Description: Test scorch operation in dry-run mode
 Preconditions: System has some test users/files not in config
@@ -362,9 +350,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 10 ]
+# [ TC 10 ]: ID: TC-10 / Scorch Safety Prompts
 
-ID: TC-10 / Scorch Safety Prompts
 Priority: High
 Description: Test scorch safety confirmation
 Preconditions:
@@ -395,9 +382,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 11 ]
+# [ TC 11 ]: ID: TC-11 / System Validation
 
-ID: TC-11 / System Validation
 Priority: High
 Description: Test system validation against current state
 Preconditions:
@@ -421,9 +407,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 12 ]
+# [ TC 12 ]: ID: TC-12 / Multi-step Workflow
 
-ID: TC-12 / Multi-step Workflow
 Priority: Medium
 Description: Test complete workflow execution
 Preconditions:
@@ -470,9 +455,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 13 ]
+# [ TC 13 ]: ID: TC-13 / Permission Denied Handling
 
-ID: TC-13 / Permission Denied Handling
 Priority: High
 Description: Test error handling for permission issues
 Preconditions:
@@ -492,9 +476,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 14 ]
+# [ TC 14 ]: ID: TC-14 / Invalid Command Prevention
 
-ID: TC-14 / Invalid Command Prevention
 Priority: High
 Description: Test prevention of dangerous commands
 Preconditions:
@@ -513,9 +496,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 15 ]
+# [ TC 15 ]: ID: TC-15 / Report Generation
 
-ID: TC-15 / Report Generation
 Priority: Medium
 Description: Test report generation in various formats
 Preconditions:
@@ -537,9 +519,8 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ TC 16 ]
+# [ TC 16 ]: ID: TC-16 / System Cleanup
 
-ID: TC-16 / System Cleanup
 Priority: High
 Description: Verify complete cleanup after testing
 Preconditions:
@@ -560,5 +541,5 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-# [ Conclusion ]
+# [ Conclusion ]: 
 
