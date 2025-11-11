@@ -17,9 +17,12 @@ Preconditions: Pyroform installed in test environment
 
 Test Steps:
 
-1. Run commands
+1. Run version command
 ```bash
 ~$ pyroform --version
+```
+2. Run help commands
+```bash
 ~$ pyroform --help
 ~$ pyroform configure --help
 ~$ pyroform scorch --help
@@ -46,13 +49,30 @@ Preconditions: Pyroform installed in test environment
 
 Test Steps:
 
-1. Run commands
+1. Run command with no arguments
 ```bash
-~$ pyroform (no arguments)
+~$ pyroform
+~$ echo $?
+```
+2. Run command with invalid action
+```bash
 ~$ pyroform invalid-command
+~$ echo $?
+```
+3. Run command with invalid option flag
+```bash
 ~$ pyroform configure --invalid-flag
-~$ pyroform configure (no input file)
-~$ pyroform --configure --scorch (multiple actions)
+~$ echo $?
+```
+4. Run incomplete command with no Pyro file
+```bash
+~$ pyroform configure
+~$ echo $?
+```
+5. Run command with multiple actions
+```
+~$ pyroform --configure --scorch
+~$ echo $?
 ```
 
 Expected Results:
@@ -70,7 +90,7 @@ Priority: High
 Description: Test YAML configuration file parsing
 Preconditions:
 
-Test Data (test_config.yaml):
+Test Data (test_config.pyro.yaml):
 ```yaml
 Label: "Test Configuration"
 Users:
@@ -93,9 +113,12 @@ Devices:
 Test Steps:
 
 1. Create test_config.yaml with above content and run commands
-2. Run commands
+2. Run validation command
 ```bash
 ~$ pyroform validate -i test_config.yaml
+```
+3. Run dry-run configuration command
+```bash
 ~$ pyroform configure -i test_config.yaml --dry-run
 ```
 

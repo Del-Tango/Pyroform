@@ -4,7 +4,7 @@ Date: 11/11/2025
 Pyroform Version: 1.0.0
 Status: [ ] PASS [X] FAIL [ ] BLOCKED
 
-Remarks
+# Remarks
 
 - Pyro file (YAML) validation failed at step 2:
     - Action 'validate' cannot be given as sub-command, only option flag (e.g. --validate);
@@ -14,10 +14,10 @@ Remarks
     - Action 'configure' cannot be given as sub-command, only option flag (e.g. --configure)
     - Dry-run cannot be configured via CLI, only config file.
 
-Archive
+# Archive
 
-1. Create dummy Pyro file
-
+## 1. Create dummy Pyro file
+```text
     bash-5.2# cat test_config.pyro.yaml
     Label: "Test Configuration"
     Users:
@@ -35,9 +35,10 @@ Archive
         Partition: 1
         Mountpoint: "/mnt/test"
         State: []
+```
 
-2. Run validation command using previously created Pyro file
-
+## 2. Run validation command using previously created Pyro file
+```text
     bash-5.2# pyroform validate -i dump/test_config.yaml
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -46,9 +47,10 @@ Archive
 
     bash-5.2# echo $?
     2
+```
 
-Miscellaneous
-
+### Miscellaneous
+```text
     bash-5.2# pyroform --validate -i test_config.pyro.yaml
 
         ___________________________________________________________________________
@@ -59,17 +61,19 @@ Miscellaneous
 
     Executing validate action with input: test_config.pyro.yaml
     Validate action failed
+```
 
-3. Dry-run of configuration
-
+## 3. Dry-run of configuration
+```text
     bash-5.2# pyroform --configure -i test_config.pyro.yaml --dry-run
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
 
     Error: No such option: --dry-run
+```
 
-Miscellaneous
-
+### Miscellaneous
+```text
     bash-5.2# pyroform configure -i test_config.yaml
     Usage: pyroform [OPTIONS]
     Try 'pyroform --help' for help.
@@ -87,4 +91,4 @@ Miscellaneous
 
     Executing configure action with input: test_config.pyro.yaml
     Configure action completed successfully
-
+```
