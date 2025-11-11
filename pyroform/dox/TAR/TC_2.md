@@ -4,6 +4,7 @@
 - Tester: D:Ta
 - Date: 11/11/2025
 - Pyroform Version: 1.0.0
+- Validates: [TPS TC_2](../TPS/TC_2.md)
 - Status: [x] PASS [ ] FAIL [ ] BLOCKED
 
 # Remarks

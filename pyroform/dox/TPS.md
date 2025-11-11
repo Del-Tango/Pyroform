@@ -1,6 +1,6 @@
 # Test Performance Specification
 
-[ Description ]:
+# [ Description ]
 
 Objective: Manual testing of Pyroform functionality across all components and actions.
 Scope: CLI interface, configuration parsing, system operations, error handling, and safety features.
@@ -8,13 +8,14 @@ Environment: Clean Linux test environment (Debian VM / Docker container recommen
 
 --------------------------------------------------------------------------------
 
-[ TC 1 ]:
+# [ TC 1 ]
 
 # CLI Help and Version
 
 - Priority: High
 - Description: Verify CLI help system and version information
 - Preconditions: Pyroform installed in test environment
+- Validated by: [TAR TC_1](./TAR/TC_1.md)
 
 ## Test Steps:
 
@@ -41,13 +42,14 @@ Environment: Clean Linux test environment (Debian VM / Docker container recommen
 
 --------------------------------------------------------------------------------
 
-[ TC 2 ]:
+# [ TC 2 ]
 
 # Invalid CLI Usage
 
 - Priority: High
 - Description: Verify error handling for invalid CLI usage
 - Preconditions: Pyroform installed in test environment
+- Validated by: [TAR TC_2](./TAR/TC_2.md)
 
 ## Test Steps:
 
@@ -85,13 +87,14 @@ Environment: Clean Linux test environment (Debian VM / Docker container recommen
 
 --------------------------------------------------------------------------------
 
-[ TC 3 ]:
+# [ TC 3 ]
 
 # YAML Configuration Parsing
 
 - Priority: High
 - Description: Test YAML configuration file parsing
 - Preconditions:
+- Validated by: [TAR TC_3](./TAR/TC_3.md)
 
 ## Test Data (test_config.pyro.yaml):
 ```yaml
@@ -133,7 +136,7 @@ Devices:
 
 --------------------------------------------------------------------------------
 
-[ TC 4 ]:
+# [ TC 4 ]
 
 ID: TC-4 / JSON Configuration Parsing
 Priority: High
@@ -180,7 +183,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 5 ]:
+# [ TC 5 ]
 
 ID: TC-5 / Invalid Configuration Files
 Priority: Medium
@@ -206,7 +209,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 6 ]:
+# [ TC 6 ]
 
 ID: TC-6 / User Creation (Dry Run)
 Priority: High
@@ -252,7 +255,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 7 ]:
+# [ TC 7 ]
 
 ID: TC-7 / Actual User Creation
 Priority: High
@@ -282,7 +285,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 8 ]:
+# [ TC 8 ]
 
 ID: TC-8 / Directory Structure Creation
 Priority: High
@@ -327,7 +330,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 9 ]:
+# [ TC 9 ]
 
 ID: TC-9 / Scorch Dry Run
 Priority: High
@@ -359,7 +362,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 10 ]:
+# [ TC 10 ]
 
 ID: TC-10 / Scorch Safety Prompts
 Priority: High
@@ -392,7 +395,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 11 ]:
+# [ TC 11 ]
 
 ID: TC-11 / System Validation
 Priority: High
@@ -418,7 +421,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 12 ]:
+# [ TC 12 ]
 
 ID: TC-12 / Multi-step Workflow
 Priority: Medium
@@ -467,7 +470,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 13 ]:
+# [ TC 13 ]
 
 ID: TC-13 / Permission Denied Handling
 Priority: High
@@ -489,7 +492,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 14 ]:
+# [ TC 14 ]
 
 ID: TC-14 / Invalid Command Prevention
 Priority: High
@@ -510,7 +513,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 15 ]:
+# [ TC 15 ]
 
 ID: TC-15 / Report Generation
 Priority: Medium
@@ -534,7 +537,7 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ TC 16 ]:
+# [ TC 16 ]
 
 ID: TC-16 / System Cleanup
 Priority: High
@@ -557,5 +560,5 @@ Expected Results:
 
 --------------------------------------------------------------------------------
 
-[ Conclusion ]:
+# [ Conclusion ]
 

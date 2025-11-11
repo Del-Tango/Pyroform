@@ -3,6 +3,7 @@
 - Priority: High
 - Description: Verify error handling for invalid CLI usage
 - Preconditions: Pyroform installed in test environment
+- Validated by: [TAR TC_2](../TAR/TC_2.md)
 
 ## Test Steps:
 

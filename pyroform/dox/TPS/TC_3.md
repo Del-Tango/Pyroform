@@ -3,6 +3,7 @@
 - Priority: High
 - Description: Test YAML configuration file parsing
 - Preconditions:
+- Validated by: [TAR TC_3](../TAR/TC_3.md)
 
 ## Test Data (test_config.pyro.yaml):
 ```yaml

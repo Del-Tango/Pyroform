@@ -3,6 +3,7 @@
 - Priority: High
 - Description: Verify CLI help system and version information
 - Preconditions: Pyroform installed in test environment
+- Validated by: [TAR TC_1](../TAR/TC_1.md)
 
 ## Test Steps:
 

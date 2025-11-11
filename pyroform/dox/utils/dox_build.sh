@@ -90,7 +90,7 @@ function print_section_header() {
     local file="$1"
     local name
     name=$(basename "$file" | cut -d '.' -f 1 | tr '_' ' ')
-    echo "[ $name ]:"
+    echo "# [ $name ]"
     echo
 }
 
