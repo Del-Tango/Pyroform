@@ -5,9 +5,12 @@ Preconditions: Pyroform installed in test environment
 
 Test Steps:
 
-1. Run commands
+1. Run version command
 ```bash
 ~$ pyroform --version
+```
+2. Run help commands
+```bash
 ~$ pyroform --help
 ~$ pyroform configure --help
 ~$ pyroform scorch --help

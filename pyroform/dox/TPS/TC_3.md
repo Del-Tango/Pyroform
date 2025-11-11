@@ -3,7 +3,7 @@ Priority: High
 Description: Test YAML configuration file parsing
 Preconditions:
 
-Test Data (test_config.yaml):
+Test Data (test_config.pyro.yaml):
 ```yaml
 Label: "Test Configuration"
 Users:
@@ -26,9 +26,12 @@ Devices:
 Test Steps:
 
 1. Create test_config.yaml with above content and run commands
-2. Run commands
+2. Run validation command
 ```bash
 ~$ pyroform validate -i test_config.yaml
+```
+3. Run dry-run configuration command
+```bash
 ~$ pyroform configure -i test_config.yaml --dry-run
 ```
 

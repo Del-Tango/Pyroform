@@ -146,7 +146,20 @@ function fix_links() {
     echo "[ OK ]: Links rewritten in $file"
 }
 
+function display_banner() {
+    cat<<EOF
+    ___________________________________________________________________________
+
+      *                      *  Dynamic DOX Builder  *                       *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+EOF
+    return $?
+}
+
 function main() {
+    display_banner
     parse_args "$@"
     build_output
     if $FIX_LINKS; then

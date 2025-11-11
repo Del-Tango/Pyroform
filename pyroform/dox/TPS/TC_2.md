@@ -5,13 +5,30 @@ Preconditions: Pyroform installed in test environment
 
 Test Steps:
 
-1. Run commands
+1. Run command with no arguments
 ```bash
-~$ pyroform (no arguments)
+~$ pyroform
+~$ echo $?
+```
+2. Run command with invalid action
+```bash
 ~$ pyroform invalid-command
+~$ echo $?
+```
+3. Run command with invalid option flag
+```bash
 ~$ pyroform configure --invalid-flag
-~$ pyroform configure (no input file)
-~$ pyroform --configure --scorch (multiple actions)
+~$ echo $?
+```
+4. Run incomplete command with no Pyro file
+```bash
+~$ pyroform configure
+~$ echo $?
+```
+5. Run command with multiple actions
+```
+~$ pyroform --configure --scorch
+~$ echo $?
 ```
 
 Expected Results:
