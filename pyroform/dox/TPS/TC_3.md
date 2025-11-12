@@ -26,14 +26,14 @@ Devices:
 
 ## Test Steps:
 
-1. Create test_config.yaml with above content and run commands
+1. Create test_config.pyro.yaml with above content and run commands
 2. Run validation command
 ```bash
-~$ pyroform validate -i test_config.yaml
+~$ pyroform validate -i test_config.pyro.yaml
 ```
 3. Run dry-run configuration command
 ```bash
-~$ pyroform configure -i test_config.yaml --dry-run
+~$ pyroform configure -i test_config.pyro.yaml --dry-run
 ```
 
 ## Expected Results:

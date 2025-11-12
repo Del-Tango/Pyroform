@@ -1,9 +1,10 @@
-ID: TC-6 / User Creation (Dry Run)
-Priority: High
-Description: Test user creation in dry-run mode
-Preconditions:
+# User Creation (Dry Run)
+- Priority: High
+- Description: Test user creation in dry-run mode
+- Preconditions:
+- Validated by: [TAR TC_6](../TAR/TC_6.md)
 
-Test Data (users_test.yaml):
+## Test Data (users_test.yaml):
 ```yaml
 Label: "User Management Test"
 Users:
@@ -24,9 +25,12 @@ Groups:
     Users: ["pyrotest2"]
 ```
 
-Test Steps:
+## Test Steps:
 
-1. Verify users don't exist: id pyrotest1 && id pyrotest2
+1. Verify users don't exist:
+```bash
+~$ id pyrotest1 && id pyrotest2
+```
 2. Run command
 ```bash
 ~$ pyroform configure -i users_test.yaml --dry-run -v
@@ -34,7 +38,7 @@ Test Steps:
 3. Check output for planned user/group operations
 4. Verify users still don't exist after dry-run
 
-Expected Results:
+## Expected Results:
 
 - Dry-run shows planned user/group creation
 - No actual users/groups created on system

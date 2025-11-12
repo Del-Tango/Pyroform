@@ -1,9 +1,10 @@
-ID: TC-5 / Invalid Configuration Files
-Priority: Medium
-Description: Test error handling for invalid configuration files
-Preconditions:
+# Invalid Configuration Files
+- Priority: Medium
+- Description: Test error handling for invalid configuration files
+- Preconditions:
+- Validated by: [TAR TC_5](../TAR/TC_5.md)
 
-Test Steps:
+## Test Steps:
 
 1. Create file with invalid YAML syntax
 2. Create file with invalid JSON syntax
@@ -14,7 +15,7 @@ Test Steps:
 ~$ pyroform validate -i test_invalid.pyro.yaml
 ```
 
-Expected Results:
+## Expected Results:
 
 - Clear error messages for syntax errors
 - Validation fails for missing required fields

@@ -1,9 +1,10 @@
-ID: TC-8 / Directory Structure Creation
-Priority: High
-Description: Test directory creation and permission setting
-Preconditions: Users from previous test exist
+# Directory Structure Creation
+- Priority: High
+- Description: Test directory creation and permission setting
+- Preconditions: Users from previous test exist
+- Validated by: [TAR TC_8](../TAR/TC_8.md)
 
-Test Data (fs_test.yaml):
+## Test Data (fs_test.yaml):
 ```yaml
 Label: "Filesystem Test"
 Devices:
@@ -18,12 +19,12 @@ Devices:
       - "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644"
 ```
 
-Test Steps:
+## Test Steps:
 
 1. Run commands
 ```bash
-pyroform configure -i fs_test.yaml --dry-run
-pyroform configure -i fs_test.yaml -y
+~$ pyroform configure -i fs_test.yaml --dry-run
+~$ pyroform configure -i fs_test.yaml -y
 ```
 2. Verify directory structure created
 3. Verify ownership and permissions
@@ -32,7 +33,7 @@ pyroform configure -i fs_test.yaml -y
 ~$ rm -rf /tmp/pyrotest
 ```
 
-Expected Results:
+## Expected Results:
 
 - Directories created with correct paths
 - Ownership set correctly (user:group)

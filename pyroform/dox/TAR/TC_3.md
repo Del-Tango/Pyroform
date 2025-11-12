@@ -15,6 +15,7 @@
     - Action 'validate' cannot be given as sub-command, only option flag (e.g. --validate);
     - No explicit reason given for failure, at least not upfront;
     - Debug flag did apparently nothing. Expected verbosity level to increase;
+
 - Pyro file (YAML) configuration failed at step 3:
     - Action 'configure' cannot be given as sub-command, only option flag (e.g. --configure)
     - Dry-run cannot be configured via CLI, only config file.

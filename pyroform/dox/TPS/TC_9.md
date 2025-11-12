@@ -1,9 +1,10 @@
-ID: TC-9 / Scorch Dry Run
-Priority: High
-Description: Test scorch operation in dry-run mode
-Preconditions: System has some test users/files not in config
+# Scorch Dry Run
+- Priority: High
+- Description: Test scorch operation in dry-run mode
+- Preconditions: System has some test users/files not in config
+- Validated by: [TAR TC_8](../TAR/TC_8.md)
 
-Test Steps:
+## Test Steps:
 
 1. Create orphaned user:
 ```bash
@@ -20,7 +21,7 @@ Test Steps:
 4. Review what would be removed
 5. Verify nothing actually removed
 
-Expected Results:
+## Expected Results:
 
 - Dry-run shows orphaned resources
 - No actual removal occurs
