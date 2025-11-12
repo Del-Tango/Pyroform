@@ -5,9 +5,9 @@
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_3](../TPS/TC_3.md)
 - Status:
-    [ ] PASS
-    [X] FAIL
-    [ ] BLOCKED
+[ ] PASS
+[X] FAIL
+[ ] BLOCKED
 
 # Remarks
 

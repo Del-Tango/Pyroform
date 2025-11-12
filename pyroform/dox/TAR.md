@@ -1,6 +1,6 @@
 # Test Archive
 
-# [ Description ]: Pyroform Test Archive
+# [ Description ]: Pyroform TAR
 
 - Objective: Archive of Pyroform manual testing functionalities as described in the TPS.
 - Scope: CLI interface, configuration parsing, system operations, error handling, and safety features.
@@ -15,7 +15,10 @@
 - Date: 11/11/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_1](./TPS/TC_1.md)
-- Status: [X] PASS [ ] FAIL [ ] BLOCKED
+- Status:
+[X] PASS
+[ ] FAIL
+[ ] BLOCKED
 
 # Remarks
 
@@ -252,7 +255,10 @@
 - Date: 11/11/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_2](./TPS/TC_2.md)
-- Status: [x] PASS [ ] FAIL [ ] BLOCKED
+- Status:
+[x] PASS
+[ ] FAIL
+[ ] BLOCKED
 
 # Remarks
 
@@ -343,7 +349,10 @@
 - Date: 11/11/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_3](./TPS/TC_3.md)
-- Status: [ ] PASS [X] FAIL [ ] BLOCKED
+- Status:
+[ ] PASS
+[X] FAIL
+[ ] BLOCKED
 
 # Remarks
 

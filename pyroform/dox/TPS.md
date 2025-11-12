@@ -1,6 +1,6 @@
 # Test Performance Specification
 
-# [ Description ]: Test Performance Specification
+# [ Description ]: Pyroform TPS
 
 - Objective: Manual testing of Pyroform functionality across all components and actions.
 - Scope: CLI interface, configuration parsing, system operations, error handling, and safety features.
