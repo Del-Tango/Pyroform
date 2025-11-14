@@ -7,38 +7,61 @@ import json
 import yaml
 import sys
 
+import pysnooper
+
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
 from .src.models import ActionType
+from .src.logging import STDOUTMsg
 from .pyroform import Pyroform
 
+# GLOBAL
+
+stdout = STDOUTMsg(debug_mode=True)
+
+# GRAFFITTY
 
 def format_banner():
     banner_text = """
     ___________________________________________________________________________
 
-      *                          *   Pyroform   *                           *
+    *                          *   Pyroform   *                           *
     ___________________________________________________________________________
                     Regards, the Alveare Solutions #!/Society -x
+
 """
     return banner_text
 
 
+# @pysnooper.snoop()
+def display_banner():
+    """Display the Pyroform banner"""
+    banner_text = format_banner()
+    click.echo(banner_text)
+
+# CLICK
+
+#@pysnooper.snoop()
 class BannerCommand(click.Command):
+
+#   @pysnooper.snoop()
     def invoke(self, ctx):
         # Display banner for all commands unless help is being shown
         if not ctx.args or not any(arg in ctx.args for arg in ['--help', '-h']):
             self._display_banner()
         return super().invoke(ctx)
 
+#   @pysnooper.snoop()
     def get_help(self, ctx):
+        '''Executed on subcommands'''
         # Display banner before help text
         banner = self._display_banner(return_text=True)
         original_help = super().get_help(ctx)
-        return f"{banner}\n{original_help}"
+        return f"{banner}{original_help}"
 
+#   @pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
         if return_text:
@@ -46,39 +69,46 @@ class BannerCommand(click.Command):
         click.echo(banner_text)
 
 
+# @pysnooper.snoop()
 class BannerGroup(click.Group):
-    def invoke(self, ctx):
-        # Display banner for all group commands unless help is being shown
-        if not ctx.args or not any(arg in ctx.args for arg in ['--help', '-h']):
-            self._display_banner()
-        return super().invoke(ctx)
 
-    def get_help(self, ctx):
-        # Display banner before help text
-        banner = self._display_banner(return_text=True)
-        original_help = super().get_help(ctx)
-        return f"{banner}\n{original_help}"
-
+#   @pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
         if return_text:
             return banner_text
         click.echo(banner_text)
 
+#   @pysnooper.snoop()
     def format_usage(self, ctx, formatter):
-        # Ensure banner is included in usage formatting
+        # Ensure banner is included in main cli usage formatting
         banner_text = self._display_banner(return_text=True)
         formatter.write(banner_text)
         super().format_usage(ctx, formatter)
 
 
-def display_banner():
-    """Display the Pyroform banner"""
-    banner_text = format_banner()
-    click.echo(banner_text)
+def display_version(ctx, param, value):
+    """Callback function to print version and exit"""
+    if not value or ctx.resilient_parsing:
+        return
+    display_banner()
+    try:
+        from pyroform import __version__
+        click.echo(f"Pyroform version {__version__}")
+    except ImportError:
+        click.echo("Pyroform version 0.0.0 (unknown)")
+    ctx.exit()
 
 
 @click.group(cls=BannerGroup)
+@click.option(
+    '--version',
+    is_flag=True,
+    callback=display_version,
+    expose_value=False,
+    is_eager=True,
+    help='Display PyrDisplay Pyroform  version'
+)
 def cli():
     """Pyroform Linux Configurator
 
@@ -88,34 +118,15 @@ def cli():
     and runs them using the flow_ctrl library.
     """
 
+# ACTION CONFIGURE
 
 @cli.command(cls=BannerCommand)
-@click.option(
-    "-S",
-    "--scorch",
-    is_flag=True,
-    help="Trigger action scorch using input Pyro file(s)",
-)
-@click.option(
-    "-M", "--mount", is_flag=True, help="Trigger action mount using input Pyro file(s)"
-)
-@click.option(
-    "-C",
-    "--configure",
-    is_flag=True,
-    help="Trigger action configure using input Pyro file(s)",
-)
-@click.option(
-    "-V",
-    "--validate",
-    is_flag=True,
-    help="Trigger action validate using input Pyro file(s)",
-)
 @click.option(
     "-i",
     "--input",
     "input_path",
     type=click.Path(exists=False),
+    required=True,
     help="Path to Pyro file (JSON|YAML) or directory containing Pyro files",
 )
 @click.option(
@@ -153,64 +164,22 @@ def cli():
     help="Flag that makes logging and STDOUT messages more verbose",
 )
 @click.option(
-    "-v", "--version", is_flag=True, help="Action that displays Pyroform version"
-)
-@click.option(
     "-y",
     "--yes",
     is_flag=True,
     help="Flag to confirm all manual prompts such that manual interaction from user is not required",
 )
-def main(
-    scorch: bool,
-    mount: bool,
-    configure: bool,
-    validate: bool,
-    input_path: Optional[str],
-    output_path: Optional[str],
-    config_file: Optional[str],
-    log_file: Optional[str],
-    dump_report: bool,
-    silent: bool,
-    debug: bool,
-    version: bool,
-    yes: bool,
-):
-    """
-    Pyroform Linux Configurator
-    """
-    # Banner is automatically displayed by BannerCommand before this function runs
-
-    if version:
-        _display_version()
-        return
-
-    # Validate action selection
-    actions = [scorch, mount, configure, validate]
-    action_count = sum(actions)
-
-    if action_count == 0:
-        # No action specified, show help
-        raise click.UsageError(
-            "No action specified. Use --scorch, --mount, --configure, or --validate"
-        )
-    elif action_count > 1:
-        raise click.UsageError(
-            "Exactly one action must be specified: --scorch, --mount, --configure, or --validate"
-        )
-
-    # Validate input path (only required for actions, not for version)
-    if not input_path:
-        raise click.UsageError(
-            "Input path must be specified with --input for action execution"
-        )
-
-    # Determine action type
-    action_type = _get_action_type(scorch, mount, configure, validate)
-
-    # Execute the action
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Perform a trial run without making any changes",
+)
+def configure(input_path: str, output_path: Optional[str], config_file: Optional[str],
+            log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
+            yes: bool, dry_run: bool):
+    """Configure system according to Pyro file(s)"""
     _execute_action(
-        action_type=action_type,
+        action_type=ActionType.CONFIGURE,
         input_path=Path(input_path) if input_path else None,
         output_path=Path(output_path) if output_path else None,
         config_file=Path(config_file) if config_file else None,
@@ -219,8 +188,229 @@ def main(
         silent=silent,
         debug=debug,
         auto_confirm=yes,
+        dry_run=dry_run,
     )
 
+# ACTION SCORCH
+
+@cli.command(cls=BannerCommand)
+@click.option(
+    "-i",
+    "--input",
+    "input_path",
+    type=click.Path(exists=False),
+    required=True,
+    help="Path to Pyro file (JSON|YAML) or directory containing Pyro files",
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(exists=False),
+    help="Path to FlowCTRL sketch file (JSON) or directory for generated files",
+)
+@click.option(
+    "-c",
+    "--config-file",
+    "config_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform config file (JSON|YAML)",
+)
+@click.option(
+    "-l",
+    "--log-file",
+    "log_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform and FlowCTRL log file",
+)
+@click.option(
+    "-r",
+    "--dump-report",
+    is_flag=True,
+    help="Flag to generate report file with STDOUT, STDERR plus summary",
+)
+@click.option("-s", "--silent", is_flag=True, help="Flag to suppress STDOUT")
+@click.option(
+    "-d",
+    "--debug",
+    is_flag=True,
+    help="Flag that makes logging and STDOUT messages more verbose",
+)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Flag to confirm all manual prompts such that manual interaction from user is not required",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Perform a trial run without making any changes",
+)
+def scorch(input_path: str, output_path: Optional[str], config_file: Optional[str],
+        log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
+        yes: bool, dry_run: bool):
+    """Remove system resources not specified in Pyro file(s)"""
+    _execute_action(
+        action_type=ActionType.SCORCH,
+        input_path=Path(input_path) if input_path else None,
+        output_path=Path(output_path) if output_path else None,
+        config_file=Path(config_file) if config_file else None,
+        log_file=Path(log_file) if log_file else None,
+        dump_report=dump_report,
+        silent=silent,
+        debug=debug,
+        auto_confirm=yes,
+        dry_run=dry_run,
+    )
+
+# ACTION MOUNT
+
+@cli.command(cls=BannerCommand)
+@click.option(
+    "-i",
+    "--input",
+    "input_path",
+    type=click.Path(exists=False),
+    required=True,
+    help="Path to Pyro file (JSON|YAML) or directory containing Pyro files",
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(exists=False),
+    help="Path to FlowCTRL sketch file (JSON) or directory for generated files",
+)
+@click.option(
+    "-c",
+    "--config-file",
+    "config_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform config file (JSON|YAML)",
+)
+@click.option(
+    "-l",
+    "--log-file",
+    "log_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform and FlowCTRL log file",
+)
+@click.option(
+    "-r",
+    "--dump-report",
+    is_flag=True,
+    help="Flag to generate report file with STDOUT, STDERR plus summary",
+)
+@click.option("-s", "--silent", is_flag=True, help="Flag to suppress STDOUT")
+@click.option(
+    "-d",
+    "--debug",
+    is_flag=True,
+    help="Flag that makes logging and STDOUT messages more verbose",
+)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Flag to confirm all manual prompts such that manual interaction from user is not required",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Perform a trial run without making any changes",
+)
+def mount(input_path: str, output_path: Optional[str], config_file: Optional[str],
+        log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
+        yes: bool, dry_run: bool):
+    """Mount devices according to Pyro file(s)"""
+    _execute_action(
+        action_type=ActionType.MOUNT,
+        input_path=Path(input_path) if input_path else None,
+        output_path=Path(output_path) if output_path else None,
+        config_file=Path(config_file) if config_file else None,
+        log_file=Path(log_file) if log_file else None,
+        dump_report=dump_report,
+        silent=silent,
+        debug=debug,
+        auto_confirm=yes,
+        dry_run=dry_run,
+    )
+
+# ACTION VALIDATE
+
+@cli.command(cls=BannerCommand)
+@click.option(
+    "-i",
+    "--input",
+    "input_path",
+    type=click.Path(exists=False),
+    required=True,
+    help="Path to Pyro file (JSON|YAML) or directory containing Pyro files",
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(exists=False),
+    help="Path to FlowCTRL sketch file (JSON) or directory for generated files",
+)
+@click.option(
+    "-c",
+    "--config-file",
+    "config_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform config file (JSON|YAML)",
+)
+@click.option(
+    "-l",
+    "--log-file",
+    "log_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform and FlowCTRL log file",
+)
+@click.option(
+    "-r",
+    "--dump-report",
+    is_flag=True,
+    help="Flag to generate report file with STDOUT, STDERR plus summary",
+)
+@click.option("-s", "--silent", is_flag=True, help="Flag to suppress STDOUT")
+@click.option(
+    "-d",
+    "--debug",
+    is_flag=True,
+    help="Flag that makes logging and STDOUT messages more verbose",
+)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Flag to confirm all manual prompts such that manual interaction from user is not required",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Perform a trial run without making any changes",
+)
+def validate(input_path: str, output_path: Optional[str], config_file: Optional[str],
+            log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
+            yes: bool, dry_run: bool):
+    """Validate system against Pyro file(s)"""
+    _execute_action(
+        action_type=ActionType.VALIDATE,
+        input_path=Path(input_path) if input_path else None,
+        output_path=Path(output_path) if output_path else None,
+        config_file=Path(config_file) if config_file else None,
+        log_file=Path(log_file) if log_file else None,
+        dump_report=dump_report,
+        silent=silent,
+        debug=debug,
+        auto_confirm=yes,
+        dry_run=dry_run,
+    )
+
+# COMPOSED ACTION WORKFLOW
 
 @cli.command(cls=BannerCommand)
 @click.option(
@@ -261,17 +451,9 @@ def workflow(workflow_file: str):
         click.echo(f"Error executing workflow: {e}")
         exit(1)
 
+# UTILS
 
-def _display_version():
-    """Display Pyroform version"""
-    try:
-        from pyroform import __version__
-
-        click.echo(f"Pyroform version {__version__}")
-    except ImportError:
-        click.echo("Pyroform version 0.1.0 (development)")
-
-
+@pysnooper.snoop()
 def _get_action_type(
     scorch: bool, mount: bool, configure: bool, validate: bool
 ) -> ActionType:
@@ -287,7 +469,7 @@ def _get_action_type(
     else:
         raise ValueError("No action specified")
 
-
+@pysnooper.snoop()
 def _execute_action(
     action_type: ActionType,
     input_path: Path,
@@ -298,6 +480,7 @@ def _execute_action(
     silent: bool,
     debug: bool,
     auto_confirm: bool,
+    dry_run: bool,
 ):
     """
     Execute the specified action with given parameters
@@ -315,14 +498,17 @@ def _execute_action(
     """
     start_time = datetime.now().isoformat()
 
-    if not silent:
-        click.echo(f"Executing {action_type.value} action with input: {input_path}")
+#   if not silent:
+#       click.echo(f"Executing {action_type.value} action with input: {input_path}")
 
     try:
         # Initialize Pyroform with configuration
         pyroform_kwargs = {"auto_confirm": auto_confirm}
         if config_file and config_file.exists():
             pyroform_kwargs["config_file"] = str(config_file)
+
+
+        stdout.debug(f'Pyroform kwargs - {pyroform_kwargs}')
 
         pf = Pyroform(**pyroform_kwargs)
 
@@ -332,15 +518,19 @@ def _execute_action(
             action_kwargs["output_dir"] = str(output_path)
         if debug:
             action_kwargs["verbose"] = True
+        if dry_run:
+            action_kwargs['dry_run'] = True
 
         # Execute the action
         if action_type == ActionType.CONFIGURE:
             result = pf.configure(str(input_path), **action_kwargs)
             success = result
         elif action_type == ActionType.SCORCH:
+            # TODO - take into account dry run
             result = pf.scorch(str(input_path), **action_kwargs)
             success = result.success
         elif action_type == ActionType.MOUNT:
+            # TODO - take into account dry run
             result = pf.mount(str(input_path), **action_kwargs)
             success = result
         elif action_type == ActionType.VALIDATE:
@@ -375,23 +565,23 @@ def _execute_action(
                 else:
                     click.echo(f"Failed to save report to: {report_file}")
 
-        if not silent:
-            if success:
-                click.echo(
-                    f"{action_type.value.capitalize()} action completed successfully"
-                )
-            else:
-                click.echo(f"✗ {action_type.value.capitalize()} action failed")
+#       if not silent:
+#           if success:
+#               click.echo(
+#                   f"{action_type.value.capitalize()} action completed successfully"
+#               )
+#           else:
+#               click.echo(f"✗ {action_type.value.capitalize()} action failed")
 
     except Exception as e:
-        if not silent:
-            click.echo(f"Error during {action_type.value} execution: {e}")
+#       if not silent:
+#           click.echo(f"Error during {action_type.value} execution: {e}")
         if debug:
             import traceback
 
             click.echo(traceback.format_exc())
 
-
+#@pysnooper.snoop()
 def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
     """
     Execute a complete Pyroform workflow
@@ -420,7 +610,7 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
                 click.echo(f"Invalid workflow step: {step}")
                 return False
 
-            click.echo(f"Executing workflow step: {action} with {input_path}")
+#           click.echo(f"Executing workflow step: {action} with {input_path}")
 
             try:
                 if action == "validate":
@@ -449,7 +639,7 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
                 )
 
                 if not success:
-                    click.echo(f"Workflow step failed: {action}")
+#                   click.echo(f"Workflow step failed: {action}")
                     return False
 
             except Exception as e:
@@ -476,4 +666,23 @@ if __name__ == "__main__":
     cli()
 
 # CODE DUMP
+
+#   # Executed on main util
+#   @pysnooper.snoop()
+#   def get_help(self, ctx):
+#       # Display banner before help text
+#       banner = self._display_banner(return_text=True)
+#       original_help = super().get_help(ctx)
+#       return f"{banner}\n{original_help}"
+#       return original_help
+
+
+
+#   @pysnooper.snoop()
+#   def invoke(self, ctx):
+#       # Display banner for all group commands unless help is being shown
+#       if not ctx.args or not any(arg in ctx.args for arg in ['--help', '-h']):
+#           self._display_banner()
+#       return super().invoke(ctx)
+
 

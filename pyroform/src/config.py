@@ -4,6 +4,9 @@ Configuration management for Pyroform
 
 import json
 import yaml
+
+import pysnooper
+
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -22,6 +25,7 @@ class PyroformConfig:
         """
         self.settings = self._load_config(config_file)
 
+    @pysnooper.snoop()
     def _load_config(self, config_file: Optional[Path]) -> Dict[str, Any]:
         """
         Load configuration from file with defaults
@@ -37,8 +41,10 @@ class PyroformConfig:
             "safety_checks": True,
             "default_output_dir": "/tmp/pyroform",
             "log_level": "INFO",
+            "log_timestamp": False,
             "auto_confirm": False,
             "dry_run": False,
+            "debug": False,
             "flowctrl": {
                 "state_file": "/tmp/pyroform_state.json",
                 "logging": {

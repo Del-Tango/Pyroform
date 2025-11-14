@@ -3,10 +3,13 @@ FlowCTRL Sketch Generator for Pyroform
 """
 
 import json
+import pysnooper
+
 from typing import Dict, Any, List
 from pathlib import Path
 
 from .models import PyroConfig, User, Group, Device, ActionType
+from .logging import STDOUTMsg
 
 
 class SketchGenerator:
@@ -14,6 +17,13 @@ class SketchGenerator:
     Generates FlowCTRL sketch files from PyroConfig objects
     """
 
+    def __init__(self, *args, stdout=None, **kwargs):
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=False,
+            timestamp=False,
+        )
+
+    @pysnooper.snoop()
     def generate_sketch(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
         """
         Generate FlowCTRL sketch based on action type
@@ -36,6 +46,7 @@ class SketchGenerator:
         else:
             raise ValueError(f"Unsupported action type: {action}")
 
+    @pysnooper.snoop()
     def generate_configure_sketch(self, config: PyroConfig) -> Dict[str, Any]:
         """
         Generate sketch for configure action (users, groups, file permissions)
@@ -56,6 +67,7 @@ class SketchGenerator:
 
         # Remove empty sections
         sketch = {k: v for k, v in sketch.items() if v}
+        self.stdout.info('FlowCTRL Sketch %s' % str(json.dumps(sketch, indent=4)))
         return sketch
 
     def generate_mount_sketch(self, config: PyroConfig) -> Dict[str, Any]:
@@ -100,6 +112,7 @@ class SketchGenerator:
         sketch = {k: v for k, v in sketch.items() if v}
         return sketch
 
+    @pysnooper.snoop()
     def _generate_user_commands(self, users: List[User]) -> List[Dict[str, Any]]:
         """Generate user management commands"""
         commands = []
@@ -312,11 +325,12 @@ class SketchGenerator:
             True if successful, False otherwise
         """
         try:
+            self.stdout.info(f'Saving FlowCTRL Sketch file to {output_path}...')
             with open(output_path, "w") as f:
-                json.dump(sketch, f, indent=2)
+                json.dump(sketch, f, indent=4)
             return True
         except (IOError, TypeError) as e:
-            print(f"Error saving sketch to {output_path}: {e}")
+            self.stdout.err(f"Error saving sketch to {output_path}: {e}")
             return False
 
 

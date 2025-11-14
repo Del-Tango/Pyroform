@@ -3,13 +3,18 @@ FlowCTRL Engine Integration for Pyroform
 """
 
 import json
+import pysnooper
+
 from pathlib import Path
 from typing import Dict, Any, Optional
 from unittest.mock import Mock
 
 from flow_ctrl.src.core.engine import FlowEngine
+# TODO - Uncomment
+from flow_ctrl.src.config.settings import FlowConfig
 
 from .models import ActionType
+from .logging import STDOUTMsg
 
 
 class PyroflowEngine:
@@ -17,7 +22,10 @@ class PyroflowEngine:
     Wrapper around FlowEngine for Pyroform operations
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    stdout: STDOUTMsg
+
+    @pysnooper.snoop()
+    def __init__(self, *args, stdout=None, config_path: Optional[str] = None, **kwargs):
         """
         Initialize PyroflowEngine
 
@@ -25,19 +33,22 @@ class PyroflowEngine:
             config_path: Optional path to FlowCTRL config file
         """
         self.config = self._load_config(config_path)
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=True,
+            timestamp=True,
+        )
+        # Try to create a real FlowEngine with proper config object
+        flow_config = self._create_flow_config()
+        self.stdout.debug(f'flow_config - {flow_config}')
+        self.stdout.debug(f'flow_config.__dict__ - {flow_config.__dict__}')
 
-        # Create a mock FlowEngine for testing compatibility
-        # In production, this would be the real FlowEngine
-        try:
-            # Try to create a real FlowEngine with proper config object
-            flow_config = self._create_flow_config()
-            self.flow_engine = FlowEngine(flow_config)
-        except (AttributeError, TypeError):
-            # Fall back to mock for testing
-            self.flow_engine = self._create_mock_flow_engine()
+        self.flow_engine = FlowEngine(flow_config)
+#       self.flow_engine = FlowEngine()
+        self.stdout.debug(f'flow_engine - {flow_engine}')
 
         self._current_sketch: Optional[Dict[str, Any]] = None
 
+    @pysnooper.snoop()
     def _create_flow_config(self):
         """
         Create a FlowEngine compatible config object
@@ -46,41 +57,30 @@ class PyroflowEngine:
             Config object with required attributes
         """
 
+        # TODO - Replace with actual FlowConfig class from original lib
         # Create a simple object with the required attributes
-        class FlowConfig:
-            def __init__(self, config_dict):
-                self.state_file = config_dict.get(
-                    "state_file", "/tmp/pyroform_state.json"
-                )
-                self.logging = type("Logging", (), config_dict.get("logging", {}))()
-                self.execution = type(
-                    "Execution", (), config_dict.get("execution", {})
-                )()
-                self.reporting = type(
-                    "Reporting", (), config_dict.get("reporting", {})
-                )()
+#       class FlowConfig:
+#           def __init__(self, config_dict):
+#               self.state_file = config_dict.get(
+#                   "state_file", "/tmp/pyroform_state.json"
+#               )
+#               self.logging = type("Logging", (), config_dict.get("logging", {}))()
+#               self.execution = type(
+#                   "Execution", (), config_dict.get("execution", {})
+#               )()
+#               self.reporting = type(
+#                   "Reporting", (), config_dict.get("reporting", {})
+#               )()
+
+        # DEBUG PATCH
+#       self.config['project_dir'] = '.'
+
+        self.stdout.debug(f'Config {self.config}')
 
         return FlowConfig(self.config)
 
-    def _create_mock_flow_engine(self):
-        """
-        Create a mock FlowEngine for testing
 
-        Returns:
-            Mock FlowEngine instance
-        """
-        mock_engine = Mock(spec=FlowEngine)
-        mock_engine.load_procedure.return_value = True
-        mock_engine.start_procedure.return_value = Mock(
-            success=True, message="Procedure completed successfully"
-        )
-        mock_engine.pause_procedure.return_value = Mock(success=True)
-        mock_engine.resume_procedure.return_value = Mock(success=True)
-        mock_engine.stop_procedure.return_value = Mock(success=True)
-        mock_engine.purge_data.return_value = Mock(success=True)
-        mock_engine.send_external_command.return_value = True
-        return mock_engine
-
+    @pysnooper.snoop()
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """
         Load configuration from file or use defaults
@@ -101,11 +101,12 @@ class PyroflowEngine:
 
                         return yaml.safe_load(f)
             except Exception as e:
-                print(f"Error loading config from {config_path}: {e}")
-                print("Using default configuration")
+                self.stdout.err(f"Error loading config from {config_path}: {e}")
+                self.stdout.info("Using default configuration")
 
         return self._default_config()
 
+    @pysnooper.snoop()
     def execute_sketch(self, sketch: Dict[str, Any], action: ActionType) -> bool:
         """
         Execute generated sketch through FlowCTRL
@@ -118,14 +119,20 @@ class PyroflowEngine:
             True if execution was successful, False otherwise
         """
         try:
+
+            self.stdout.debug('FlowCTRL Sketch - %S' % str(json.dumps(sketch, indent=4)))
+
             # Save sketch to temporary file
             temp_sketch_path = Path("/tmp/pyroform_sketch.json")
+
+            self.stdout.debug(f'temp_sketch_path - {temp_sketch_path}')
+
             with open(temp_sketch_path, "w") as f:
                 json.dump(sketch, f)
 
             # Load procedure into FlowEngine
             if not self.flow_engine.load_procedure(str(temp_sketch_path)):
-                print(f"Failed to load procedure from {temp_sketch_path}")
+                self.stdout.err(f"Failed to load procedure from {temp_sketch_path}")
                 return False
 
             self._current_sketch = sketch
@@ -217,6 +224,7 @@ class PyroflowEngine:
             print(f"Error purging data: {e}")
             return False
 
+    @pysnooper.snoop()
     def _default_config(self) -> Dict[str, Any]:
         """
         Generate default FlowCTRL configuration for Pyroform
@@ -224,19 +232,38 @@ class PyroflowEngine:
         Returns:
             Default configuration dictionary
         """
-        return {
-            "state_file": "/tmp/pyroform_state.json",
-            "logging": {"level": "INFO", "file": "/var/log/pyroform_flowctrl.log"},
-            "execution": {
-                "max_retries": 3,
-                "timeout": 300,
-                "continue_on_failure": False,
-            },
-            "reporting": {
-                "generate_reports": True,
-                "report_dir": "/var/log/pyroform/reports",
-            },
+#       return {
+#           "state_file": "/tmp/pyroform_state.json",
+#           "logging": {"level": "INFO", "file": "/var/log/pyroform_flowctrl.log"},
+#           "execution": {
+#               "max_retries": 3,
+#               "timeout": 300,
+#               "continue_on_failure": False,
+#           },
+#           "reporting": {
+#               "generate_reports": True,
+#               "report_dir": "/var/log/pyroform/reports",
+#           },
+#       }
+
+        flow_ctrl_config = {
+            "project_dir": str(Path(__file__).parent.parent.parent),
+            "log_dir": "/tmp/pyroflow",
+            "conf_dir": "/etc/pyroflow",
+            "state_file": "/tmp/.pyroflow.state",
+            "report_file": "/tmp/.pyroflow.report",
+            "log_file": "pyroflow.log",
+            "log_name": "PyroFlowCTRL",
+            "silence": False,
+            "debug": True,
+            "log_format": "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+            "timestamp_format": "%Y-%m-%d %H:%M:%S"
         }
+
+#       self.stdout.debug('FlowCTRL config %s' % str(json.dumps(flow_ctrl_config, indent=4)))
+
+        return flow_ctrl_config
+
 
     @property
     def current_sketch(self) -> Optional[Dict[str, Any]]:
@@ -245,4 +272,34 @@ class PyroflowEngine:
 
 
 # CODE DUMP
+
+        # Create a mock FlowEngine for testing compatibility
+        # In production, this would be the real FlowEngine
+#       try:
+#       except (AttributeError, TypeError):
+#           # Fall back to mock for testing
+#           self.flow_engine = self._create_mock_flow_engine()
+
+
+
+#   # TODO - DEPRECATED
+#   def _create_mock_flow_engine(self):
+#       """
+#       Create a mock FlowEngine for testing
+
+#       Returns:
+#           Mock FlowEngine instance
+#       """
+#       mock_engine = Mock(spec=FlowEngine)
+#       mock_engine.load_procedure.return_value = True
+#       mock_engine.start_procedure.return_value = Mock(
+#           success=True, message="Procedure completed successfully"
+#       )
+#       mock_engine.pause_procedure.return_value = Mock(success=True)
+#       mock_engine.resume_procedure.return_value = Mock(success=True)
+#       mock_engine.stop_procedure.return_value = Mock(success=True)
+#       mock_engine.purge_data.return_value = Mock(success=True)
+#       mock_engine.send_external_command.return_value = True
+#       return mock_engine
+
 

@@ -29,7 +29,7 @@ setup(
 #   install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "pyroform=pyroform.cli:main",
+            "pyroform=pyroform.cli:cli",
         ],
     },
 )

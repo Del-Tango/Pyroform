@@ -4,17 +4,26 @@ Pyro Configuration Parser
 
 import json
 import yaml
-from pathlib import Path
-from typing import List, Dict, Any
 import glob
 
-from .models import PyroConfig, User, Group, Device
+import pysnooper
 
+from pathlib import Path
+from typing import List, Dict, Any
+
+from .models import PyroConfig, User, Group, Device
+from .logging import STDOUTMsg
 
 class PyroParser:
     """
     Parser for Pyro configuration files (JSON and YAML)
     """
+
+    def __init__(self, *args, stdout=None, **kwargs):
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=False,
+            timestamp=False,
+        )
 
     def parse(self, input_path: Path) -> List[PyroConfig]:
         """
@@ -40,7 +49,9 @@ class PyroParser:
         elif input_path.is_dir():
             return self._parse_directory(input_path)
         else:
-            raise ValueError(f"Input path is neither file nor directory: {input_path}")
+            msg = f"Input path is neither file nor directory: {input_path}"
+            self.stdout.err(msg)
+            raise ValueError(msg)
 
     def _parse_single_file(self, file_path: Path) -> PyroConfig:
         """
@@ -55,6 +66,7 @@ class PyroParser:
         Raises:
             ValueError: If file format is invalid or unsupported
         """
+        self.stdout.info(f'Parsing Pyro state file ({file_path})...')
         if file_path.suffix.lower() in [".json"]:
             with open(file_path, "r") as f:
                 data = json.load(f)
@@ -62,7 +74,9 @@ class PyroParser:
             with open(file_path, "r") as f:
                 data = yaml.safe_load(f)
         else:
-            raise ValueError(f"Unsupported file format: {file_path.suffix}")
+            msg = f"Unsupported Pyro state file format: {file_path.suffix}"
+            self.stdout.err(msg)
+            raise ValueError(msg)
 
         return self._parse_single_file_data(data)
 
@@ -91,7 +105,9 @@ class PyroParser:
                 )
                 users.append(user)
             except (KeyError, TypeError) as e:
-                raise ValueError(f"Invalid user data: {user_data}") from e
+                msg = f"Invalid user data: {user_data}"
+                self.stdout.err(msg)
+                raise ValueError(msg) from e
 
         # Parse groups
         groups = []
@@ -104,7 +120,9 @@ class PyroParser:
                 )
                 groups.append(group)
             except (KeyError, TypeError) as e:
-                raise ValueError(f"Invalid group data: {group_data}") from e
+                msg = f"Invalid group data: {group_data}"
+                self.stdout.err(msg)
+                raise ValueError(msg) from e
 
         # Parse devices
         devices = []
@@ -119,7 +137,11 @@ class PyroParser:
                 )
                 devices.append(device)
             except (KeyError, TypeError) as e:
-                raise ValueError(f"Invalid device data: {device_data}") from e
+                msg = f"Invalid device data: {device_data}"
+                self.stdout.err(msg)
+                raise ValueError(msg) from e
+
+        self.stdout.info(f'State file data: %s' % (str(json.dumps(data, indent=4))))
 
         return PyroConfig(label=label, users=users, groups=groups, devices=devices)
 
@@ -133,11 +155,13 @@ class PyroParser:
         Returns:
             List of PyroConfig objects
         """
+        self.stout.info('Input path is a directory. Scanning for Pyro state file patterns...')
         configs = []
 
         # Look for JSON files with pyro_ prefix
         json_patterns = [
             "pyro_*.json",
+            "*.pyro.json",
             "*.json",  # Also accept any JSON file for flexibility
         ]
 
@@ -145,6 +169,8 @@ class PyroParser:
         yaml_patterns = [
             "pyro_*.yaml",
             "pyro_*.yml",
+            "*.pyro.yaml",
+            "*.pyro.yml",
             "*.yaml",
             "*.yml",  # Also accept any YAML file for flexibility
         ]
@@ -159,6 +185,11 @@ class PyroParser:
         # Remove duplicates and sort for consistent ordering
         all_files = sorted(set(all_files))
 
+        if all_files:
+            self.stdout.ok('Identified state files: %s' % str(json.dumps(all_files, indent=4)))
+        else:
+            self.stdout.nok(f'No state files found at specified location! Details: {directory_path}')
+
         # Parse each file
         for file_path in all_files:
             if file_path.is_file():
@@ -166,7 +197,11 @@ class PyroParser:
                     config = self._parse_single_file(file_path)
                     configs.append(config)
                 except (json.JSONDecodeError, yaml.YAMLError, ValueError) as e:
-                    raise ValueError(f"Error parsing file {file_path}: {e}") from e
+                    msg = f"Error parsing file {file_path}! Details: {e}"
+                    self.stdout.err(msg)
+                    raise ValueError(msg) from e
+            else:
+                self.stdout.warn(f'{file_path} not a regular file! Skipping')
 
         return configs
 
