@@ -503,7 +503,13 @@ def _execute_action(
 
     try:
         # Initialize Pyroform with configuration
-        pyroform_kwargs = {"auto_confirm": auto_confirm}
+        pyroform_kwargs = {
+            "auto_confirm": auto_confirm,
+            'dry_run': dry_run,
+            'debug': debug,
+            'silent': silent,
+            'dump_report': dump_report,
+        }
         if config_file and config_file.exists():
             pyroform_kwargs["config_file"] = str(config_file)
 

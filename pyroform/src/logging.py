@@ -145,24 +145,24 @@ class STDOUTMsg:
 
     def warn(self, message: str, **kwargs) -> None:
         """
-        Print warning message with orange [ WARN ] prefix.
+        Print warning message with orange [ WARNING ] prefix.
 
         Args:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
-        formatted = self._format_message("WARN", message, "orange")
+        formatted = self._format_message("WARNING", message, "orange")
         self._print(formatted, **kwargs)
 
     def err(self, message: str, **kwargs) -> None:
         """
-        Print error message with red [ ERR ] prefix.
+        Print error message with red [ ERROR ] prefix.
 
         Args:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
-        formatted = self._format_message("ERR", message, "red")
+        formatted = self._format_message("ERROR", message, "red")
         self._print(formatted, **kwargs)
 
     def debug(self, message: str, **kwargs) -> None:

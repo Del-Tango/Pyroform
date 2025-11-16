@@ -10,7 +10,6 @@ from typing import Dict, Any, Optional
 from unittest.mock import Mock
 
 from flow_ctrl.src.core.engine import FlowEngine
-# TODO - Uncomment
 from flow_ctrl.src.config.settings import FlowConfig
 
 from .models import ActionType
@@ -43,8 +42,7 @@ class PyroflowEngine:
         self.stdout.debug(f'flow_config.__dict__ - {flow_config.__dict__}')
 
         self.flow_engine = FlowEngine(flow_config)
-#       self.flow_engine = FlowEngine()
-        self.stdout.debug(f'flow_engine - {flow_engine}')
+        self.stdout.debug(f'flow_engine - {self.flow_engine}')
 
         self._current_sketch: Optional[Dict[str, Any]] = None
 
@@ -56,28 +54,8 @@ class PyroflowEngine:
         Returns:
             Config object with required attributes
         """
-
-        # TODO - Replace with actual FlowConfig class from original lib
-        # Create a simple object with the required attributes
-#       class FlowConfig:
-#           def __init__(self, config_dict):
-#               self.state_file = config_dict.get(
-#                   "state_file", "/tmp/pyroform_state.json"
-#               )
-#               self.logging = type("Logging", (), config_dict.get("logging", {}))()
-#               self.execution = type(
-#                   "Execution", (), config_dict.get("execution", {})
-#               )()
-#               self.reporting = type(
-#                   "Reporting", (), config_dict.get("reporting", {})
-#               )()
-
-        # DEBUG PATCH
-#       self.config['project_dir'] = '.'
-
         self.stdout.debug(f'Config {self.config}')
-
-        return FlowConfig(self.config)
+        return FlowConfig(**self.config)
 
 
     @pysnooper.snoop()
@@ -120,15 +98,19 @@ class PyroflowEngine:
         """
         try:
 
-            self.stdout.debug('FlowCTRL Sketch - %S' % str(json.dumps(sketch, indent=4)))
+            self.stdout.debug('FlowCTRL Sketch - %s' % str(json.dumps(sketch, indent=4)))
 
+            # TODO - Set --output path from config / cli args
             # Save sketch to temporary file
-            temp_sketch_path = Path("/tmp/pyroform_sketch.json")
+            temp_sketch_path = Path("pyroflow.sketch.json")
 
             self.stdout.debug(f'temp_sketch_path - {temp_sketch_path}')
 
             with open(temp_sketch_path, "w") as f:
                 json.dump(sketch, f)
+
+            # Purging previous session data
+            self.flow_engine.purge_data()
 
             # Load procedure into FlowEngine
             if not self.flow_engine.load_procedure(str(temp_sketch_path)):
@@ -232,26 +214,12 @@ class PyroflowEngine:
         Returns:
             Default configuration dictionary
         """
-#       return {
-#           "state_file": "/tmp/pyroform_state.json",
-#           "logging": {"level": "INFO", "file": "/var/log/pyroform_flowctrl.log"},
-#           "execution": {
-#               "max_retries": 3,
-#               "timeout": 300,
-#               "continue_on_failure": False,
-#           },
-#           "reporting": {
-#               "generate_reports": True,
-#               "report_dir": "/var/log/pyroform/reports",
-#           },
-#       }
-
         flow_ctrl_config = {
             "project_dir": str(Path(__file__).parent.parent.parent),
-            "log_dir": "/tmp/pyroflow",
-            "conf_dir": "/etc/pyroflow",
-            "state_file": "/tmp/.pyroflow.state",
-            "report_file": "/tmp/.pyroflow.report",
+            "log_dir": "log/pyroflow",
+            "conf_dir": "conf/pyroflow",
+            "state_file": ".pyroflow.state",
+            "report_file": "pyroflow.report",
             "log_file": "pyroflow.log",
             "log_name": "PyroFlowCTRL",
             "silence": False,
@@ -259,9 +227,6 @@ class PyroflowEngine:
             "log_format": "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
             "timestamp_format": "%Y-%m-%d %H:%M:%S"
         }
-
-#       self.stdout.debug('FlowCTRL config %s' % str(json.dumps(flow_ctrl_config, indent=4)))
-
         return flow_ctrl_config
 
 
@@ -272,6 +237,13 @@ class PyroflowEngine:
 
 
 # CODE DUMP
+
+#       self.flow_engine = FlowEngine()
+
+
+#       self.stdout.debug('FlowCTRL config %s' % str(json.dumps(flow_ctrl_config, indent=4)))
+
+
 
         # Create a mock FlowEngine for testing compatibility
         # In production, this would be the real FlowEngine
@@ -303,3 +275,34 @@ class PyroflowEngine:
 #       return mock_engine
 
 
+        # TODO - Replace with actual FlowConfig class from original lib
+        # Create a simple object with the required attributes
+#       class FlowConfig:
+#           def __init__(self, config_dict):
+#               self.state_file = config_dict.get(
+#                   "state_file", "/tmp/pyroform_state.json"
+#               )
+#               self.logging = type("Logging", (), config_dict.get("logging", {}))()
+#               self.execution = type(
+#                   "Execution", (), config_dict.get("execution", {})
+#               )()
+#               self.reporting = type(
+#                   "Reporting", (), config_dict.get("reporting", {})
+#               )()
+
+        # DEBUG PATCH
+#       self.config['project_dir'] = '.'
+
+#       return {
+#           "state_file": "/tmp/pyroform_state.json",
+#           "logging": {"level": "INFO", "file": "/var/log/pyroform_flowctrl.log"},
+#           "execution": {
+#               "max_retries": 3,
+#               "timeout": 300,
+#               "continue_on_failure": False,
+#           },
+#           "reporting": {
+#               "generate_reports": True,
+#               "report_dir": "/var/log/pyroform/reports",
+#           },
+#       }

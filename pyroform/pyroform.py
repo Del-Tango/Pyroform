@@ -28,7 +28,7 @@ class Pyroform:
     Main Pyroform library class for programmatic usage
     """
 
-    def __init__(self, config_file: Optional[str] = None, auto_confirm: bool = False):
+    def __init__(self, config_file: Optional[str] = None, **kwargs):
         """
         Initialize Pyroform
 
@@ -36,8 +36,8 @@ class Pyroform:
             config_file: Optional path to configuration file
             auto_confirm: Whether to auto-confirm destructive operations
         """
-        self.auto_confirm = auto_confirm
-        self.config = self._load_config(config_file)
+        self.auto_confirm = kwargs.get('auto_confirm', False)
+        self.config = self._load_config(config_file, **kwargs)
         self.engine = PyroformEngine(self.config)
         self._last_action = None
         self._last_result = None
@@ -263,7 +263,7 @@ class Pyroform:
             "overall_success": all(r["success"] for r in workflow_results),
         }
 
-    def _load_config(self, config_file: Optional[str]) -> Dict[str, Any]:
+    def _load_config(self, config_file: Optional[str], **kwargs) -> Dict[str, Any]:
         """
         Load configuration from file or use defaults
 
@@ -278,9 +278,9 @@ class Pyroform:
             "default_output_dir": "/tmp/pyroform",
             "log_level": "INFO",
             "log_timestamp": False,
-            "auto_confirm": self.auto_confirm,
-            "dry_run": False,
-            "debug":  False,
+            "auto_confirm": kwargs.get('auto_confirm', False),
+            "dry_run": kwargs.get('dry_run', False),
+            "debug":  kwargs.get('debug', False),
         }
 
         if not config_file:

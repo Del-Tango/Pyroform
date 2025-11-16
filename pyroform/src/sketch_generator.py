@@ -17,7 +17,8 @@ class SketchGenerator:
     Generates FlowCTRL sketch files from PyroConfig objects
     """
 
-    def __init__(self, *args, stdout=None, **kwargs):
+    def __init__(self, *args, stdout: STDOUTMsg | None = None, dry_run: bool | None = False, **kwargs):
+        self.dry_run = dry_run
         self.stdout = stdout or STDOUTMsg(
             debug_mode=False,
             timestamp=False,
@@ -46,52 +47,7 @@ class SketchGenerator:
         else:
             raise ValueError(f"Unsupported action type: {action}")
 
-    @pysnooper.snoop()
-    def generate_configure_sketch(self, config: PyroConfig) -> Dict[str, Any]:
-        """
-        Generate sketch for configure action (users, groups, file permissions)
-
-        Args:
-            config: PyroConfig object
-
-        Returns:
-            FlowCTRL sketch dictionary
-        """
-        sketch = {
-            "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Users": self._generate_user_commands(config.users),
-            "Groups": self._generate_group_commands(config.groups),
-            "Files": self._generate_file_commands(config.devices),
-            "summary": f"Configure system according to {config.label}",
-        }
-
-        # Remove empty sections
-        sketch = {k: v for k, v in sketch.items() if v}
-        self.stdout.info('FlowCTRL Sketch %s' % str(json.dumps(sketch, indent=4)))
-        return sketch
-
-    def generate_mount_sketch(self, config: PyroConfig) -> Dict[str, Any]:
-        """
-        Generate sketch for mount action (device mounting only)
-
-        Args:
-            config: PyroConfig object
-
-        Returns:
-            FlowCTRL sketch dictionary
-        """
-        sketch = {
-            "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Devices": self._generate_mount_commands(
-                config.devices
-            ),  # Only mount-related commands
-            "summary": f"Mount devices according to {config.label}",
-        }
-
-        # Remove empty sections
-        sketch = {k: v for k, v in sketch.items() if v}
-        return sketch
-
+    # TODO -
     def generate_scorch_sketch(self, config: PyroConfig) -> Dict[str, Any]:
         """
         Generate sketch for scorch action (cleanup)
@@ -105,181 +61,14 @@ class SketchGenerator:
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
             "Cleanup": self._generate_cleanup_commands(config),
-            "summary": f"Scorch system according to {config.label}",
         }
 
         # Remove empty sections
         sketch = {k: v for k, v in sketch.items() if v}
         return sketch
 
+    # TODO - WIP
     @pysnooper.snoop()
-    def _generate_user_commands(self, users: List[User]) -> List[Dict[str, Any]]:
-        """Generate user management commands"""
-        commands = []
-
-        for user in users:
-            user_cmd = {
-                "name": f"create_user_{user.name}",
-                "cmd": f"useradd -m -p {user.password} {user.name}",
-                "setup-cmd": f"id {user.name}",
-                "teardown-cmd": f"userdel -r {user.name}",
-                "on-ok-cmd": f"echo 'User {user.name} exists or created successfully'",
-                "on-nok-cmd": f"echo 'Failed to create user {user.name}'",
-                "fatal-nok": False,
-            }
-            commands.append(user_cmd)
-
-            # Add user to groups
-            for group_name in user.groups:
-                group_cmd = {
-                    "name": f"add_user_{user.name}_to_{group_name}",
-                    "cmd": f"usermod -a -G {group_name} {user.name}",
-                    "setup-cmd": f"id {user.name} | grep -q '{group_name}'",
-                    "on-ok-cmd": f"echo 'User {user.name} already in group {group_name}'",
-                    "on-nok-cmd": f"echo 'Adding user {user.name} to group {group_name}'",
-                    "fatal-nok": False,
-                }
-                commands.append(group_cmd)
-
-        return commands
-
-    def _generate_group_commands(self, groups: List[Group]) -> List[Dict[str, Any]]:
-        """Generate group management commands"""
-        commands = []
-
-        for group in groups:
-            group_cmd = {
-                "name": f"create_group_{group.name}",
-                "cmd": f"groupadd {group.name}",
-                "setup-cmd": f"getent group {group.name}",
-                "teardown-cmd": f"groupdel {group.name}",
-                "on-ok-cmd": f"echo 'Group {group.name} exists'",
-                "on-nok-cmd": f"echo 'Creating group {group.name}'",
-                "fatal-nok": False,
-            }
-            commands.append(group_cmd)
-
-        return commands
-
-    def _generate_mount_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
-        """
-        Generate device mounting commands only (no file/directory creation)
-
-        For mount action, we only handle the actual device mounting,
-        not the directory structure creation.
-        """
-        commands = []
-
-        for device in devices:
-            # Create mountpoint directory
-            mountpoint_cmd = {
-                "name": f"create_mountpoint_{device.mountpoint.replace('/', '_')}",
-                "cmd": f"mkdir -p {device.mountpoint}",
-                "setup-cmd": f"test -d {device.mountpoint}",
-                "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
-                "on-nok-cmd": f"echo 'Creating mountpoint {device.mountpoint}'",
-                "fatal-nok": True,
-            }
-            commands.append(mountpoint_cmd)
-
-            # Mount device
-            device_cmd = {
-                "name": f"mount_device_{device.label}",
-                "cmd": f"mount {device.path} {device.mountpoint}",
-                "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
-                "teardown-cmd": f"umount {device.mountpoint}",
-                "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
-                "on-nok-cmd": f"echo 'Mounting {device.path} to {device.mountpoint}'",
-                "fatal-nok": True,
-            }
-            commands.append(device_cmd)
-
-        return commands
-
-    def _generate_device_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
-        """
-        Generate complete device commands including directory structure
-        Used for configure action
-        """
-        commands = []
-
-        for device in devices:
-            # Create mountpoint directory
-            mountpoint_cmd = {
-                "name": f"create_mountpoint_{device.mountpoint.replace('/', '_')}",
-                "cmd": f"mkdir -p {device.mountpoint}",
-                "setup-cmd": f"test -d {device.mountpoint}",
-                "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
-                "on-nok-cmd": f"echo 'Creating mountpoint {device.mountpoint}'",
-                "fatal-nok": True,
-            }
-            commands.append(mountpoint_cmd)
-
-            # Mount device
-            device_cmd = {
-                "name": f"mount_device_{device.label}",
-                "cmd": f"mount {device.path} {device.mountpoint}",
-                "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
-                "teardown-cmd": f"umount {device.mountpoint}",
-                "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
-                "on-nok-cmd": f"echo 'Mounting {device.path} to {device.mountpoint}'",
-                "fatal-nok": True,
-            }
-            commands.append(device_cmd)
-
-            # Create directory structure from state (for configure action)
-            for state_entry in device.state:
-                state_parts = state_entry.split(",")
-                if len(state_parts) >= 5:
-                    obj_type, path, owner, group, permissions = state_parts[:5]
-
-                    if obj_type == "dir":
-                        dir_cmd = {
-                            "name": f"create_dir_{path.replace('/', '_')}",
-                            "cmd": f"mkdir -p {path}",
-                            "setup-cmd": f"test -d {path}",
-                            "on-ok-cmd": f"echo 'Directory {path} exists'",
-                            "on-nok-cmd": f"echo 'Creating directory {path}'",
-                            "fatal-nok": False,
-                        }
-                        commands.append(dir_cmd)
-
-                    # Set ownership and permissions
-                    perm_cmd = {
-                        "name": f"set_perms_{path.replace('/', '_')}",
-                        "cmd": f"chown {owner}:{group} {path} && chmod {permissions} {path}",
-                        "setup-cmd": f"stat -c '%U:%G %a' {path} | grep -q '{owner}:{group} {permissions}'",
-                        "on-ok-cmd": f"echo 'Permissions for {path} are correct'",
-                        "on-nok-cmd": f"echo 'Setting permissions for {path}'",
-                        "fatal-nok": False,
-                    }
-                    commands.append(perm_cmd)
-
-        return commands
-
-    def _generate_file_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
-        """Generate file and directory creation commands from device states"""
-        commands = []
-
-        for device in devices:
-            for state_entry in device.state:
-                state_parts = state_entry.split(",")
-                if len(state_parts) >= 5:
-                    obj_type, path, owner, group, permissions = state_parts[:5]
-
-                    if obj_type == "fl":  # file
-                        file_cmd = {
-                            "name": f"create_file_{path.replace('/', '_')}",
-                            "cmd": f"touch {path}",
-                            "setup-cmd": f"test -f {path}",
-                            "on-ok-cmd": f"echo 'File {path} exists'",
-                            "on-nok-cmd": f"echo 'Creating file {path}'",
-                            "fatal-nok": False,
-                        }
-                        commands.append(file_cmd)
-
-        return commands
-
     def _generate_cleanup_commands(self, config: PyroConfig) -> List[Dict[str, Any]]:
         """
         Generate cleanup commands for scorch action
@@ -313,6 +102,242 @@ class SketchGenerator:
 
         return commands
 
+    @pysnooper.snoop()
+    def generate_configure_sketch(self, config: PyroConfig) -> Dict[str, Any]:
+        """
+        Generate sketch for configure action (users, groups, file permissions)
+
+        Args:
+            config: PyroConfig object
+
+        Returns:
+            FlowCTRL sketch dictionary
+        """
+        sketch = {
+            "name": f"Pyroform Auto-Generated Sketch {config.label}",
+            "Users": self._generate_user_commands(config.users),
+            "Groups": self._generate_group_commands(config.groups),
+            "Devices": self._generate_device_commands(config.devices),
+        }
+
+        # Remove empty sections
+        sketch = {k: v for k, v in sketch.items() if v}
+        self.stdout.info('FlowCTRL Sketch %s' % str(json.dumps(sketch, indent=4)))
+        return sketch
+
+    def generate_mount_sketch(self, config: PyroConfig) -> Dict[str, Any]:
+        """
+        Generate sketch for mount action (device mounting only)
+
+        Args:
+            config: PyroConfig object
+
+        Returns:
+            FlowCTRL sketch dictionary
+        """
+        sketch = {
+            "name": f"Pyroform Auto-Generated Sketch {config.label}",
+            "Devices": self._generate_mount_commands(config.devices),  # Only mount-related commands
+        }
+
+        # Remove empty sections
+        sketch = {k: v for k, v in sketch.items() if v}
+        return sketch
+
+    @pysnooper.snoop()
+    def _generate_user_commands(self, users: List[User]) -> List[Dict[str, Any]]:
+        """Generate user management commands"""
+        commands = []
+        cmd_prefix = '' if not self.dry_run else '#'
+
+        for user in users:
+            group_membership = [str(grp) for grp in user.groups]
+            csv_groups = ','.join(group_membership)
+            groups = ' '.join(group_membership)
+            user_cmd = {
+                "name": f"Creating System User {user.name}",
+                "cmd": f"{cmd_prefix} for group in '{groups}'; do groupadd -f $group; done && useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}'",
+                "setup-cmd": f"id {user.name}",
+                "teardown-cmd": "",
+                "on-ok-cmd": f"echo 'User {user.name} exists or created successfully'",
+                "on-nok-cmd": f"echo 'Failed to create user {user.name}'",
+                "fatal-nok": False,
+            }
+            commands.append(user_cmd)
+
+        return commands
+
+    def _generate_group_commands(self, groups: List[Group]) -> List[Dict[str, Any]]:
+        """Generate group management commands"""
+        commands = []
+        cmd_prefix = '' if not self.dry_run else '#'
+
+        for group in groups:
+            member_users = [str(usr) for usr in group.users]
+            users = ' '.join(member_users)
+            group_cmd = {
+                "name": f"Creating System Group {group.name}",
+                "cmd": f"{cmd_prefix} groupadd -f '{group.name}' && for user in '{users}'; do id $user &>/dev/null || useradd -m $user; usermod -a -G '{group.name}' $user; done",
+                "setup-cmd": f"groupadd {group.name}",
+                "teardown-cmd": "",
+                "on-ok-cmd": f"echo 'Group {group.name} exists'",
+                "on-nok-cmd": f"echo 'Creating group {group.name}'",
+                "fatal-nok": False,
+            }
+            commands.append(group_cmd)
+
+        return commands
+
+    def _generate_mount_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
+        """
+        Generate device mounting commands only (no file/directory creation)
+
+        For mount action, we only handle the actual device mounting,
+        not the directory structure creation.
+        """
+        commands = []
+        cmd_prefix = '' if not self.dry_run else '#'
+
+        for device in devices:
+            # Create mountpoint directory
+            mountpoint_cmd = {
+                "name": f"Creating System Mountpoint Directory {device.mountpoint.replace('/', '_')}",
+                "cmd": f"{cmd_prefix} mkdir -p '{device.mountpoint}' && sudo mount '{device.path}{device.partition}' '{device.mountpoint}'",  #f"mkdir -p {device.mountpoint}",
+                "setup-cmd": f"test -d {device.mountpoint}",
+                "teardown-cmd": "",
+                "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
+                "on-nok-cmd": f"echo 'Creating mountpoint {device.mountpoint}'",
+                "fatal-nok": True,
+            }
+            commands.append(mountpoint_cmd)
+
+            # Mount device
+            device_cmd = {
+                "name": f"Mounting Block Device {device.label}",
+                "cmd": f"{cmd_prefix} mount {device.path} {device.mountpoint}",
+                "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
+                "teardown-cmd": f"umount {device.mountpoint}",
+                "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
+                "on-nok-cmd": f"echo 'Mounting {device.path} to {device.mountpoint}'",
+                "fatal-nok": True,
+            }
+            commands.append(device_cmd)
+
+        return commands
+
+    @pysnooper.snoop()
+    def _generate_device_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
+        """
+        Generate complete device commands including directory structure
+        Used for configure action
+        """
+        commands = []
+        cmd_prefix = '' if not self.dry_run else '#'
+
+        for device in devices:
+            # Create mountpoint directory
+            mountpoint_cmd = {
+                "name": f"Creating System Mountpoint Directory {device.mountpoint.replace('/', '_')}",
+                "cmd": f"{cmd_prefix} mkdir -p {device.mountpoint}",
+                "setup-cmd": f"test -d {device.mountpoint}",
+                "teardown-cmd": "",
+                "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
+                "on-nok-cmd": f"echo 'Creating mountpoint {device.mountpoint}'",
+                "fatal-nok": True,
+            }
+            commands.append(mountpoint_cmd)
+
+            # Mount device
+            device_cmd = {
+                "name": f"Mounting Block Device {device.label}",
+                "cmd": f"{cmd_prefix} mount {device.path} {device.mountpoint}",
+                "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
+                "teardown-cmd": "",
+                "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
+                "on-nok-cmd": f"echo 'Mounting {device.path} to {device.mountpoint}'",
+                "fatal-nok": True,
+            }
+            commands.append(device_cmd)
+
+            # Create directory structure from state (for configure action)
+            for state_entry in device.state:
+                state_parts = state_entry.split(",")
+                if len(state_parts) >= 5:
+                    obj_type, path, owner, group, permissions = state_parts[:5]
+
+                    if obj_type.lower() in ("d", "dir", "directory"):
+                        dir_cmd = {
+                            "name": f"Creating Directory {path.replace('/', '_')}",
+                            "cmd": f"{cmd_prefix} mkdir -p {path}",
+                            "setup-cmd": f"test -d {path}",
+                            "teardown-cmd": "",
+                            "on-ok-cmd": f"echo 'Directory {path} exists'",
+                            "on-nok-cmd": f"echo 'Creating directory {path}'",
+                            "fatal-nok": True,
+                        }
+                        commands.append(dir_cmd)
+                    elif obj_type.lower() in ("f", "fl", "file"):
+                        dir_cmd = {
+                            "name": f"Creating Regular File {path.replace('/', '_')}",
+                            "cmd": f"{cmd_prefix} touch {path}",
+                            "setup-cmd": f"test -f {path}",
+                            "teardown-cmd": "",
+                            "on-ok-cmd": f"echo 'File {path} exists'",
+                            "on-nok-cmd": f"echo 'Creating file {path}'",
+                            "fatal-nok": True,
+                        }
+                        commands.append(dir_cmd)
+                    elif obj_type.lower() in ("l", "ln", "link"):
+                        dir_cmd = {
+                            "name": f"Creating Symbolic Link {path.replace('/', '_')}",
+                            "cmd": f"{cmd_prefix} ln -s {state_parts[5]} {path}",
+                            "setup-cmd": f"test -l {path}",
+                            "teardown-cmd": "",
+                            "on-ok-cmd": f"echo 'File {path} exists'",
+                            "on-nok-cmd": f"echo 'Creating file {path}'",
+                            "fatal-nok": True,
+                        }
+                        commands.append(dir_cmd)
+                    # Set ownership and permissions
+                    perm_cmd = {
+                        "name": f"Setting Permissions For {path.replace('/', '_')}",
+                        "cmd": f"{cmd_prefix} chown {owner}:{group} {path} && chmod {permissions} {path}",
+                        "setup-cmd": f"stat -c '%U:%G %a' {path} | grep -q '{owner}:{group} {permissions}'",
+                        "teardown-cmd": "",
+                        "on-ok-cmd": f"echo 'Permissions for {path} are correct'",
+                        "on-nok-cmd": f"echo 'Setting permissions for {path}'",
+                        "fatal-nok": True,
+                    }
+                    commands.append(perm_cmd)
+
+        return commands
+
+    # TODO... ?
+    @pysnooper.snoop()
+    def _generate_file_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
+        """Generate file and directory creation commands from device states"""
+        commands = []
+
+        for device in devices:
+            for state_entry in device.state:
+                state_parts = state_entry.split(",")
+                if len(state_parts) >= 5:
+                    obj_type, path, owner, group, permissions = state_parts[:5]
+
+                    if obj_type == "fl":  # file
+                        file_cmd = {
+                            "name": f"create_file_{path.replace('/', '_')}",
+                            "cmd": f"touch {path}",
+                            "setup-cmd": f"test -f {path}",
+                            "on-ok-cmd": f"echo 'File {path} exists'",
+                            "on-nok-cmd": f"echo 'Creating file {path}'",
+                            "fatal-nok": False,
+                        }
+                        commands.append(file_cmd)
+
+        return commands
+
+    @pysnooper.snoop()
     def save_sketch(self, sketch: Dict[str, Any], output_path: Path) -> bool:
         """
         Save sketch to JSON file
@@ -335,4 +360,34 @@ class SketchGenerator:
 
 
 # CODE DUMP
+
+#           "summary": f"Scorch system according to {config.label}",
+
+#           "Files": self._generate_file_commands(config.devices),
+#           "summary": f"Configure system according to {config.label}",
+
+#           "summary": f"Mount devices according to {config.label}",
+
+        #f"getent group {group.name}",
+        #groupdel {group.name}
+
+#           csv_users = ','.join(member_users)
+
+
+        # username="john"; groups="developers docker admin"; for group in $groups; do groupadd -f $group; done && useradd -m -G $(echo $groups | tr " " ",") $username
+        # f"useradd -m -p {user.password} {user.name}",
+
+
+#           # Add user to groups
+#           for group_name in user.groups:
+#               group_cmd = {
+#                   "name": f"add_user_{user.name}_to_{group_name}",
+#                   "cmd": f"usermod -a -G {group_name} {user.name}",
+#                   "setup-cmd": f"id {user.name} | grep -q '{group_name}'",
+#                   "on-ok-cmd": f"echo 'User {user.name} already in group {group_name}'",
+#                   "on-nok-cmd": f"echo 'Adding user {user.name} to group {group_name}'",
+#                   "fatal-nok": False,
+#               }
+#               commands.append(group_cmd)
+
 

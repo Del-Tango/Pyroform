@@ -42,7 +42,7 @@ class PyroformEngine:
         )
 
         self.parser = PyroParser(stdout=self.stdout)
-        self.sketch_generator = SketchGenerator(stdout=self.stdout)
+        self.sketch_generator = SketchGenerator(stdout=self.stdout, dry_run=self.config['dry_run'])
 
         self.flow_engine = PyroflowEngine(stdout=self.stdout)
 
