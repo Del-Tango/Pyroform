@@ -157,7 +157,7 @@ class SketchGenerator:
             user_cmd = {
                 "name": f"Creating System User {user.name}",
                 "cmd": f"{cmd_prefix} for group in '{groups}'; do groupadd -f $group; done && useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}'",
-                "setup-cmd": f"id {user.name}",
+                "setup-cmd": f"id {user.name} && echo 'User {user.name} already exists' || exit 0",
                 "teardown-cmd": "",
                 "on-ok-cmd": f"echo 'User {user.name} exists or created successfully'",
                 "on-nok-cmd": f"echo 'Failed to create user {user.name}'",
@@ -178,7 +178,7 @@ class SketchGenerator:
             group_cmd = {
                 "name": f"Creating System Group {group.name}",
                 "cmd": f"{cmd_prefix} groupadd -f '{group.name}' && for user in '{users}'; do id $user &>/dev/null || useradd -m $user; usermod -a -G '{group.name}' $user; done",
-                "setup-cmd": f"groupadd {group.name}",
+                "setup-cmd": f"getent group {group.name} && echo 'Group {group.name} already exists' || exit 0",
                 "teardown-cmd": "",
                 "on-ok-cmd": f"echo 'Group {group.name} exists'",
                 "on-nok-cmd": f"echo 'Creating group {group.name}'",

@@ -4,7 +4,7 @@
 - Preconditions:
 - Validated by: [TAR TC_6](../TAR/TC_6.md)
 
-## Test Data (users_test.yaml):
+## Test Data (users_test.pyro.yaml):
 ```yaml
 Label: "User Management Test"
 Users:
@@ -33,10 +33,13 @@ Groups:
 ```
 2. Run command
 ```bash
-~$ pyroform configure -i users_test.yaml --dry-run -v
+~$ pyroform configure -i users_test.yaml --dry-run
 ```
 3. Check output for planned user/group operations
 4. Verify users still don't exist after dry-run
+```bash
+~$ id pyrotest1 && id pyrotest2
+```
 
 ## Expected Results:
 

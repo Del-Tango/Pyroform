@@ -30,9 +30,12 @@
 ## Test Steps:
 
 1. Create test_config.pyro.json with above content
-2. Run commands
+2. Run validation command
 ```bash
 ~$ pyroform validate -i test_config.pyro.json
+```
+3. Run configuration command with dry-run flag
+```bash
 ~$ pyroform configure -i test_config.pyro.json --dry-run
 ```
 

@@ -163,9 +163,12 @@ Devices:
 ## Test Steps:
 
 1. Create test_config.pyro.json with above content
-2. Run commands
+2. Run validation command
 ```bash
 ~$ pyroform validate -i test_config.pyro.json
+```
+3. Run configuration command with dry-run flag
+```bash
 ~$ pyroform configure -i test_config.pyro.json --dry-run
 ```
 
@@ -210,7 +213,7 @@ Devices:
 - Preconditions:
 - Validated by: [TAR TC_6](./TAR/TC_6.md)
 
-## Test Data (users_test.yaml):
+## Test Data (users_test.pyro.yaml):
 ```yaml
 Label: "User Management Test"
 Users:
@@ -239,10 +242,13 @@ Groups:
 ```
 2. Run command
 ```bash
-~$ pyroform configure -i users_test.yaml --dry-run -v
+~$ pyroform configure -i users_test.yaml --dry-run
 ```
 3. Check output for planned user/group operations
 4. Verify users still don't exist after dry-run
+```bash
+~$ id pyrotest1 && id pyrotest2
+```
 
 ## Expected Results:
 
