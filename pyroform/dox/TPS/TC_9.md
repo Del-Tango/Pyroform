@@ -1,8 +1,8 @@
 # Scorch Dry Run
 - Priority: High
 - Description: Test scorch operation in dry-run mode
-- Preconditions: System has some test users/files not in config
-- Validated by: [TAR TC_8](../TAR/TC_8.md)
+- Preconditions: System has some test users/groups/files not in config
+- Validated by: [TAR TC_9](../TAR/TC_9.md)
 
 ## Test Steps:
 
@@ -16,7 +16,7 @@
 ```
 3. Run commands
 ```bash
-~$ pyroform scorch -i minimal_config.yaml --dry-run -v
+~$ pyroform scorch -i minimal_config.pyro.yaml --dry-run -v
 ```
 4. Review what would be removed
 5. Verify nothing actually removed

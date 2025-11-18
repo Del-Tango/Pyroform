@@ -11,6 +11,8 @@ from .scorch_engine import ScorchEngine, ScorchResult
 from .pyroform_engine import PyroformEngine
 from .reporter import ReportGenerator
 from .logging import STDOUTMsg
+from .scanner import get_system_state
+from .difference import compare_system_state_with_pyro_file
 
 __all__ = [
     "PyroConfig",
@@ -28,6 +30,8 @@ __all__ = [
     "ScorchResult",
     "ReportGenerator",
     "PyroformEngine",
+    "get_system_state",
+    "compare_system_state_with_pyro_file",
 ]
 
 # CODE DUMP

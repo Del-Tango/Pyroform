@@ -1221,36 +1221,960 @@ id: 'pyrotest1': no such user
 
 --------------------------------------------------------------------------------
 
-# [ TC 7 ]: Test Environment:
+# [ TC 7 ]: Actual User Creation
 
-Tester:
-Date:
-Pyroform Version:
-Status: [ ] PASS [ ] FAIL [ ] BLOCKED
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
+- Tester: D:Ta
+- Date: 17/11/2025
+- Pyroform Version: 1.0.0
+- Validates: [TPS TC_7](./TPS/TC_7.md)
+- Preconditions: users_test.pyro.yaml file from TC_6 available
+- Status:
+[X] PASS
+[ ] FAIL
+[ ] BLOCKED
 
-Archive
+# Archive
+
+## 1. Run configure command (auto-confirm)
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure -i users_test.pyro.yaml -y
+
+        ___________________________________________________________________________
+
+          *                          *   Pyroform   *                           *
+        ___________________________________________________________________________
+                        Regards, the Alveare Solutions #!/Society -x
+
+
+    [ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
+    [ INFO ]: State monitoring configured for inter-process control
+    [ INFO ]: Parsing Pyro state file (users_test.pyro.yaml)...
+    [ INFO ]: State file data: {
+        "Label": "User Management Test",
+        "Users": [
+            {
+                "label": "test_user_1",
+                "Name": "pyrotest1",
+                "Password": "testpass1",
+                "Groups": [
+                    "pyrogroup1"
+                ]
+            },
+            {
+                "label": "test_user_2",
+                "Name": "pyrotest2",
+                "Password": "testpass2",
+                "Groups": [
+                    "pyrogroup1",
+                    "pyrogroup2"
+                ]
+            }
+        ],
+        "Groups": [
+            {
+                "label": "group_1",
+                "Name": "pyrogroup1",
+                "Users": [
+                    "pyrotest1",
+                    "pyrotest2"
+                ]
+            },
+            {
+                "label": "group_2",
+                "Name": "pyrogroup2",
+                "Users": [
+                    "pyrotest2"
+                ]
+            }
+        ]
+    }
+    [ INFO ]: FlowCTRL Sketch {
+        "name": "Pyroform Auto-Generated Sketch User Management Test",
+        "Users": [
+            {
+                "name": "Creating System User pyrotest1",
+                "cmd": " for group in pyrogroup1; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1' || exit 0",
+                "setup-cmd": "id pyrotest1 && echo 'User pyrotest1 already exists' || exit 0",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'User pyrotest1 exists or created successfully'",
+                "on-nok-cmd": "echo 'Failed to create user pyrotest1'",
+                "fatal-nok": false
+            },
+            {
+                "name": "Creating System User pyrotest2",
+                "cmd": " for group in pyrogroup1 pyrogroup2; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2' || exit 0",
+                "setup-cmd": "id pyrotest2 && echo 'User pyrotest2 already exists' || exit 0",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'User pyrotest2 exists or created successfully'",
+                "on-nok-cmd": "echo 'Failed to create user pyrotest2'",
+                "fatal-nok": false
+            }
+        ],
+        "Groups": [
+            {
+                "name": "Creating System Group pyrogroup1",
+                "cmd": " groupadd -f 'pyrogroup1' && for user in pyrotest1 pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done",
+                "setup-cmd": "getent group pyrogroup1 && echo 'Group pyrogroup1 already exists' || exit 0",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Group pyrogroup1 exists'",
+                "on-nok-cmd": "echo 'Failed to create group pyrogroup1'",
+                "fatal-nok": false
+            },
+            {
+                "name": "Creating System Group pyrogroup2",
+                "cmd": " groupadd -f 'pyrogroup2' && for user in pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done",
+                "setup-cmd": "getent group pyrogroup2 && echo 'Group pyrogroup2 already exists' || exit 0",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Group pyrogroup2 exists'",
+                "on-nok-cmd": "echo 'Failed to create group pyrogroup2'",
+                "fatal-nok": false
+            }
+        ]
+    }
+    [ INFO ]: Purging all state and report data
+    [ OK ]: All data purged
+    [ INFO ]: Loading sketch file: pyroflow.sketch.json
+    [ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch User Management Test
+    [ INFO ]: Starting procedure execution with state monitoring
+    [ INFO ]: Procedure state set to STARTED
+    [ INFO ]: State monitoring active - process can be controlled externally
+    [ INFO ]: Beginning controlled procedure execution...
+    [ INFO ]: Processing stage: Users
+    [ INFO ]: Processing action: Creating System User pyrotest1
+    [ INFO ]: Executing Procedure Stage Action: Creating System User pyrotest1
+    CMD> id pyrotest1 && echo 'User pyrotest1 already exists' || exit 0
+
+
+    CMD>  for group in pyrogroup1; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1' || exit 0
+
+
+    CMD> echo 'User pyrotest1 exists or created successfully'
+    User pyrotest1 exists or created successfully
+
+    [ OK ]: Action completed: Creating System User pyrotest1
+    [ INFO ]: Processing action: Creating System User pyrotest2
+    [ INFO ]: Executing Procedure Stage Action: Creating System User pyrotest2
+    CMD> id pyrotest2 && echo 'User pyrotest2 already exists' || exit 0
+
+
+    CMD>  for group in pyrogroup1 pyrogroup2; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2' || exit 0
+
+
+    CMD> echo 'User pyrotest2 exists or created successfully'
+    User pyrotest2 exists or created successfully
+
+    [ OK ]: Action completed: Creating System User pyrotest2
+    [ OK ]: Stage completed: Users
+    [ INFO ]: Processing stage: Groups
+    [ INFO ]: Processing action: Creating System Group pyrogroup1
+    [ INFO ]: Executing Procedure Stage Action: Creating System Group pyrogroup1
+    CMD> getent group pyrogroup1 && echo 'Group pyrogroup1 already exists' || exit 0
+    pyrogroup1:x:1000:pyrotest1,pyrotest2
+    Group pyrogroup1 already exists
+
+    CMD>  groupadd -f 'pyrogroup1' && for user in pyrotest1 pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done
+    uid=1000(pyrotest1) gid=1001(pyrotest1) groups=1001(pyrotest1),1000(pyrogroup1)
+    uid=1001(pyrotest2) gid=1003(pyrotest2) groups=1003(pyrotest2),1000(pyrogroup1),1002(pyrogroup2)
+
+    CMD> echo 'Group pyrogroup1 exists'
+    Group pyrogroup1 exists
+
+    [ OK ]: Action completed: Creating System Group pyrogroup1
+    [ INFO ]: Processing action: Creating System Group pyrogroup2
+    [ INFO ]: Executing Procedure Stage Action: Creating System Group pyrogroup2
+    CMD> getent group pyrogroup2 && echo 'Group pyrogroup2 already exists' || exit 0
+    pyrogroup2:x:1002:pyrotest2
+    Group pyrogroup2 already exists
+
+    CMD>  groupadd -f 'pyrogroup2' && for user in pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done
+    uid=1001(pyrotest2) gid=1003(pyrotest2) groups=1003(pyrotest2),1000(pyrogroup1),1002(pyrogroup2)
+
+    CMD> echo 'Group pyrogroup2 exists'
+    Group pyrogroup2 exists
+
+    [ OK ]: Action completed: Creating System Group pyrogroup2
+    [ OK ]: Stage completed: Groups
+    [ OK ]: Procedure completed: SUCCESS
+```
+
+## 2. Verify users created
+```text
+    root@1e1b62138bef:/app/Pyroform# id pyrotest1 && id pyrotest2
+    uid=1000(pyrotest1) gid=1001(pyrotest1) groups=1001(pyrotest1),1000(pyrogroup1)
+    uid=1001(pyrotest2) gid=1003(pyrotest2) groups=1003(pyrotest2),1000(pyrogroup1),1002(pyrogroup2)
+```
+
+## 3. Verify groups created
+```text
+    root@1e1b62138bef:/app/Pyroform# getent group pyrogroup1 && getent group pyrogroup2
+    pyrogroup1:x:1000:pyrotest1,pyrotest2
+    pyrogroup2:x:1002:pyrotest2
+```
+
+## 4. Verify group membership
+```text
+    root@1e1b62138bef:/app/Pyroform# groups pyrotest1 && groups pyrotest2
+    pyrotest1 : pyrotest1 pyrogroup1
+    pyrotest2 : pyrotest2 pyrogroup1 pyrogroup2
+```
+
+## 5. Cleanup
+```text
+    root@1e1b62138bef:/app/Pyroform# userdel -r pyrotest1 && userdel -r pyrotest2
+    userdel: pyrotest1 mail spool (/var/mail/pyrotest1) not found
+    userdel: pyrotest2 mail spool (/var/mail/pyrotest2) not found
+
+    root@1e1b62138bef:/app/Pyroform# groupdel pyrogroup1 && groupdel pyrogroup2; echo $?
+    0
+```
 
 --------------------------------------------------------------------------------
 
-# [ TC 8 ]: Test Environment:
+# [ TC 8 ]: Directory Structure Creation
 
-Tester:
-Date:
-Pyroform Version:
-Status: [ ] PASS [ ] FAIL [ ] BLOCKED
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
+- Tester: D:Ta
+- Date: 18/11/2025
+- Pyroform Version: 1.0.0
+- Validates: [TPS TC_8](./TPS/TC_8.md)
+- Preconditions: Users from TC_7 exist
+- Status:
+[X] PASS
+[ ] FAIL
+[ ] BLOCKED
 
-Archive
+# Archive
+
+## 1. Create test Pyro file
+```text
+Label: "Filesystem Test"
+Devices:
+  - label: "test_fs"
+    Path: ""
+    Partition: 0
+    Mountpoint: "/tmp/pyrotest"
+    State:
+      - "dir,/tmp/pyrotest,root,root,755"
+      - "dir,/tmp/pyrotest/data,pyrotest1,pyrogroup1,750"
+      - "dir,/tmp/pyrotest/logs,root,pyrogroup1,775"
+      - "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644"
+      - "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
+```
+
+## 2. Dry-run configure
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure -i fs_test.pyro.yaml --dry-run
+
+        ___________________________________________________________________________
+
+        *                          *   Pyroform   *                           *
+        ___________________________________________________________________________
+                        Regards, the Alveare Solutions #!/Society -x
+
+
+    [ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
+    [ INFO ]: State monitoring configured for inter-process control
+    [ INFO ]: Parsing Pyro state file (fs_test.pyro.yaml)...
+    [ INFO ]: State file data: {
+        "Label": "Filesystem Test",
+        "Devices": [
+            {
+                "label": "test_fs",
+                "Path": "",
+                "Partition": 0,
+                "Mountpoint": "/tmp/pyrotest",
+                "State": [
+                    "dir,/tmp/pyrotest,root,root,755",
+                    "dir,/tmp/pyrotest/data,pyrotest1,pyrogroup1,750",
+                    "dir,/tmp/pyrotest/logs,root,pyrogroup1,775",
+                    "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644",
+                    "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
+                ]
+            }
+        ]
+    }
+    [ INFO ]: FlowCTRL Sketch {
+        "name": "Pyroform Auto-Generated Sketch Filesystem Test",
+        "Devices": [
+            {
+                "name": "Creating System Mountpoint Directory _tmp_pyrotest",
+                "cmd": "# mkdir -p /tmp/pyrotest",
+                "setup-cmd": "test -d /tmp/pyrotest",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Mountpoint /tmp/pyrotest exists'",
+                "on-nok-cmd": "echo 'Creating mountpoint /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Mounting Block Device test_fs",
+                "cmd": "# mount  /tmp/pyrotest",
+                "setup-cmd": "mount | grep -q ' on /tmp/pyrotest'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Device  already mounted to /tmp/pyrotest'",
+                "on-nok-cmd": "echo 'Mounting  to /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Directory /tmp/pyrotest",
+                "cmd": "# mkdir -p /tmp/pyrotest",
+                "setup-cmd": "test -d /tmp/pyrotest",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Directory /tmp/pyrotest exists'",
+                "on-nok-cmd": "echo 'Creating directory /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest",
+                "cmd": "# chown root:root /tmp/pyrotest && chmod 755 /tmp/pyrotest",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest | grep -q 'root:root 755'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Directory /tmp/pyrotest/data",
+                "cmd": "# mkdir -p /tmp/pyrotest/data",
+                "setup-cmd": "test -d /tmp/pyrotest/data",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Directory /tmp/pyrotest/data exists'",
+                "on-nok-cmd": "echo 'Creating directory /tmp/pyrotest/data'",
+                "fatal-nok": true
+            },
+            {                                                                                                                                                                                                                  17:15:06 [187/1819]
+                "name": "Setting Permissions For /tmp/pyrotest/data",
+                "cmd": "# chown pyrotest1:pyrogroup1 /tmp/pyrotest/data && chmod 750 /tmp/pyrotest/data",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/data | grep -q 'pyrotest1:pyrogroup1 750'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/data are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/data'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Directory /tmp/pyrotest/logs",
+                "cmd": "# mkdir -p /tmp/pyrotest/logs",
+                "setup-cmd": "test -d /tmp/pyrotest/logs",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Directory /tmp/pyrotest/logs exists'",
+                "on-nok-cmd": "echo 'Creating directory /tmp/pyrotest/logs'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/logs",
+                "cmd": "# chown root:pyrogroup1 /tmp/pyrotest/logs && chmod 775 /tmp/pyrotest/logs",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/logs | grep -q 'root:pyrogroup1 775'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/logs are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/logs'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Regular File /tmp/pyrotest/README",
+                "cmd": "# touch /tmp/pyrotest/README",
+                "setup-cmd": "test -f /tmp/pyrotest/README",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'File /tmp/pyrotest/README exists'",
+                "on-nok-cmd": "echo 'Creating file /tmp/pyrotest/README'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/README",
+                "cmd": "# chown pyrotest1:pyrogroup1 /tmp/pyrotest/README && chmod 644 /tmp/pyrotest/README",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/README | grep -q 'pyrotest1:pyrogroup1 644'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/README are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/README'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Symbolic Link /tmp/pyrotest/readme_shortcut",
+                "cmd": "# ln -s /tmp/pyrotest/README /tmp/pyrotest/readme_shortcut",
+                "setup-cmd": "test -l /tmp/pyrotest/readme_shortcut",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'File /tmp/pyrotest/readme_shortcut exists'",
+                "on-nok-cmd": "echo 'Creating file /tmp/pyrotest/readme_shortcut'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/readme_shortcut",
+                "cmd": "# chown pyrotest1:pyrogroup1 /tmp/pyrotest/readme_shortcut && chmod 777 /tmp/pyrotest/readme_shortcut",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/readme_shortcut | grep -q 'pyrotest1:pyrogroup1 777'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/readme_shortcut are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/readme_shortcut'",
+                "fatal-nok": true
+            }
+        ]
+    }
+    [ INFO ]: Purging all state and report data
+    [ OK ]: All data purged
+    [ INFO ]: Loading sketch file: pyroflow.sketch.json
+    [ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Filesystem Test
+    [ INFO ]: Starting procedure execution with state monitoring
+    [ INFO ]: Procedure state set to STARTED
+    [ INFO ]: State monitoring active - process can be controlled externally
+    [ INFO ]: Beginning controlled procedure execution...
+    [ INFO ]: Processing stage: Devices
+    [ INFO ]: Processing action: Creating System Mountpoint Directory _tmp_pyrotest
+    [ INFO ]: Executing Procedure Stage Action: Creating System Mountpoint Directory _tmp_pyrotest
+    CMD> test -d /tmp/pyrotest
+
+
+    [ NOK ]:
+
+    CMD> # mkdir -p /tmp/pyrotest
+
+
+    CMD> echo 'Mountpoint /tmp/pyrotest exists'
+    Mountpoint /tmp/pyrotest exists
+
+    [ OK ]: Action completed: Creating System Mountpoint Directory _tmp_pyrotest
+    [ INFO ]: Processing action: Mounting Block Device test_fs
+    [ INFO ]: Executing Procedure Stage Action: Mounting Block Device test_fs
+    CMD> mount | grep -q ' on /tmp/pyrotest'
+
+
+    [ NOK ]:
+
+    CMD> # mount  /tmp/pyrotest
+
+
+    CMD> echo 'Device  already mounted to /tmp/pyrotest'
+    Device  already mounted to /tmp/pyrotest
+
+    [ OK ]: Action completed: Mounting Block Device test_fs
+    [ INFO ]: Processing action: Creating Directory /tmp/pyrotest
+    [ INFO ]: Executing Procedure Stage Action: Creating Directory /tmp/pyrotest
+    CMD> test -d /tmp/pyrotest
+
+
+    [ NOK ]:
+
+    CMD> # mkdir -p /tmp/pyrotest
+
+
+    CMD> echo 'Directory /tmp/pyrotest exists'
+    Directory /tmp/pyrotest exists
+
+    [ OK ]: Action completed: Creating Directory /tmp/pyrotest
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest | grep -q 'root:root 755'
+
+
+    [ NOK ]: stat: cannot statx '/tmp/pyrotest': No such file or directory
+
+    CMD> # chown root:root /tmp/pyrotest && chmod 755 /tmp/pyrotest
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest are correct'
+    Permissions for /tmp/pyrotest are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest
+    [ INFO ]: Processing action: Creating Directory /tmp/pyrotest/data
+    [ INFO ]: Executing Procedure Stage Action: Creating Directory /tmp/pyrotest/data
+    CMD> test -d /tmp/pyrotest/data
+
+
+    [ NOK ]:
+
+    CMD> # mkdir -p /tmp/pyrotest/data
+
+
+    CMD> echo 'Directory /tmp/pyrotest/data exists'
+    Directory /tmp/pyrotest/data exists
+
+    [ OK ]: Action completed: Creating Directory /tmp/pyrotest/data
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/data
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/data
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/data | grep -q 'pyrotest1:pyrogroup1 750'
+
+
+    [ NOK ]: stat: cannot statx '/tmp/pyrotest/data': No such file or directory
+
+    CMD> # chown pyrotest1:pyrogroup1 /tmp/pyrotest/data && chmod 750 /tmp/pyrotest/data
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/data are correct'
+    Permissions for /tmp/pyrotest/data are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/data
+    [ INFO ]: Processing action: Creating Directory /tmp/pyrotest/logs
+    [ INFO ]: Executing Procedure Stage Action: Creating Directory /tmp/pyrotest/logs
+    CMD> test -d /tmp/pyrotest/logs
+
+
+    [ NOK ]:
+
+    CMD> # mkdir -p /tmp/pyrotest/logs
+
+
+    CMD> echo 'Directory /tmp/pyrotest/logs exists'
+    Directory /tmp/pyrotest/logs exists
+
+    [ OK ]: Action completed: Creating Directory /tmp/pyrotest/logs
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/logs
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/logs
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/logs | grep -q 'root:pyrogroup1 775'
+
+
+    [ NOK ]: stat: cannot statx '/tmp/pyrotest/logs': No such file or directory
+
+    CMD> # chown root:pyrogroup1 /tmp/pyrotest/logs && chmod 775 /tmp/pyrotest/logs
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/logs are correct'
+    Permissions for /tmp/pyrotest/logs are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/logs
+    [ INFO ]: Processing action: Creating Regular File /tmp/pyrotest/README
+    [ INFO ]: Executing Procedure Stage Action: Creating Regular File /tmp/pyrotest/README
+    CMD> test -f /tmp/pyrotest/README
+
+
+    [ NOK ]:
+
+    CMD> # touch /tmp/pyrotest/README
+
+
+    CMD> echo 'File /tmp/pyrotest/README exists'
+    File /tmp/pyrotest/README exists
+
+    [ OK ]: Action completed: Creating Regular File /tmp/pyrotest/README
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/README
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/README
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/README | grep -q 'pyrotest1:pyrogroup1 644'
+
+
+    [ NOK ]: stat: cannot statx '/tmp/pyrotest/README': No such file or directory
+
+    CMD> # chown pyrotest1:pyrogroup1 /tmp/pyrotest/README && chmod 644 /tmp/pyrotest/README
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/README are correct'
+    Permissions for /tmp/pyrotest/README are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/README
+    [ INFO ]: Processing action: Creating Symbolic Link /tmp/pyrotest/readme_shortcut
+    [ INFO ]: Executing Procedure Stage Action: Creating Symbolic Link /tmp/pyrotest/readme_shortcut
+    CMD> test -l /tmp/pyrotest/readme_shortcut
+
+
+    [ NOK ]: /bin/sh: 1: test: -l: unexpected operator
+
+    CMD> # ln -s /tmp/pyrotest/README /tmp/pyrotest/readme_shortcut
+
+
+    CMD> echo 'File /tmp/pyrotest/readme_shortcut exists'
+    File /tmp/pyrotest/readme_shortcut exists
+
+    [ OK ]: Action completed: Creating Symbolic Link /tmp/pyrotest/readme_shortcut
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/readme_shortcut
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/readme_shortcut
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/readme_shortcut | grep -q 'pyrotest1:pyrogroup1 777'
+
+
+    [ NOK ]: stat: cannot statx '/tmp/pyrotest/readme_shortcut': No such file or directory
+
+    CMD> # chown pyrotest1:pyrogroup1 /tmp/pyrotest/readme_shortcut && chmod 777 /tmp/pyrotest/readme_shortcut
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/readme_shortcut are correct'
+    Permissions for /tmp/pyrotest/readme_shortcut are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/readme_shortcut
+    [ OK ]: Stage completed: Devices
+    [ OK ]: Procedure completed: SUCCESS
+```
+
+## 3. Run configure command (auto-confirm)
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure -i dump/fs_test.pyro.yaml -y
+
+        ___________________________________________________________________________
+
+          *                          *   Pyroform   *                           *
+        ___________________________________________________________________________
+                        Regards, the Alveare Solutions #!/Society -x
+
+
+    [ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
+    [ INFO ]: State monitoring configured for inter-process control
+    [ INFO ]: Parsing Pyro state file (fs_test.pyro.yaml)...
+    [ INFO ]: State file data: {
+        "Label": "Filesystem Test",
+        "Devices": [
+            {
+                "label": "test_fs",
+                "Path": "",
+                "Partition": 0,
+                "Mountpoint": "/tmp/pyrotest",
+                "State": [
+                    "dir,/tmp/pyrotest,root,root,755",
+                    "dir,/tmp/pyrotest/data,pyrotest1,pyrogroup1,750",
+                    "dir,/tmp/pyrotest/logs,root,pyrogroup1,775",
+                    "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644",
+                    "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
+                ]
+            }
+        ]
+    }
+    [ INFO ]: FlowCTRL Sketch {
+        "name": "Pyroform Auto-Generated Sketch Filesystem Test",
+        "Devices": [
+            {
+                "name": "Creating System Mountpoint Directory /tmp/pyrotest",
+                "cmd": "mkdir -p /tmp/pyrotest",
+                "setup-cmd": "test -d /tmp/pyrotest",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Mountpoint /tmp/pyrotest exists'",
+                "on-nok-cmd": "echo 'Creating mountpoint /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Directory /tmp/pyrotest",
+                "cmd": "mkdir -p /tmp/pyrotest",
+                "setup-cmd": "test -d /tmp/pyrotest",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Directory /tmp/pyrotest exists'",
+                "on-nok-cmd": "echo 'Creating directory /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest",
+                "cmd": "chown root:root /tmp/pyrotest && chmod 755 /tmp/pyrotest",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest | grep -q 'root:root 755'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Directory /tmp/pyrotest/data",
+                "cmd": "mkdir -p /tmp/pyrotest/data",
+                "setup-cmd": "test -d /tmp/pyrotest/data",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Directory /tmp/pyrotest/data exists'",
+                "on-nok-cmd": "echo 'Creating directory /tmp/pyrotest/data'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/data",
+                "cmd": "chown pyrotest1:pyrogroup1 /tmp/pyrotest/data && chmod 750 /tmp/pyrotest/data",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/data | grep -q 'pyrotest1:pyrogroup1 750'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/data are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/data'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Directory /tmp/pyrotest/logs",
+                "cmd": "mkdir -p /tmp/pyrotest/logs",
+                "setup-cmd": "test -d /tmp/pyrotest/logs",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Directory /tmp/pyrotest/logs exists'",
+                "on-nok-cmd": "echo 'Creating directory /tmp/pyrotest/logs'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/logs",
+                "cmd": "chown root:pyrogroup1 /tmp/pyrotest/logs && chmod 775 /tmp/pyrotest/logs",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/logs | grep -q 'root:pyrogroup1 775'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/logs are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/logs'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Regular File /tmp/pyrotest/README",
+                "cmd": "touch /tmp/pyrotest/README",
+                "setup-cmd": "test -f /tmp/pyrotest/README",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'File /tmp/pyrotest/README exists'",
+                "on-nok-cmd": "echo 'Creating file /tmp/pyrotest/README'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/README",
+                "cmd": "chown pyrotest1:pyrogroup1 /tmp/pyrotest/README && chmod 644 /tmp/pyrotest/README",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/README | grep -q 'pyrotest1:pyrogroup1 644'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/README are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/README'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Creating Symbolic Link /tmp/pyrotest/readme_shortcut",
+                "cmd": "ln -s /tmp/pyrotest/README /tmp/pyrotest/readme_shortcut",
+                "setup-cmd": "test -L /tmp/pyrotest/readme_shortcut",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'File /tmp/pyrotest/readme_shortcut exists'",
+                "on-nok-cmd": "echo 'Creating file /tmp/pyrotest/readme_shortcut'",
+                "fatal-nok": true
+            },
+            {
+                "name": "Setting Permissions For /tmp/pyrotest/readme_shortcut",
+                "cmd": "chown pyrotest1:pyrogroup1 /tmp/pyrotest/readme_shortcut && chmod 777 /tmp/pyrotest/readme_shortcut",
+                "setup-cmd": "stat -c '%U:%G %a' /tmp/pyrotest/readme_shortcut | grep -q 'pyrotest1:pyrogroup1 777'",
+                "teardown-cmd": "",
+                "on-ok-cmd": "echo 'Permissions for /tmp/pyrotest/readme_shortcut are correct'",
+                "on-nok-cmd": "echo 'Setting permissions for /tmp/pyrotest/readme_shortcut'",
+                "fatal-nok": true
+            }
+        ]
+    }
+    [ INFO ]: Purging all state and report data
+    [ OK ]: All data purged
+    [ INFO ]: Loading sketch file: pyroflow.sketch.json
+    [ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Filesystem Test
+    [ INFO ]: Starting procedure execution with state monitoring
+    [ INFO ]: Procedure state set to STARTED
+    [ INFO ]: State monitoring active - process can be controlled externally
+    [ INFO ]: Beginning controlled procedure execution...
+    [ INFO ]: Processing stage: Devices
+    [ INFO ]: Processing action: Creating System Mountpoint Directory /tmp/pyrotest
+    [ INFO ]: Executing Procedure Stage Action: Creating System Mountpoint Directory /tmp/pyrotest
+    CMD> test -d /tmp/pyrotest
+
+
+    [ NOK ]:
+
+    CMD> mkdir -p /tmp/pyrotest
+
+
+    CMD> echo 'Mountpoint /tmp/pyrotest exists'
+    Mountpoint /tmp/pyrotest exists
+
+    [ OK ]: Action completed: Creating System Mountpoint Directory /tmp/pyrotest
+    [ INFO ]: Processing action: Creating Directory /tmp/pyrotest
+    [ INFO ]: Executing Procedure Stage Action: Creating Directory /tmp/pyrotest
+    CMD> test -d /tmp/pyrotest
+
+
+    CMD> mkdir -p /tmp/pyrotest
+
+
+    CMD> echo 'Directory /tmp/pyrotest exists'
+    Directory /tmp/pyrotest exists
+
+    [ OK ]: Action completed: Creating Directory /tmp/pyrotest
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest | grep -q 'root:root 755'
+
+
+    CMD> chown root:root /tmp/pyrotest && chmod 755 /tmp/pyrotest
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest are correct'
+    Permissions for /tmp/pyrotest are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest
+    [ INFO ]: Processing action: Creating Directory /tmp/pyrotest/data
+    [ INFO ]: Executing Procedure Stage Action: Creating Directory /tmp/pyrotest/data
+    CMD> test -d /tmp/pyrotest/data
+
+
+    [ NOK ]:
+
+    CMD> mkdir -p /tmp/pyrotest/data
+
+
+    CMD> echo 'Directory /tmp/pyrotest/data exists'
+    Directory /tmp/pyrotest/data exists
+
+    [ OK ]: Action completed: Creating Directory /tmp/pyrotest/data
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/data
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/data
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/data | grep -q 'pyrotest1:pyrogroup1 750'
+
+
+    [ NOK ]:
+
+    CMD> chown pyrotest1:pyrogroup1 /tmp/pyrotest/data && chmod 750 /tmp/pyrotest/data
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/data are correct'
+    Permissions for /tmp/pyrotest/data are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/data
+    [ INFO ]: Processing action: Creating Directory /tmp/pyrotest/logs
+    [ INFO ]: Executing Procedure Stage Action: Creating Directory /tmp/pyrotest/logs
+    CMD> test -d /tmp/pyrotest/logs
+
+
+    [ NOK ]:
+
+    CMD> mkdir -p /tmp/pyrotest/logs
+
+
+    CMD> echo 'Directory /tmp/pyrotest/logs exists'
+    Directory /tmp/pyrotest/logs exists
+
+    [ OK ]: Action completed: Creating Directory /tmp/pyrotest/logs
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/logs
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/logs
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/logs | grep -q 'root:pyrogroup1 775'
+
+
+    [ NOK ]:
+
+    CMD> chown root:pyrogroup1 /tmp/pyrotest/logs && chmod 775 /tmp/pyrotest/logs
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/logs are correct'
+    Permissions for /tmp/pyrotest/logs are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/logs
+    [ INFO ]: Processing action: Creating Regular File /tmp/pyrotest/README
+    [ INFO ]: Executing Procedure Stage Action: Creating Regular File /tmp/pyrotest/README
+    CMD> test -f /tmp/pyrotest/README
+
+
+    [ NOK ]:
+
+    CMD> touch /tmp/pyrotest/README
+
+
+    CMD> echo 'File /tmp/pyrotest/README exists'
+    File /tmp/pyrotest/README exists
+
+    [ OK ]: Action completed: Creating Regular File /tmp/pyrotest/README
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/README
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/README
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/README | grep -q 'pyrotest1:pyrogroup1 644'
+
+
+    [ NOK ]:
+
+    CMD> chown pyrotest1:pyrogroup1 /tmp/pyrotest/README && chmod 644 /tmp/pyrotest/README
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/README are correct'
+    Permissions for /tmp/pyrotest/README are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/README
+    [ INFO ]: Processing action: Creating Symbolic Link /tmp/pyrotest/readme_shortcut
+    [ INFO ]: Executing Procedure Stage Action: Creating Symbolic Link /tmp/pyrotest/readme_shortcut
+    CMD> test -L /tmp/pyrotest/readme_shortcut
+
+
+    [ NOK ]:
+
+    CMD> ln -s /tmp/pyrotest/README /tmp/pyrotest/readme_shortcut
+
+
+    CMD> echo 'File /tmp/pyrotest/readme_shortcut exists'
+    File /tmp/pyrotest/readme_shortcut exists
+
+    [ OK ]: Action completed: Creating Symbolic Link /tmp/pyrotest/readme_shortcut
+    [ INFO ]: Processing action: Setting Permissions For /tmp/pyrotest/readme_shortcut
+    [ INFO ]: Executing Procedure Stage Action: Setting Permissions For /tmp/pyrotest/readme_shortcut
+    CMD> stat -c '%U:%G %a' /tmp/pyrotest/readme_shortcut | grep -q 'pyrotest1:pyrogroup1 777'
+
+
+    [ NOK ]:
+
+    CMD> chown pyrotest1:pyrogroup1 /tmp/pyrotest/readme_shortcut && chmod 777 /tmp/pyrotest/readme_shortcut
+
+
+    CMD> echo 'Permissions for /tmp/pyrotest/readme_shortcut are correct'
+    Permissions for /tmp/pyrotest/readme_shortcut are correct
+
+    [ OK ]: Action completed: Setting Permissions For /tmp/pyrotest/readme_shortcut
+    [ OK ]: Stage completed: Devices
+    [ OK ]: Procedure completed: SUCCESS
+```
+
+## 4. Verify created directory structure
+```text
+    root@1e1b62138bef:/app/Pyroform# tree /tmp/pyrotest/
+    /tmp/pyrotest/
+    |-- README
+    |-- data
+    |-- logs
+    `-- readme_shortcut -> /tmp/pyrotest/README
+
+    3 directories, 2 files
+```
+
+## 5. Verify ownership and permissions
+```text
+    root@1e1b62138bef:/app/Pyroform# ls -allah /tmp/pyrotest/
+    total 24K
+    drwxr-xr-x 4 root      root       4.0K Nov 17 22:27 .
+    drwxrwxrwt 1 root      root        12K Nov 17 22:27 ..
+    -rwxrwxrwx 1 pyrotest1 pyrogroup1    0 Nov 17 22:27 README
+    drwxr-x--- 2 pyrotest1 pyrogroup1 4.0K Nov 17 22:27 data
+    drwxrwxr-x 2 root      pyrogroup1 4.0K Nov 17 22:27 logs
+    lrwxrwxrwx 1 root      root         20 Nov 17 22:27 readme_shortcut -> /tmp/pyrotest/README
+
+
+    root@1e1b62138bef:/app/Pyroform# echo 'Hell Yes!' > /tmp/pyrotest/readme_shortcut
+    root@1e1b62138bef:/app/Pyroform# cat /tmp/pyrotest/README
+    Hell Yes!
+```
+
+## 6. Cleanup
+```text
+    root@1e1b62138bef:/app/Pyroform# rm -rf /tmp/pyrotest; echo $?
+    0
+```
+
 
 --------------------------------------------------------------------------------
 
-# [ TC 9 ]: Test Environment:
+# [ TC 9 ]: Directory Structure Creation
 
-Tester:
-Date:
-Pyroform Version:
-Status: [ ] PASS [ ] FAIL [ ] BLOCKED
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
+- Tester: D:Ta
+- Date: 18/11/2025
+- Pyroform Version: 1.0.0
+- Validates: [TPS TC_9](./TPS/TC_9.md)
+- Preconditions: System has some test users/files not in config
+- Status:
+[ ] PASS
+[ ] FAIL
+[ ] BLOCKED
 
-Archive
+# Archive
+
+## 1.
+```text
+
+```
+
+## 2.
+```text
+
+```
+
+## 3.
+```text
+
+```
+
+## 4.
+```text
+
+```
+
+## 5.
+```text
+
+```
+
+## 6.
+```text
+
+```
+
+## 7.
+```text
+
+```
+
 
 --------------------------------------------------------------------------------
 

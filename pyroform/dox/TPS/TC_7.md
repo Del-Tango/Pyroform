@@ -6,9 +6,9 @@
 
 ## Test Steps:
 
-1. Run command
+1. Run configure command (auto-confirm)
 ```bash
-~$ pyroform configure -i users_test.yaml -y (auto-confirm)
+~$ pyroform configure -i users_test.yaml -y
 ```
 2. Verify users created:
 ```bash
@@ -22,9 +22,10 @@
 ```bash
 ~$ groups pyrotest1 && groups pyrotest2
 ```
-5. Clean up:
+5. Cleanup:
 ```bash
 ~$ userdel -r pyrotest1 && userdel -r pyrotest2
+~$ groupdel pyrogroup1 && groupdel pyrogroup2; echo $?
 ```
 
 ## Expected Results:

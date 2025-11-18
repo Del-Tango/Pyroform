@@ -179,7 +179,6 @@ class PyroformEngine:
             all_valid = True
 
             for config in configs:
-#               self.stdout.info(f'Processing Pyro config {config.label}... Details: {config.__dict__}') #$ % str(json.dumps(config.__dict__, indent=4)))
                 result = self.validator.validate_configuration(config)
                 self.stdout.debug(f'Result {result}')
                 if result.discrepancies:
@@ -244,6 +243,7 @@ class PyroformEngine:
         }
 
 # CODE DUMP
+#               self.stdout.info(f'Processing Pyro config {config.label}... Details: {config.__dict__}') #$ % str(json.dumps(config.__dict__, indent=4)))
 
 #   # TODO - DEPRECATED
 #   def _create_mock_flow_engine(self):

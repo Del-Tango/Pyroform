@@ -56,5 +56,13 @@ class PyroConfig:
         self.devices = self.devices or []
 
 
+@dataclass
+class FileInfo:
+    path: str
+    owner: str
+    group: str
+    permissions: str
+    type: str
+
 # CODE DUMP
 

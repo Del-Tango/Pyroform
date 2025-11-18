@@ -98,8 +98,6 @@ class STDOUTMsg:
     def _format_message(self, tag: str, message: str, color: Optional[str] = None) -> str:
         """Format message with tag prefix and optional color."""
         timestamp = self._get_timestamp()
-#       formatted_tag = f"[ {tag} ]:"
-
         if color and color in self.COLORS:
             return f"{timestamp}[ {self.COLORS[color]}{tag}{self.COLORS['reset']} ]: {message}"
         else:
@@ -200,6 +198,10 @@ class STDOUTMsg:
 
 
 # CODE DUMP
+
+#       formatted_tag = f"[ {tag} ]:"
+
+
 
 #   class STDOUTMsg():
 
