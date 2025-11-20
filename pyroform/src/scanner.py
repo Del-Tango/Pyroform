@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
-from .models import FileInfo
+from .models import FileInfo, PyroConfig
 
 
+@pysnooper.snoop()
 def get_system_state(
     scan_paths: Optional[List[str]] = None,
+    pyro_config: Optional[PyroConfig] = None,
     max_depth: int = 10,
     include_hidden: bool = True
 ) -> Dict[str, Any]:
@@ -32,17 +34,20 @@ def get_system_state(
     """
 
     system_state = {
-        'users': get_users_info(),
-        'groups': get_groups_info(),
-        'mounted_devices': get_mounted_devices_info(scan_paths, max_depth, include_hidden)
+        'users': get_users_info(pyro_config=pyro_config),
+        'groups': get_groups_info(pyro_config=pyro_config),
+        'mounted_devices': get_mounted_devices_info(scan_paths, max_depth, include_hidden, pyro_config=pyro_config)
     }
 
     return system_state
 
-def get_users_info() -> List[Dict[str, Any]]:
+@pysnooper.snoop()
+def get_users_info(pyro_config: Optional[PyroConfig] = None) -> List[Dict[str, Any]]:
     """Get information about all system users."""
     users = []
     try:
+        if not pyro_config.users:
+            return users
         for user in pwd.getpwall():
             try:
                 groups = get_user_groups(user.pw_name)
@@ -63,6 +68,7 @@ def get_users_info() -> List[Dict[str, Any]]:
 
     return users
 
+#@pysnooper.snoop()
 def get_user_groups(username: str) -> List[str]:
     """Get all groups a user belongs to."""
     try:
@@ -76,10 +82,13 @@ def get_user_groups(username: str) -> List[str]:
     except (subprocess.CalledProcessError, IndexError, FileNotFoundError):
         return []
 
-def get_groups_info() -> List[Dict[str, Any]]:
+#@pysnooper.snoop()
+def get_groups_info(pyro_config: Optional[PyroConfig] = None) -> List[Dict[str, Any]]:
     """Get information about all system groups."""
     groups = []
     try:
+        if not pyro_config.groups:
+            return groups
         for group in grp.getgrall():
             try:
                 groups.append({
@@ -95,15 +104,21 @@ def get_groups_info() -> List[Dict[str, Any]]:
 
     return groups
 
+#@pysnooper.snoop()
 def get_mounted_devices_info(
     scan_paths: Optional[List[str]],
     max_depth: int,
-    include_hidden: bool
+    include_hidden: bool,
+    pyro_config: Optional[PyroConfig] = None,
 ) -> List[Dict[str, Any]]:
     """Get information about mounted devices and their contents."""
     mounted_devices = []
 
     try:
+
+        if not pyro_config.devices:
+            return mounted_devices
+
         # Get mount information using multiple methods
         mounts = []
 
@@ -243,6 +258,7 @@ def get_mounted_devices_info(
 
     return mounted_devices
 
+@pysnooper.snoop()
 def get_device_partitions(device: str) -> List[Dict[str, str]]:
     """Get partition information for a device."""
     partitions = []
@@ -280,6 +296,7 @@ def get_device_partitions(device: str) -> List[Dict[str, str]]:
 
     return partitions
 
+#@pysnooper.snoop()
 def get_numeric_permissions(mode: int) -> str:
     """
     Convert file mode to numeric (octal) permissions notation.
@@ -295,6 +312,7 @@ def get_numeric_permissions(mode: int) -> str:
     # Format as 4-digit octal string
     return oct(permissions)[2:].zfill(4)
 
+#@pysnooper.snoop()
 def scan_filesystem(
     path: str,
     device_info: Dict[str, Any],
@@ -371,9 +389,9 @@ def scan_filesystem(
         pass
 
 # Example usage and testing
-if __name__ == "__main__":
-    # Get complete system state
-    system_state = get_system_state()
+#   if __name__ == "__main__":
+#       # Get complete system state
+#       system_state = get_system_state()
 
 # CODE DUMP
 

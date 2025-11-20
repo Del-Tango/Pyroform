@@ -12,7 +12,8 @@ from typing import Dict, Any, Optional
 # List
 # from datetime import datetime
 
-from .models import ActionType
+from .models import ActionType, PyroConfig
+# from .models import PyroConfig, ScorchResult
 from .parser import PyroParser
 from .sketch_generator import SketchGenerator
 from .flow_engine import PyroflowEngine
@@ -86,6 +87,35 @@ class PyroformEngine:
             print(f"Configure action failed: {e}")
             return False
 
+    def _confirm_scorch(self, config: PyroConfig) -> bool:
+        """
+        Confirm scorch operation with user
+
+        Args:
+            config: Configuration that will be used to determine what to keep
+
+        Returns:
+            True if confirmed, False if cancelled
+        """
+        print(
+            f"WARNING: Scorch action will remove system resources not specified in '{config.label}'."
+        )
+        print("This includes:")
+        print("  - Users not in the configuration")
+        print("  - Groups not in the configuration")
+        print("  - Mount points not in the configuration")
+        print("  - Files not in the configuration")
+        print("  - Directories not in the configuration")
+        print("  - Symbolic links not in the configuration")
+        print()
+        print("THIS IS A DESTRUCTIVE OPERATION THAT CANNOT BE UNDONE!")
+        print()
+        response = input("Are you sure you want to continue? [Y/N]: ")
+        return response.lower() in ["yes", "y"]
+
+
+    # TODO - Refactor
+    @pysnooper.snoop()
     def scorch(self, input_path: str, **kwargs) -> ScorchResult:
         """
         Execute scorch action
@@ -107,22 +137,44 @@ class PyroformEngine:
                     success=False,
                 )
 
-            # Use the first configuration for scorch
-            config = configs[0]
             safety_check = not kwargs.get("auto_confirm", False)
             dry_run = kwargs.get("dry_run", False)
 
-            scorch_engine = ScorchEngine(safety_check=safety_check)
-            return scorch_engine.execute_scorch(config, dry_run=dry_run)
+            for config in configs:
+                self.stdout.debug(f'Config {config}')
+                sketch = self.sketch_generator.generate_scorch_sketch(config)
+                self.stdout.debug(f'Sketch {sketch}')
 
+                # TODO - Prompt user for confirmation
+                if safety_check:
+                    self._confirm_scorch(config)
+
+                success = self.flow_engine.execute_sketch(sketch, ActionType.SCORCH)
+                self.stdout.debug(f'Success {success}')
+                if not success:
+                    return False
+
+            return True
         except Exception as e:
             print(f"Scorch action failed: {e}")
-            return ScorchResult(
-                resources_removed=[],
-                resources_failed=[{"error": str(e)}],
-                dry_run=kwargs.get("dry_run", False),
-                success=False,
-            )
+            return False
+
+#           # Use the first configuration for scorch
+#           config = configs[0]
+#           safety_check = not kwargs.get("auto_confirm", False)
+#           dry_run = kwargs.get("dry_run", False)
+
+#           scorch_engine = ScorchEngine(safety_check=safety_check)
+#           return scorch_engine.execute_scorch(config, dry_run=dry_run)
+
+#       except Exception as e:
+#           print(f"Scorch action failed: {e}")
+#           return ScorchResult(
+#               resources_removed=[],
+#               resources_failed=[{"error": str(e)}],
+#               dry_run=kwargs.get("dry_run", False),
+#               success=False,
+#           )
 
     def mount(self, input_path: str, **kwargs) -> bool:
         """

@@ -9,9 +9,11 @@ from typing import Dict, Any, List
 from pathlib import Path
 
 from .models import PyroConfig, User, Group, Device, ActionType
+from .logging import STDOUTMsg
+from .splitter import ListSplitter
+
 from .scanner import get_system_state
 from .difference import compare_system_state_with_pyro_file
-from .logging import STDOUTMsg
 
 
 class SketchGenerator:
@@ -20,11 +22,15 @@ class SketchGenerator:
     """
 
     def __init__(self, *args, stdout: STDOUTMsg | None = None, dry_run: bool | None = False, **kwargs):
+        self.chunk_size = 500
         self.dry_run = dry_run
+        self.cmd_prefix = '' if not self.dry_run else '# '
+        # TODO - Configure from config file
         self.stdout = stdout or STDOUTMsg(
             debug_mode=False,
             timestamp=False,
         )
+        self.list_splitter = ListSplitter(chunk_size=self.chunk_size)
 
     @pysnooper.snoop()
     def generate_sketch(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
@@ -38,6 +44,7 @@ class SketchGenerator:
         Returns:
             FlowCTRL sketch dictionary
         """
+        self.cmd_prefix = '' if not self.dry_run else '# '
         if action == ActionType.CONFIGURE:
             return self.generate_configure_sketch(config)
         elif action == ActionType.MOUNT:
@@ -49,6 +56,7 @@ class SketchGenerator:
         else:
             raise ValueError(f"Unsupported action type: {action}")
 
+    @pysnooper.snoop()
     def generate_scorch_sketch(self, config: PyroConfig) -> Dict[str, Any]:
         """
         Generate sketch for scorch action (cleanup)
@@ -59,9 +67,14 @@ class SketchGenerator:
         Returns:
             FlowCTRL sketch dictionary
         """
+        system_state = get_system_state(
+            pyro_config=config, max_depth=100, include_hidden=True
+        )
+        compared = compare_system_state_with_pyro_file(system_state, config)
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Cleanup": self._generate_cleanup_commands(config),
+            "Cleanup": self._generate_cleanup_commands(config, system_state, compared),
+#           "Corrections": self._generate_correction_commands(config, system_state, compared),
         }
 
         # Remove empty sections
@@ -69,9 +82,15 @@ class SketchGenerator:
         return sketch
 
 
+    # TODO
+#   def _generate_correction_commands(self, config: PyroConfig, system_state: dict, compared: dict) -> List[Dict[str, Any]]:
+#       commands = []
+
+#       return commands
+
     # TODO - WIP
-    @pysnooper.snoop()
-    def _generate_cleanup_commands(self, config: PyroConfig) -> List[Dict[str, Any]]:
+#   @pysnooper.snoop()
+    def _generate_cleanup_commands(self, config: PyroConfig, system_state: dict, compared: dict) -> List[Dict[str, Any]]:
         """
         Generate cleanup commands for scorch action
 
@@ -79,31 +98,100 @@ class SketchGenerator:
         need to compare current system state with desired state.
         """
         commands = []
+        cmd_prefix = '' if not self.dry_run else '# '
         # TODO - Make configurable from config file
-        system_state = get_system_state(max_depth=100, include_hidden=True)
-        compared = compare_system_state_with_pyro_file(system_state, config)
+#       system_state = get_system_state(
+#           pyro_config=config, max_depth=100, include_hidden=True
+#       )
+#       compared = compare_system_state_with_pyro_file(system_state, config)
 
-#       # Clean up users not in config
-#       cleanup_user_cmd = {
-#           "name": "cleanup_orphaned_users",
-#           "cmd": "echo 'User cleanup would happen here'",
-#           "setup-cmd": "echo 'Checking for orphaned users'",
-#           "on-ok-cmd": "echo 'No orphaned users found'",
-#           "on-nok-cmd": "echo 'Cleaning up orphaned users'",
-#           "fatal-nok": False,
-#       }
-#       commands.append(cleanup_user_cmd)
+        print(f'[ DEBUG ]: system_state - {system_state}')
+#       print('[ DEBUG ]: system_state - ', json.dumps(system_state, indent=4))
+        print(f'[ DEBUG ]: compared - {compared}')
+#       print('[ DEBUG ]: compared - ', json.dumps(compared, indent=4))
+        print(f'[ DEBUG ]: compared[extra_directories] - {compared["extra_directories"]}')
 
-#       # Clean up groups not in config
-#       cleanup_group_cmd = {
-#           "name": "cleanup_orphaned_groups",
-#           "cmd": "echo 'Group cleanup would happen here'",
-#           "setup-cmd": "echo 'Checking for orphaned groups'",
-#           "on-ok-cmd": "echo 'No orphaned groups found'",
-#           "on-nok-cmd": "echo 'Cleaning up orphaned groups'",
-#           "fatal-nok": False,
-#       }
-#       commands.append(cleanup_group_cmd)
+        extra_usernames = " ".join([user['username'] for user in compared.get('extra_users', []) if user.get('username')])
+        if extra_usernames.strip():
+            # Clean up users not in config
+            cleanup_user_cmd = {
+                "name": "Cleanup extra users",
+                "cmd": f"{self.cmd_prefix}for user in {extra_usernames}; do userdel -f -r $user; done",
+                "setup-cmd": "",
+                "on-ok-cmd": f"echo 'Eliminated: {extra_usernames}'",
+                "on-nok-cmd": f"echo 'Could not scorch extra system users! Details: {extra_usernames}'",
+                "fatal-nok": False,
+            }
+            commands.append(cleanup_user_cmd)
+
+        extra_groups = " ".join([group['groupname'] for group in compared.get('extra_groups', []) if group.get('groupname')])
+        if extra_groups.strip():
+            # Clean up groups not in config
+            cleanup_group_cmd = {
+                "name": "Cleanup extra groups",
+                "cmd": f"{self.cmd_prefix}for group in {extra_groups}; do groupdel $group; done",
+                "setup-cmd": "",
+                "on-ok-cmd": f"echo 'Eliminated: {extra_groups}'",
+                "on-nok-cmd": f"echo 'Could not scorch extra system groups! Details: {extra_groups}'",
+                "fatal-nok": False,
+            }
+            commands.append(cleanup_group_cmd)
+
+
+
+#       # TODO
+#       extra_mounted_devices = " ".join([])
+#       if extra_mounted_devices.strip():
+#           # Clean up groups not in config
+#           cleanup_devices_cmd = {
+#               "name": "Cleanup extra mounted block storage devices",
+#               "cmd": f"{self.cmd_prefix}for device in {extra_mounted_devices}; do umount -f $device; done",
+#               "setup-cmd": "",
+#               "on-ok-cmd": f"echo 'Eliminated: {extra_mounted_devices}'",
+#               "on-nok-cmd": f"echo 'Could not scorch extra mounted devices! Details: {extra_mounted_devices}'",
+#               "fatal-nok": False,
+#           }
+#           commands.append(cleanup_devices_cmd)
+
+#       # TODO - Support chunks
+#       extra_directory_list = []
+#       if len(extra_directory_list) > self.chunk_size:
+#           directory_chunks = self.list_splitter.split(extra_directory_list)
+
+        extra_directory_list = [directory['path'] for directory in compared.get('extra_directories', []) if directory.get('path')]
+        dir_chunks = self.list_splitter.split(extra_directory_list) if len(extra_directory_list) > self.chunk_size else [extra_directory_list]
+        for chunk in dir_chunks:
+            extra_directories = " ".join(chunk)
+            if not extra_directories.strip():
+                continue
+            # Clean up groups not in config
+            cleanup_directories_cmd = {
+                "name": "Cleanup extra directories",
+                "cmd": f"{self.cmd_prefix}rm -rf {extra_directories}",
+                "setup-cmd": "",
+                "on-ok-cmd": f"echo 'Eliminated: {extra_directories}'",
+                "on-nok-cmd": f"echo 'Could not scorch extra directories! Details: {extra_directories}'",
+                "fatal-nok": False,
+            }
+            commands.append(cleanup_directories_cmd)
+
+        extra_files_and_linx_list = [file['path'] for file in compared.get('extra_files', []) if file.get('path')] \
+            + [link['path'] for link in compared.get('extra_symlinks', []) if link.get('path')]
+        file_chunks = self.list_splitter.split(extra_files_and_linx_list) if len(extra_files_and_linx_list) > self.chunk_size else [extra_files_and_linx_list]
+        for chunk in file_chunks:
+            extra_files_and_links = " ".join(chunk)
+            if not extra_files_and_links.strip():
+                continue
+            # Clean up groups not in config
+            cleanup_files_and_links_cmd = {
+                "name": "Cleanup extra files and links",
+                "cmd": f"{self.cmd_prefix}rm -f {extra_files_and_links}",
+                "setup-cmd": "",
+                "on-ok-cmd": f"echo 'Eliminated: {extra_files_and_links}'",
+                "on-nok-cmd": f"echo 'Could not scorch extra files and links! Details: {extra_files_and_links}'",
+                "fatal-nok": False,
+            }
+            commands.append(cleanup_files_and_links_cmd)
 
         return commands
 
@@ -161,7 +249,7 @@ class SketchGenerator:
             groups = " ".join(group_membership)
             user_cmd = {
                 "name": f"Creating System User {user.name}",
-                "cmd": f"{cmd_prefix}for group in {groups}; do groupadd -f $group; done && useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}' || exit 0",
+                "cmd": f"{self.cmd_prefix}for group in {groups}; do groupadd -f $group; done && useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}' || exit 0",
                 "setup-cmd": f"id {user.name} && echo 'User {user.name} already exists' || exit 0",
                 "teardown-cmd": "",
                 "on-ok-cmd": f"echo 'User {user.name} exists or created successfully'",
@@ -182,7 +270,7 @@ class SketchGenerator:
             users = " ".join(member_users)
             group_cmd = {
                 "name": f"Creating System Group {group.name}",
-                "cmd": f"{cmd_prefix}groupadd -f '{group.name}' && for user in {users}; do id $user || useradd -m $user; usermod -a -G '{group.name}' $user; done",
+                "cmd": f"{self.cmd_prefix}groupadd -f '{group.name}' && for user in {users}; do id $user || useradd -m $user; usermod -a -G '{group.name}' $user; done",
                 "setup-cmd": f"getent group {group.name} && echo 'Group {group.name} already exists' || exit 0",
                 "teardown-cmd": "",
                 "on-ok-cmd": f"echo 'Group {group.name} exists'",
@@ -207,7 +295,7 @@ class SketchGenerator:
             # Create mountpoint directory
             mountpoint_cmd = {
                 "name": f"Creating System Mountpoint Directory {device.mountpoint}",
-                "cmd": f"{cmd_prefix} mkdir -p '{device.mountpoint}' && sudo mount '{device.path}{device.partition}' '{device.mountpoint}'",  #f"mkdir -p {device.mountpoint}",
+                "cmd": f"{self.cmd_prefix} mkdir -p '{device.mountpoint}' && sudo mount '{device.path}{device.partition}' '{device.mountpoint}'",  #f"mkdir -p {device.mountpoint}",
                 "setup-cmd": f"test -d {device.mountpoint}",
                 "teardown-cmd": "",
                 "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
@@ -219,7 +307,7 @@ class SketchGenerator:
             # Mount device
             device_cmd = {
                 "name": f"Mounting Block Device {device.label}",
-                "cmd": f"{cmd_prefix} mount {device.path} {device.mountpoint}",
+                "cmd": f"{self.cmd_prefix} mount {device.path} {device.mountpoint}",
                 "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
                 "teardown-cmd": f"umount {device.mountpoint}",
                 "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
@@ -244,7 +332,7 @@ class SketchGenerator:
             if device.mountpoint:
                 mountpoint_cmd = {
                     "name": f"Creating System Mountpoint Directory {device.mountpoint}",
-                    "cmd": f"{cmd_prefix}mkdir -p {device.mountpoint}",
+                    "cmd": f"{self.cmd_prefix}mkdir -p {device.mountpoint}",
                     "setup-cmd": f"test -d {device.mountpoint}",
                     "teardown-cmd": "",
                     "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
@@ -257,7 +345,7 @@ class SketchGenerator:
             if device.path:
                 device_cmd = {
                     "name": f"Mounting Block Device {device.label}",
-                    "cmd": f"{cmd_prefix}mount {device.path} {device.mountpoint}",
+                    "cmd": f"{self.cmd_prefix}mount {device.path} {device.mountpoint}",
                     "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
                     "teardown-cmd": "",
                     "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
@@ -279,7 +367,7 @@ class SketchGenerator:
                     if obj_type.lower() in ("d", "dir", "directory"):
                         dir_cmd = {
                             "name": f"Creating Directory {path}",
-                            "cmd": f"{cmd_prefix}mkdir -p {path}",
+                            "cmd": f"{self.cmd_prefix}mkdir -p {path}",
                             "setup-cmd": f"test -d {path}",
                             "teardown-cmd": "",
                             "on-ok-cmd": f"echo 'Directory {path} exists'",
@@ -290,7 +378,7 @@ class SketchGenerator:
                     elif obj_type.lower() in ("f", "fl", "file"):
                         dir_cmd = {
                             "name": f"Creating Regular File {path}",
-                            "cmd": f"{cmd_prefix}touch {path}",
+                            "cmd": f"{self.cmd_prefix}touch {path}",
                             "setup-cmd": f"test -f {path}",
                             "teardown-cmd": "",
                             "on-ok-cmd": f"echo 'File {path} exists'",
@@ -301,7 +389,7 @@ class SketchGenerator:
                     elif obj_type.lower() in ("l", "ln", "link"):
                         dir_cmd = {
                             "name": f"Creating Symbolic Link {path}", #.replace('/', '_')
-                            "cmd": f"{cmd_prefix}ln -s {state_parts[5]} {path}",
+                            "cmd": f"{self.cmd_prefix}ln -s {state_parts[5]} {path}",
                             "setup-cmd": f"test -L {path}",
                             "teardown-cmd": "",
                             "on-ok-cmd": f"echo 'File {path} exists'",
@@ -312,7 +400,7 @@ class SketchGenerator:
                     # Set ownership and permissions
                     perm_cmd = {
                         "name": f"Setting Permissions For {path}", #.replace('/', '_')
-                        "cmd": f"{cmd_prefix}chown {owner}:{group} {path} && chmod {permissions} {path}",
+                        "cmd": f"{self.cmd_prefix}chown {owner}:{group} {path} && chmod {permissions} {path}",
                         "setup-cmd": f"stat -c '%U:%G %a' {path} | grep -q '{owner}:{group} {permissions}'",
                         "teardown-cmd": "",
                         "on-ok-cmd": f"echo 'Permissions for {path} are correct'",

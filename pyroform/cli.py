@@ -532,9 +532,8 @@ def _execute_action(
             result = pf.configure(str(input_path), **action_kwargs)
             success = result
         elif action_type == ActionType.SCORCH:
-            # TODO - take into account dry run
             result = pf.scorch(str(input_path), **action_kwargs)
-            success = result.success
+            success = result
         elif action_type == ActionType.MOUNT:
             # TODO - take into account dry run
             result = pf.mount(str(input_path), **action_kwargs)

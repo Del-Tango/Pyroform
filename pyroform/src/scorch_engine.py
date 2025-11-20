@@ -2,24 +2,19 @@
 Scorch Engine for Pyroform - Cleanup of unspecified resources
 """
 
+# TODO - DEPRECATED
+
 import subprocess
 import os
 import shutil
+
+import pysnooper
+
 from dataclasses import dataclass
 from typing import List, Dict, Any, Set
 from pathlib import Path
 
-from .models import PyroConfig
-
-
-@dataclass
-class ScorchResult:
-    """Result of scorch operation"""
-
-    resources_removed: List[str]
-    resources_failed: List[Dict[str, Any]]
-    dry_run: bool
-    success: bool
+from .models import PyroConfig, ScorchResult
 
 
 class ScorchEngine:
@@ -27,6 +22,7 @@ class ScorchEngine:
     Engine for cleaning up system resources not specified in configuration
     """
 
+    @pysnooper.snoop()
     def __init__(self, safety_check: bool = True):
         """
         Initialize ScorchEngine
@@ -36,6 +32,11 @@ class ScorchEngine:
         """
         self.safety_check = safety_check
 
+
+    # TODO - Add comparison here
+    # TODO - If only users in pyro file, remove only users, if only groups,
+    # remove only groups, if only devices, remove files and unmount
+#   @pysnooper.snoop()
     def execute_scorch(self, config: PyroConfig, dry_run: bool = False) -> ScorchResult:
         """
         Remove resources not specified in configuration
@@ -57,32 +58,43 @@ class ScorchEngine:
                     success=False,
                 )
 
-        current_state = self._get_current_system_state()
-        resources_to_remove = self._calculate_cleanup_set(config, current_state)
+#       system_state = get_system_state(max_depth=100, include_hidden=True)
+#       compared = compare_system_state_with_pyro_file(system_state, config)
 
-        removed = []
-        failed = []
+#       print(f'[ DEBUG ]: system_state - {system_state}')
+#       print(f'[ DEBUG ]: compared - {compared}')
 
-        for resource in resources_to_remove:
-            resource_type = resource["type"]
-            resource_id = resource["id"]
+#       current_state = self._get_current_system_state()
+#       resources_to_remove = self._calculate_cleanup_set(config, current_state)
 
-            if dry_run:
-                removed.append(f"{resource_type}:{resource_id} (dry-run)")
-            else:
-                success = self._execute_removal(resource_type, resource_id)
-                if success:
-                    removed.append(f"{resource_type}:{resource_id}")
-                else:
-                    failed.append(
-                        {
-                            "type": resource_type,
-                            "id": resource_id,
-                            "error": f"Failed to remove {resource_type} {resource_id}",
-                        }
-                    )
-                    # Stop on first failure for safety
-                    break
+#       removed = []
+#       failed = []
+
+#       for resource in resources_to_remove:
+#           resource_type = resource["type"]
+#           resource_id = resource["id"]
+
+#           if dry_run:
+#               removed.append(f"{resource_type}:{resource_id} (dry-run)")
+#           else:
+#               success = self._execute_removal(resource_type, resource_id)
+#               if success:
+#                   removed.append(f"{resource_type}:{resource_id}")
+#               else:
+#                   failed.append(
+#                       {
+#                           "type": resource_type,
+#                           "id": resource_id,
+#                           "error": f"Failed to remove {resource_type} {resource_id}",
+#                       }
+#                   )
+#                   # Stop on first failure for safety
+#                   break
+
+
+#       print(f'[ DEBUG ]: config - {config}')
+#       print(f'[ DEBUG ]: resources removed - {removed}')
+#       print(f'[ DEBUG ]: resources failed - {failed}')
 
         return ScorchResult(
             resources_removed=removed,

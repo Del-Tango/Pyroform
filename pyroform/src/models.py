@@ -3,7 +3,7 @@ Pyroform Data Models
 """
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict, Any, Set
 from enum import Enum
 
 
@@ -63,6 +63,17 @@ class FileInfo:
     group: str
     permissions: str
     type: str
+
+
+@dataclass
+class ScorchResult:
+    """Result of scorch operation"""
+
+    resources_removed: List[str]
+    resources_failed: List[Dict[str, Any]]
+    dry_run: bool
+    success: bool
+
 
 # CODE DUMP
 

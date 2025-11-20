@@ -13,8 +13,10 @@ from .reporter import ReportGenerator
 from .logging import STDOUTMsg
 from .scanner import get_system_state
 from .difference import compare_system_state_with_pyro_file
+from .splitter import ListSplitter
 
 __all__ = [
+    "ListSplitter",
     "PyroConfig",
     "STDOUTMsg",
     "User",

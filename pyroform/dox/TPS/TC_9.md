@@ -16,7 +16,7 @@
 ```
 3. Run commands
 ```bash
-~$ pyroform scorch -i minimal_config.pyro.yaml --dry-run -v
+~$ pyroform scorch -i minimal_config.pyro.yaml --dry-run
 ```
 4. Review what would be removed
 5. Verify nothing actually removed

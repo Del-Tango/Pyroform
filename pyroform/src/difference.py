@@ -1,10 +1,15 @@
 import os
 import json
 
+import pysnooper
+
 from typing import Dict, List, Any, Tuple, Set
 from pathlib import Path
 
+from .models import User, Group, Device
 
+
+@pysnooper.snoop()
 def compare_system_state_with_pyro_file(system_state: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compare current system state with configuration and generate difference report.
@@ -19,22 +24,22 @@ def compare_system_state_with_pyro_file(system_state: Dict[str, Any], config: Di
 
     differences = {
         'missing_users': [],
-        'extra_users': [],
-        'user_mismatches': [],
+        'extra_users': [],              #
+        'user_mismatches': [],          #?
         'missing_groups': [],
-        'extra_groups': [],
-        'group_mismatches': [],
+        'extra_groups': [],             #
+        'group_mismatches': [],         #?
         'missing_directories': [],
-        'extra_directories': [],
+        'extra_directories': [],        #
         'directory_mismatches': [],
         'missing_files': [],
-        'extra_files': [],
+        'extra_files': [],              #
         'file_mismatches': [],
         'missing_symlinks': [],
-        'extra_symlinks': [],
-        'symlink_mismatches': [],
+        'extra_symlinks': [],           #
+        'symlink_mismatches': [],       #?
         'missing_mountpoints': [],
-        'mountpoint_mismatches': []
+        'mountpoint_mismatches': []     #?
     }
 
     # Extract current state for easier comparison
@@ -44,14 +49,21 @@ def compare_system_state_with_pyro_file(system_state: Dict[str, Any], config: Di
     # Build current filesystem state
     current_fs_state = build_filesystem_state(system_state)
 
+
     # Compare users
-    compare_users(config.get('Users', []), current_users, differences)
+    if config.users:
+
+        print(f'[ DEBUG ]: config.users - {config.users}')
+
+        compare_users(config.users, current_users, differences)
 
     # Compare groups
-    compare_groups(config.get('Groups', []), current_groups, differences)
+    if config.groups:
+        compare_groups(config.groups, current_groups, differences)
 
     # Compare filesystem state
-    compare_filesystem(config.get('Devices', []), current_fs_state, differences)
+    if config.devices:
+        compare_filesystem(config.devices, current_fs_state, differences)
 
     return differences
 
@@ -98,20 +110,21 @@ def build_filesystem_state(system_state: Dict[str, Any]) -> Dict[str, Dict[str, 
 
     return fs_state
 
-def compare_users(config_users: List[Dict], current_users: Dict, differences: Dict[str, Any]) -> None:
+@pysnooper.snoop()
+def compare_users(config_users: List[User], current_users: Dict, differences: Dict[str, Any]) -> None:
     """Compare configured users with current system users."""
     config_user_names = set()
 
     for config_user in config_users:
-        username = config_user['Name']
+        username = config_user.name
         config_user_names.add(username)
 
         if username not in current_users:
             differences['missing_users'].append({
-                'label': config_user.get('label', ''),
+                'label': config_user.label,
                 'username': username,
-                'password': config_user.get('Password', ''),
-                'groups': config_user.get('Groups', [])
+                'password': config_user.password,
+                'groups': config_user.groups
             })
         else:
             # Check user properties
@@ -119,7 +132,7 @@ def compare_users(config_users: List[Dict], current_users: Dict, differences: Di
             mismatches = []
 
             # Check group membership
-            expected_groups = set(config_user.get('Groups', []))
+            expected_groups = set(config_user.groups)
             current_groups = set(current_user.get('groups', []))
 
             missing_groups = expected_groups - current_groups
@@ -136,7 +149,7 @@ def compare_users(config_users: List[Dict], current_users: Dict, differences: Di
 
             if mismatches:
                 differences['user_mismatches'].append({
-                    'label': config_user.get('label', ''),
+                    'label': config_user.label,
                     'username': username,
                     'mismatches': mismatches
                 })
@@ -148,26 +161,27 @@ def compare_users(config_users: List[Dict], current_users: Dict, differences: Di
     # Filter out system users (typically UID < 1000)
     for username in extra_users:
         user = current_users[username]
-        if user['uid'] >= 1000:  # Typically non-system users
-            differences['extra_users'].append({
-                'username': username,
-                'uid': user['uid'],
-                'home_directory': user['home_directory']
-            })
+#       if user['uid'] >= 1000:  # Typically non-system users
+        differences['extra_users'].append({
+            'username': username,
+            'uid': user['uid'],
+            'home_directory': user['home_directory']
+        })
 
-def compare_groups(config_groups: List[Dict], current_groups: Dict, differences: Dict[str, Any]) -> None:
+@pysnooper.snoop()
+def compare_groups(config_groups: List[Group], current_groups: Dict, differences: Dict[str, Any]) -> None:
     """Compare configured groups with current system groups."""
     config_group_names = set()
 
     for config_group in config_groups:
-        groupname = config_group['Name']
+        groupname = config_group.name
         config_group_names.add(groupname)
 
         if groupname not in current_groups:
             differences['missing_groups'].append({
-                'label': config_group.get('label', ''),
+                'label': config_group.label,
                 'groupname': groupname,
-                'members': config_group.get('Users', [])
+                'members': config_group.users,
             })
         else:
             # Check group properties
@@ -175,7 +189,7 @@ def compare_groups(config_groups: List[Dict], current_groups: Dict, differences:
             mismatches = []
 
             # Check group membership
-            expected_members = set(config_group.get('Users', []))
+            expected_members = set(config_group.users)
             current_members = set(current_group.get('members', []))
 
             missing_members = expected_members - current_members
@@ -192,7 +206,7 @@ def compare_groups(config_groups: List[Dict], current_groups: Dict, differences:
 
             if mismatches:
                 differences['group_mismatches'].append({
-                    'label': config_group.get('label', ''),
+                    'label': config_group.label,
                     'groupname': groupname,
                     'mismatches': mismatches
                 })
@@ -236,13 +250,13 @@ def parse_config_state_entry(entry: str) -> Dict[str, Any]:
 
     return result
 
-def compare_filesystem(config_devices: List[Dict], current_fs_state: Dict, differences: Dict[str, Any]) -> None:
+def compare_filesystem(config_devices: List[Device], current_fs_state: Dict, differences: Dict[str, Any]) -> None:
     """Compare configured filesystem state with current state."""
     config_paths = set()
 
     for device in config_devices:
-        mountpoint = device.get('Mountpoint', '')
-        config_states = device.get('State', [])
+        mountpoint = device.mountpoint
+        config_states = device.state
 
         # Check if mountpoint exists
         mountpoint_exists = any(
@@ -253,7 +267,7 @@ def compare_filesystem(config_devices: List[Dict], current_fs_state: Dict, diffe
 
         if not mountpoint_exists and mountpoint:
             differences['missing_mountpoints'].append({
-                'label': device.get('label', ''),
+                'label': device.label,
                 'mountpoint': mountpoint
             })
 
@@ -361,6 +375,8 @@ def compare_filesystem(config_devices: List[Dict], current_fs_state: Dict, diffe
             extra_entry['target'] = item.get('target', 'broken')
             differences['extra_symlinks'].append(extra_entry)
 
+
+# TODO - DEPRECATED
 def generate_difference_report(differences: Dict[str, Any]) -> str:
     """Generate a human-readable difference report."""
     report = []

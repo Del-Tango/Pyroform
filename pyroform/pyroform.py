@@ -62,6 +62,7 @@ class Pyroform:
         self._last_result = self.engine.configure(input_path, **kwargs)
         return self._last_result
 
+    @pysnooper.snoop()
     def scorch(self, input_path: str, **kwargs) -> ScorchResult:
         """
         Remove system resources not specified in Pyro file(s)
@@ -81,6 +82,7 @@ class Pyroform:
         self._last_result = self.engine.scorch(input_path, **kwargs)
         return self._last_result
 
+    @pysnooper.snoop()
     def mount(self, input_path: str, **kwargs) -> bool:
         """
         Mount devices according to Pyro file(s)
