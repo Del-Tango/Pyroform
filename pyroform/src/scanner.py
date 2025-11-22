@@ -12,6 +12,12 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
 from .models import FileInfo, PyroConfig
+from .logging import STDOUTMsg
+
+stdout = STDOUTMsg(
+    debug_mode=True,
+    timestamp=True,
+)
 
 
 @pysnooper.snoop()
@@ -32,6 +38,10 @@ def get_system_state(
     Returns:
         Dictionary with system state organized by users, groups, and mounted devices
     """
+
+    stdout.info('Scanning current machine state (users, groups, filesystem)...')
+    stdout.debug(f'Max directory depth: {max_depth}')
+    stdout.debug(f'Include hidden files: {include_hidden}')
 
     system_state = {
         'users': get_users_info(pyro_config=pyro_config),
@@ -205,13 +215,13 @@ def get_mounted_devices_info(
                 # TODO - Configure from config file
                 # Skip obviously virtual filesystems but be less restrictive
 #               skip_patterns = ['/proc', '/sys', '/dev/pts', '/dev/shm', 'cgroup', 'mqueue', 'hugetlbfs']
-                skip_patterns = ['/proc', '/sys', '/dev/pts', '/dev/shm']
-                if any(pattern in mountpoint for pattern in skip_patterns):
-                    continue
+#               skip_patterns = ['/proc', '/sys', '/dev/pts', '/dev/shm']
+#               if any(pattern in mountpoint for pattern in skip_patterns):
+#                   continue
 
-                # Skip tmpfs and devtmpfs
-                if fstype in ['tmpfs', 'devtmpfs']:
-                    continue
+#               # Skip tmpfs and devtmpfs
+#               if fstype in ['tmpfs', 'devtmpfs']:
+#                   continue
 
                 processed_mountpoints.add(mountpoint)
 
@@ -231,7 +241,7 @@ def get_mounted_devices_info(
                     'symlinks': []
                 }
 
-                print(f"Scanning mountpoint: {mountpoint}")
+                stdout.debug(f"Scanning mountpoint: {mountpoint}")
 
                 # Scan filesystem contents
                 if os.path.exists(mountpoint) and os.path.isdir(mountpoint):
@@ -243,18 +253,18 @@ def get_mounted_devices_info(
                             include_hidden,
                             current_depth=0
                         )
-                        print(f"  Found {len(device_info['files'])} files, {len(device_info['directories'])} directories, {len(device_info['symlinks'])} symlinks")
+                        stdout.debug(f"  Found {len(device_info['files'])} files, {len(device_info['directories'])} directories, {len(device_info['symlinks'])} symlinks")
                     except Exception as e:
-                        print(f"  Error scanning {mountpoint}: {e}")
+                        stdout.err(f"  Error scanning {mountpoint}: {e}")
 
                 mounted_devices.append(device_info)
 
             except Exception as e:
-                print(f"Error processing mount line '{mount}': {e}")
+                stdout.err(f"Error processing mount line '{mount}': {e}")
                 continue
 
     except Exception as e:
-        print(f"Error reading mounts: {e}")
+        stdout.err(f"Error reading mounts: {e}")
 
     return mounted_devices
 
@@ -388,12 +398,12 @@ def scan_filesystem(
         # Skip directories we can't access
         pass
 
+# CODE DUMP
+
 # Example usage and testing
 #   if __name__ == "__main__":
 #       # Get complete system state
 #       system_state = get_system_state()
-
-# CODE DUMP
 
 #   @dataclass
 #   class FileInfo:

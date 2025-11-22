@@ -265,6 +265,7 @@ class Pyroform:
             "overall_success": all(r["success"] for r in workflow_results),
         }
 
+    # TODO - Treat excludes
     def _load_config(self, config_file: Optional[str], **kwargs) -> Dict[str, Any]:
         """
         Load configuration from file or use defaults

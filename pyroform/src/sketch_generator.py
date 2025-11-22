@@ -5,10 +5,10 @@ FlowCTRL Sketch Generator for Pyroform
 import json
 import pysnooper
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 from pathlib import Path
 
-from .models import PyroConfig, User, Group, Device, ActionType
+from .models import PyroConfig, User, Group, Device, Exclude, ActionType
 from .logging import STDOUTMsg
 from .splitter import ListSplitter
 
@@ -82,13 +82,37 @@ class SketchGenerator:
         return sketch
 
 
-    # TODO
+    # TODO - WIP
 #   def _generate_correction_commands(self, config: PyroConfig, system_state: dict, compared: dict) -> List[Dict[str, Any]]:
 #       commands = []
 
 #       return commands
 
-    # TODO - WIP
+#   @pysnooper.snoop()
+    def has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
+        """
+        Check if a path has any excluded path as its parent directory.
+
+        Args:
+            path: The path to check
+            excluded_paths: List of paths that should not be parents
+
+        Returns:
+            bool: True if any excluded path is a parent of the given path
+        """
+        path_obj = Path(path).resolve()
+        for excluded in excluded_paths:
+            excluded_obj = Path(excluded).resolve()
+            try:
+                # If path starts with excluded path, excluded is a parent
+                path_obj.relative_to(excluded_obj)
+                self.stdout.debug(f'Excluding: {path}')
+                return True
+            except ValueError:
+                # excluded is not a parent of path
+                continue
+        return False
+
 #   @pysnooper.snoop()
     def _generate_cleanup_commands(self, config: PyroConfig, system_state: dict, compared: dict) -> List[Dict[str, Any]]:
         """
@@ -98,12 +122,6 @@ class SketchGenerator:
         need to compare current system state with desired state.
         """
         commands = []
-        cmd_prefix = '' if not self.dry_run else '# '
-        # TODO - Make configurable from config file
-#       system_state = get_system_state(
-#           pyro_config=config, max_depth=100, include_hidden=True
-#       )
-#       compared = compare_system_state_with_pyro_file(system_state, config)
 
         print(f'[ DEBUG ]: system_state - {system_state}')
 #       print('[ DEBUG ]: system_state - ', json.dumps(system_state, indent=4))
@@ -111,7 +129,12 @@ class SketchGenerator:
 #       print('[ DEBUG ]: compared - ', json.dumps(compared, indent=4))
         print(f'[ DEBUG ]: compared[extra_directories] - {compared["extra_directories"]}')
 
-        extra_usernames = " ".join([user['username'] for user in compared.get('extra_users', []) if user.get('username')])
+        extra_usernames = " ".join([
+            user['username']
+            for user in compared.get('extra_users', [])
+            if user.get('username')
+            and user['username'] not in config.excludes.users
+        ])
         if extra_usernames.strip():
             # Clean up users not in config
             cleanup_user_cmd = {
@@ -124,7 +147,12 @@ class SketchGenerator:
             }
             commands.append(cleanup_user_cmd)
 
-        extra_groups = " ".join([group['groupname'] for group in compared.get('extra_groups', []) if group.get('groupname')])
+        extra_groups = " ".join([
+            group['groupname']
+            for group in compared.get('extra_groups', [])
+            if group.get('groupname')
+            and group['groupname'] not in config.excludes.groups
+        ])
         if extra_groups.strip():
             # Clean up groups not in config
             cleanup_group_cmd = {
@@ -137,28 +165,13 @@ class SketchGenerator:
             }
             commands.append(cleanup_group_cmd)
 
-
-
-#       # TODO
-#       extra_mounted_devices = " ".join([])
-#       if extra_mounted_devices.strip():
-#           # Clean up groups not in config
-#           cleanup_devices_cmd = {
-#               "name": "Cleanup extra mounted block storage devices",
-#               "cmd": f"{self.cmd_prefix}for device in {extra_mounted_devices}; do umount -f $device; done",
-#               "setup-cmd": "",
-#               "on-ok-cmd": f"echo 'Eliminated: {extra_mounted_devices}'",
-#               "on-nok-cmd": f"echo 'Could not scorch extra mounted devices! Details: {extra_mounted_devices}'",
-#               "fatal-nok": False,
-#           }
-#           commands.append(cleanup_devices_cmd)
-
-#       # TODO - Support chunks
-#       extra_directory_list = []
-#       if len(extra_directory_list) > self.chunk_size:
-#           directory_chunks = self.list_splitter.split(extra_directory_list)
-
-        extra_directory_list = [directory['path'] for directory in compared.get('extra_directories', []) if directory.get('path')]
+        extra_directory_list = [
+            directory['path']
+            for directory in compared.get('extra_directories', [])
+            if directory.get('path')
+            and directory['path'] not in config.excludes.directories
+            and not self.has_excluded_parent(directory['path'], config.excludes.directories)
+        ]
         dir_chunks = self.list_splitter.split(extra_directory_list) if len(extra_directory_list) > self.chunk_size else [extra_directory_list]
         for chunk in dir_chunks:
             extra_directories = " ".join(chunk)
@@ -175,8 +188,19 @@ class SketchGenerator:
             }
             commands.append(cleanup_directories_cmd)
 
-        extra_files_and_linx_list = [file['path'] for file in compared.get('extra_files', []) if file.get('path')] \
-            + [link['path'] for link in compared.get('extra_symlinks', []) if link.get('path')]
+        extra_files_and_linx_list = [
+            file['path']
+            for file in compared.get('extra_files', [])
+            if file.get('path')
+            and file['path'] not in config.excludes.files
+            and not self.has_excluded_parent(file['path'], config.excludes.directories)
+        ] + [
+            link['path']
+            for link in compared.get('extra_symlinks', [])
+            if link.get('path')
+            and link['path'] not in config.excludes.links
+            and not self.has_excluded_parent(link['path'], config.excludes.directories)
+        ]
         file_chunks = self.list_splitter.split(extra_files_and_linx_list) if len(extra_files_and_linx_list) > self.chunk_size else [extra_files_and_linx_list]
         for chunk in file_chunks:
             extra_files_and_links = " ".join(chunk)
@@ -208,9 +232,9 @@ class SketchGenerator:
         """
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Users": self._generate_user_commands(config.users),
-            "Groups": self._generate_group_commands(config.groups),
-            "Devices": self._generate_device_commands(config.devices),
+            "Users": self._generate_user_commands(config.users, excludes=config.excludes.users),
+            "Groups": self._generate_group_commands(config.groups, excludes=config.excludes.groups),
+            "Devices": self._generate_device_commands(config.devices, excludes=config.excludes),
         }
 
         # Remove empty sections
@@ -230,7 +254,7 @@ class SketchGenerator:
         """
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Devices": self._generate_mount_commands(config.devices),  # Only mount-related commands
+            "Devices": self._generate_mount_commands(config.devices, excludes=config.excludes.devices),  # Only mount-related commands
         }
 
         # Remove empty sections
@@ -238,12 +262,15 @@ class SketchGenerator:
         return sketch
 
     @pysnooper.snoop()
-    def _generate_user_commands(self, users: List[User]) -> List[Dict[str, Any]]:
+    def _generate_user_commands(self, users: List[User], excludes: Union[List[str], None] = None) -> List[Dict[str, Any]]:
         """Generate user management commands"""
         commands = []
         cmd_prefix = '' if not self.dry_run else '# '
 
         for user in users:
+            if excludes and user.name in excludes:
+                self.stdout.info(f'Excluding system user: {user.name}')
+                continue
             group_membership = [str(grp) for grp in user.groups]
             csv_groups = ','.join(group_membership)
             groups = " ".join(group_membership)
@@ -260,12 +287,15 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_group_commands(self, groups: List[Group]) -> List[Dict[str, Any]]:
+    def _generate_group_commands(self, groups: List[Group], excludes: Union[List[str], None] = None) -> List[Dict[str, Any]]:
         """Generate group management commands"""
         commands = []
         cmd_prefix = '' if not self.dry_run else '# '
 
         for group in groups:
+            if excludes and group.name in excludes:
+                self.stdout.info(f'Excluding system group: {group.name}')
+                continue
             member_users = [str(usr) for usr in group.users]
             users = " ".join(member_users)
             group_cmd = {
@@ -281,7 +311,8 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_mount_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
+    # TODO
+    def _generate_mount_commands(self, devices: List[Device], excludes: Union[List[str], None] = None) -> List[Dict[str, Any]]:
         """
         Generate device mounting commands only (no file/directory creation)
 
@@ -292,6 +323,9 @@ class SketchGenerator:
         cmd_prefix = '' if not self.dry_run else '#'
 
         for device in devices:
+            if excludes and device.path in excludes:
+                self.stdout.info(f'Excluding block storage device: {device.label} - {device.path}')
+                continue
             # Create mountpoint directory
             mountpoint_cmd = {
                 "name": f"Creating System Mountpoint Directory {device.mountpoint}",
@@ -319,7 +353,7 @@ class SketchGenerator:
         return commands
 
     @pysnooper.snoop()
-    def _generate_device_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
+    def _generate_device_commands(self, devices: List[Device], excludes: Union[Exclude, None] = None) -> List[Dict[str, Any]]:
         """
         Generate complete device commands including directory structure
         Used for configure action
@@ -328,6 +362,9 @@ class SketchGenerator:
         cmd_prefix = '' if not self.dry_run else '# '
 
         for device in devices:
+            if excludes and device.path in excludes.devices:
+                self.stdout.info(f'Excluding block storage device: {device.label} - {device.path}')
+                continue
             # Create mountpoint directory
             if device.mountpoint:
                 mountpoint_cmd = {
@@ -365,6 +402,9 @@ class SketchGenerator:
                     obj_type, path, owner, group, permissions = state_parts[:5]
 
                     if obj_type.lower() in ("d", "dir", "directory"):
+                        if excludes and path in excludes.directories or self.has_excluded_parent(path, excludes.directories):
+                            self.stdout.info(f'Excluding directory: {path}')
+                            continue
                         dir_cmd = {
                             "name": f"Creating Directory {path}",
                             "cmd": f"{self.cmd_prefix}mkdir -p {path}",
@@ -376,6 +416,9 @@ class SketchGenerator:
                         }
                         commands.append(dir_cmd)
                     elif obj_type.lower() in ("f", "fl", "file"):
+                        if excludes and path in excludes.files or self.has_excluded_parent(path, excludes.directories):
+                            self.stdout.info(f'Excluding file: {path}')
+                            continue
                         dir_cmd = {
                             "name": f"Creating Regular File {path}",
                             "cmd": f"{self.cmd_prefix}touch {path}",
@@ -387,6 +430,9 @@ class SketchGenerator:
                         }
                         commands.append(dir_cmd)
                     elif obj_type.lower() in ("l", "ln", "link"):
+                        if excludes and path in excludes.links or self.has_excluded_parent(path, excludes.directories):
+                            self.stdout.info(f'Excluding link: {path}')
+                            continue
                         dir_cmd = {
                             "name": f"Creating Symbolic Link {path}", #.replace('/', '_')
                             "cmd": f"{self.cmd_prefix}ln -s {state_parts[5]} {path}",
@@ -432,8 +478,14 @@ class SketchGenerator:
             self.stdout.err(f"Error saving sketch to {output_path}: {e}")
             return False
 
-
 # CODE DUMP
+#   def is_parent_path(self, parent_path: Path, child_path: Path) -> bool:
+#       """Check if parent_path is contained within child_path's hierarchy."""
+#       try:
+#           parent_path.resolve().relative_to(child_path.resolve())
+#           return True
+#       except ValueError:
+#           return False
 
 #   @pysnooper.snoop()
 #   def _generate_file_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:

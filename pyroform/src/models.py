@@ -3,7 +3,7 @@ Pyroform Data Models
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Any, Set
+from typing import List, Dict, Any, Set, Union
 from enum import Enum
 
 
@@ -12,6 +12,7 @@ class ActionType(Enum):
     SCORCH = "scorch"
     MOUNT = "mount"
     VALIDATE = "validate"
+    SNAPSHOT = "snapshot"
 
 
 @dataclass
@@ -39,11 +40,22 @@ class Device:
 
 
 @dataclass
+class Exclude:
+    users: Union[List[str], None]
+    groups: Union[List[str], None]
+    devices: Union[List[str], None]
+    directories: Union[List[str], None]
+    files: Union[List[str], None]
+    links: Union[List[str], None]
+
+
+@dataclass
 class PyroConfig:
     label: str
     users: List[User]
     groups: List[Group]
     devices: List[Device]
+    excludes: Exclude
 
     def __post_init__(self):
         """Validate required fields after initialization"""
@@ -54,6 +66,7 @@ class PyroConfig:
         self.users = self.users or []
         self.groups = self.groups or []
         self.devices = self.devices or []
+        self.excludes = self.excludes or Exclude()
 
 
 @dataclass

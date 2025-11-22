@@ -11,7 +11,7 @@ import pysnooper
 from pathlib import Path
 from typing import List, Dict, Any
 
-from .models import PyroConfig, User, Group, Device
+from .models import PyroConfig, User, Group, Device, Exclude
 from .logging import STDOUTMsg
 
 class PyroParser:
@@ -80,6 +80,7 @@ class PyroParser:
 
         return self._parse_single_file_data(data)
 
+    # TODO - Treat excludes
     def _parse_single_file_data(self, data: Dict[str, Any]) -> PyroConfig:
         """
         Parse configuration data from a single file
@@ -105,7 +106,7 @@ class PyroParser:
                 )
                 users.append(user)
             except (KeyError, TypeError) as e:
-                msg = f"Invalid user data: {user_data}"
+                msg = f"Invalid user data: {user_data}\nDetails: {e}"
                 self.stdout.err(msg)
                 raise ValueError(msg) from e
 
@@ -141,9 +142,30 @@ class PyroParser:
                 self.stdout.err(msg)
                 raise ValueError(msg) from e
 
+        # Parse exceptions
+        exclude_data, excludes = data.get("Excludes"), Exclude([], [], [], [], [], [])
+        if exclude_data:
+            try:
+                excludes = Exclude(
+                    users=exclude_data.get('Users', []),
+                    groups=exclude_data.get('Groups', []),
+                    devices=exclude_data.get('Devices', []),
+                    directories=exclude_data.get('Directories', []),
+                    files=exclude_data.get('Files', []),
+                    links=exclude_data.get('Links', []),
+                )
+
+                print(f'[ DEBUG ]: excludes - {excludes}')
+                print(f'[ DEBUG ]: excludes.__dict__ - {excludes.__dict__}')
+            except (KeyError, TypeError) as e:
+                msg = f"Invalid exclude data: {exclude_data}"
+                self.stdout.err(msg)
+                raise ValueError(msg) from e
+
+
         self.stdout.info(f'State file data: %s' % (str(json.dumps(data, indent=4))))
 
-        return PyroConfig(label=label, users=users, groups=groups, devices=devices)
+        return PyroConfig(label=label, users=users, groups=groups, devices=devices, excludes=excludes)
 
     def _parse_directory(self, directory_path: Path) -> List[PyroConfig]:
         """

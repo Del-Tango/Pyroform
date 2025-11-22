@@ -98,7 +98,7 @@ class PyroflowEngine:
         """
         try:
 
-            self.stdout.debug('FlowCTRL Sketch - %s' % str(json.dumps(sketch, indent=4)))
+            self.stdout.info('FlowCTRL Sketch - %s' % str(json.dumps(sketch, indent=4)))
 
             # TODO - Set --output path from config / cli args
             # Save sketch to temporary file
@@ -107,7 +107,7 @@ class PyroflowEngine:
             self.stdout.debug(f'temp_sketch_path - {temp_sketch_path}')
 
             with open(temp_sketch_path, "w") as f:
-                json.dump(sketch, f)
+                json.dump(sketch, f, indent=4)
 
             # Purging previous session data
             self.flow_engine.purge_data()
@@ -122,11 +122,12 @@ class PyroflowEngine:
             # Start procedure execution
             result = self.flow_engine.start_procedure()
 
-            # Clean up temporary file
-            try:
-                temp_sketch_path.unlink()
-            except OSError:
-                pass  # Ignore cleanup errors
+            # TODO - Make configurable from CLI args
+#           # Clean up temporary file
+#           try:
+#               temp_sketch_path.unlink()
+#           except OSError:
+#               pass  # Ignore cleanup errors
 
             return result.success if hasattr(result, "success") else False
 
@@ -254,7 +255,7 @@ class PyroflowEngine:
 
 
 
-#   # TODO - DEPRECATED
+#   #  DEPRECATED
 #   def _create_mock_flow_engine(self):
 #       """
 #       Create a mock FlowEngine for testing
