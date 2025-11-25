@@ -9,13 +9,14 @@ from pathlib import Path
 from .models import User, Group, Device
 from .logging import STDOUTMsg
 
+# TODO - Configure from Pyroform interface (config file / CLI options)
 stdout = STDOUTMsg(
     debug_mode=True,
-    timestamp=True,
+    timestamp=False,
 )
 
 
-@pysnooper.snoop()
+##@pysnooper.snoop()
 def compare_system_state_with_pyro_file(system_state: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compare current system state with configuration and generate difference report.
@@ -67,6 +68,7 @@ def compare_system_state_with_pyro_file(system_state: Dict[str, Any], config: Di
     if config.devices:
         stdout.debug(f'config.devices - {config.devices}')
         compare_filesystem(config.devices, current_fs_state, differences)
+    stdout.debug("Differences: " + json.dumps(differences, indent=4))
     return differences
 
 # TODO - Cant this be migrated to scanner?
@@ -113,7 +115,7 @@ def build_filesystem_state(system_state: Dict[str, Any]) -> Dict[str, Dict[str, 
 
     return fs_state
 
-@pysnooper.snoop()
+##@pysnooper.snoop()
 def compare_users(config_users: List[User], current_users: Dict, differences: Dict[str, Any]) -> None:
     """Compare configured users with current system users."""
     config_user_names = set()
@@ -171,7 +173,7 @@ def compare_users(config_users: List[User], current_users: Dict, differences: Di
             'home_directory': user['home_directory']
         })
 
-@pysnooper.snoop()
+##@pysnooper.snoop()
 def compare_groups(config_groups: List[Group], current_groups: Dict, differences: Dict[str, Any]) -> None:
     """Compare configured groups with current system groups."""
     config_group_names = set()
@@ -380,190 +382,3 @@ def compare_filesystem(config_devices: List[Device], current_fs_state: Dict, dif
 
 # CODE DUMP
 
-#   # DEPRECATED
-#   def generate_difference_report(differences: Dict[str, Any]) -> str:
-#       """Generate a human-readable difference report."""
-#       report = []
-
-#       # Summary
-#       total_issues = sum(len(items) for items in differences.values())
-#       report.append(f"SYSTEM STATE COMPARISON REPORT")
-#       report.append(f"Total issues found: {total_issues}")
-#       report.append("=" * 60)
-
-#       # Users section
-#       if differences['missing_users']:
-#           report.append("\n❌ MISSING USERS:")
-#           for user in differences['missing_users']:
-#               report.append(f"  - {user['username']} (label: {user['label']})")
-#               report.append(f"    Groups: {', '.join(user['groups'])}")
-
-#       if differences['extra_users']:
-#           report.append("\n⚠️  EXTRA USERS (in system but not in config):")
-#           for user in differences['extra_users']:
-#               report.append(f"  - {user['username']} (UID: {user['uid']}, Home: {user['home_directory']})")
-
-#       if differences['user_mismatches']:
-#           report.append("\n🔧 USER MISMATCHES:")
-#           for user in differences['user_mismatches']:
-#               report.append(f"  - {user['username']} (label: {user['label']})")
-#               for mismatch in user['mismatches']:
-#                   if mismatch['property'] == 'groups':
-#                       report.append(f"    Groups mismatch:")
-#                       if mismatch['missing']:
-#                           report.append(f"      Missing: {', '.join(mismatch['missing'])}")
-#                       if mismatch['extra']:
-#                           report.append(f"      Extra: {', '.join(mismatch['extra'])}")
-
-#       # Groups section
-#       if differences['missing_groups']:
-#           report.append("\n❌ MISSING GROUPS:")
-#           for group in differences['missing_groups']:
-#               report.append(f"  - {group['groupname']} (label: {group['label']})")
-#               report.append(f"    Members: {', '.join(group['members'])}")
-
-#       if differences['extra_groups']:
-#           report.append("\n⚠️  EXTRA GROUPS (in system but not in config):")
-#           for group in differences['extra_groups']:
-#               report.append(f"  - {group['groupname']} (GID: {group['gid']})")
-#               if group['members']:
-#                   report.append(f"    Members: {', '.join(group['members'])}")
-
-#       if differences['group_mismatches']:
-#           report.append("\n🔧 GROUP MISMATCHES:")
-#           for group in differences['group_mismatches']:
-#               report.append(f"  - {group['groupname']} (label: {group['label']})")
-#               for mismatch in group['mismatches']:
-#                   if mismatch['property'] == 'members':
-#                       report.append(f"    Members mismatch:")
-#                       if mismatch['missing']:
-#                           report.append(f"      Missing: {', '.join(mismatch['missing'])}")
-#                       if mismatch['extra']:
-#                           report.append(f"      Extra: {', '.join(mismatch['extra'])}")
-
-#       # Filesystem section
-#       if differences['missing_mountpoints']:
-#           report.append("\n❌ MISSING MOUNTPOINTS:")
-#           for mountpoint in differences['missing_mountpoints']:
-#               report.append(f"  - {mountpoint['mountpoint']} (label: {mountpoint['label']})")
-
-#       def format_fs_item(item):
-#           return f"{item['path']} ({item['owner']}:{item['group']} {item['permissions']})"
-
-#       if differences['missing_directories']:
-#           report.append("\n❌ MISSING DIRECTORIES:")
-#           for dir in differences['missing_directories']:
-#               report.append(f"  - {format_fs_item(dir)}")
-
-#       if differences['missing_files']:
-#           report.append("\n❌ MISSING FILES:")
-#           for file in differences['missing_files']:
-#               report.append(f"  - {format_fs_item(file)}")
-
-#       if differences['missing_symlinks']:
-#           report.append("\n❌ MISSING SYMLINKS:")
-#           for link in differences['missing_symlinks']:
-#               target_info = f" -> {link['target']}" if 'target' in link else ""
-#               report.append(f"  - {format_fs_item(link)}{target_info}")
-
-#       # Mismatches
-#       if differences['directory_mismatches']:
-#           report.append("\n🔧 DIRECTORY MISMATCHES:")
-#           for dir in differences['directory_mismatches']:
-#               report.append(f"  - {dir['path']}")
-#               for mismatch in dir['mismatches']:
-#                   report.append(f"    {mismatch['property']}: expected '{mismatch['expected']}', got '{mismatch['actual']}'")
-
-#       if differences['file_mismatches']:
-#           report.append("\n🔧 FILE MISMATCHES:")
-#           for file in differences['file_mismatches']:
-#               report.append(f"  - {file['path']}")
-#               for mismatch in file['mismatches']:
-#                   report.append(f"    {mismatch['property']}: expected '{mismatch['expected']}', got '{mismatch['actual']}'")
-
-#       if differences['symlink_mismatches']:
-#           report.append("\n🔧 SYMLINK MISMATCHES:")
-#           for link in differences['symlink_mismatches']:
-#               report.append(f"  - {link['path']}")
-#               for mismatch in link['mismatches']:
-#                   report.append(f"    {mismatch['property']}: expected '{mismatch['expected']}', got '{mismatch['actual']}'")
-
-#       return "\n".join(report)
-
-#   # Example usage
-#   if __name__ == "__main__":
-#       # Your configuration
-#       config = {
-#           "Label": "User Management Test",
-#           "Users": [
-#               {
-#                   "label": "test_user_1",
-#                   "Name": "pyrotest1",
-#                   "Password": "testpass1",
-#                   "Groups": [
-#                       "pyrogroup1"
-#                   ]
-#               },
-#               {
-#                   "label": "test_user_2",
-#                   "Name": "pyrotest2",
-#                   "Password": "testpass2",
-#                   "Groups": [
-#                       "pyrogroup1",
-#                       "pyrogroup2"
-#                   ]
-#               }
-#           ],
-#           "Groups": [
-#               {
-#                   "label": "group_1",
-#                   "Name": "pyrogroup1",
-#                   "Users": [
-#                       "pyrotest1",
-#                       "pyrotest2"
-#                   ]
-#               },
-#               {
-#                   "label": "group_2",
-#                   "Name": "pyrogroup2",
-#                   "Users": [
-#                       "pyrotest2"
-#                   ]
-#               }
-#           ],
-#           "Devices": [
-#               {
-#                   "label": "test_fs",
-#                   "Path": "",
-#                   "Partition": 0,
-#                   "Mountpoint": "/tmp/pyrotest",
-#                   "State": [
-#                       "dir,/tmp/pyrotest,root,root,0755",
-#                       "dir,/tmp/pyrotest/data,pyrotest1,pyrogroup1,0750",
-#                       "dir,/tmp/pyrotest/logs,root,pyrogroup1,0775",
-#                       "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,0644",
-#                       "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,0777,/tmp/pyrotest/README"
-#                   ]
-#               }
-#           ]
-#       }
-
-#       # Assuming you have a system_state from the previous script
-#       # system_state = get_complete_system_state()
-
-#       # For demonstration, create a mock system state
-#       system_state = {
-#           'users': [],
-#           'groups': [],
-#           'mounted_devices': []
-#       }
-
-#       # Compare and generate report
-#       differences = compare_system_state_with_pyro_file(system_state, config)
-#       report = generate_difference_report(differences)
-#       print(report)
-
-#       # Save detailed differences to JSON
-#       with open('system_state_differences.json', 'w') as f:
-#           json.dump(differences, f, indent=2, default=str)
-#       print("\nDetailed differences saved to system_state_differences.json")

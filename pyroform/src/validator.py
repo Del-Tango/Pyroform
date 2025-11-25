@@ -3,11 +3,17 @@ System Validation for Pyroform
 """
 
 import subprocess
+import json
+import pysnooper
+
 from dataclasses import dataclass
 from typing import List, Dict, Any
 from pathlib import Path
 
 from .models import PyroConfig
+from .logging import STDOUTMsg
+from .scanner import get_system_state
+from .difference import compare_system_state_with_pyro_file
 
 
 @dataclass
@@ -24,9 +30,17 @@ class SystemValidator:
     Validates current system state against desired Pyro configuration
     """
 
-    def __init__(self):
+    @pysnooper.snoop()
+    def __init__(self, stdout: STDOUTMsg | None = None, config: dict | None = None) -> None:
         self._last_result: ValidationResult = None
+        self.config = config or {}
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=self.config.get('debug', False),
+            timestamp=self.config.get('log_timestamp') or self.config.get('debug', False),
+        )
 
+    # TODO - Refactor - use scanner and difference
+    @pysnooper.snoop()
     def validate_configuration(self, config: PyroConfig) -> ValidationResult:
         """
         Compare current system state with desired configuration
@@ -37,8 +51,20 @@ class SystemValidator:
         Returns:
             ValidationResult with discrepancies and summary
         """
+
+        # TODO - Move to validator and use in sketch generator from here
+#       system_state = get_system_state(
+#           pyro_config=config, max_depth=100, include_hidden=True
+#       )
+#       compared = compare_system_state_with_pyro_file(system_state, config)
+
+
+        # TODO - DEPRECATED 2 down
         current_state = self._get_current_system_state()
         discrepancies = self._compare_states(config, current_state)
+
+        self.stdout.debug('Current State: ' + json.dumps(current_state, indent=4))
+        self.stdout.debug('Discrepancies: ' + json.dumps(discrepancies, indent=4))
 
         # Calculate summary
         critical_issues = len([d for d in discrepancies if d.get("critical", False)])
@@ -56,6 +82,7 @@ class SystemValidator:
 
         return self._last_result
 
+    @pysnooper.snoop()
     def get_validation_report(self) -> Dict[str, Any]:
         """
         Generate detailed validation report
@@ -93,6 +120,7 @@ class SystemValidator:
             "is_valid": self._last_result.is_valid,
         }
 
+    @pysnooper.snoop()
     def _get_current_system_state(self) -> Dict[str, Any]:
         """
         Get current system state
@@ -107,6 +135,7 @@ class SystemValidator:
             "files": self._get_current_file_state(),
         }
 
+    @pysnooper.snoop()
     def _get_current_users(self) -> List[str]:
         """Get list of current system users"""
         try:
@@ -121,6 +150,7 @@ class SystemValidator:
         except (subprocess.CalledProcessError, FileNotFoundError):
             return []
 
+    @pysnooper.snoop()
     def _get_current_groups(self) -> List[str]:
         """Get list of current system groups"""
         try:
@@ -135,6 +165,7 @@ class SystemValidator:
         except (subprocess.CalledProcessError, FileNotFoundError):
             return []
 
+    @pysnooper.snoop()
     def _get_current_mounts(self) -> Dict[str, str]:
         """Get current mount points"""
         try:
@@ -153,6 +184,8 @@ class SystemValidator:
         except (subprocess.CalledProcessError, FileNotFoundError):
             return {}
 
+    # TODO - Move implementation from scanner
+    @pysnooper.snoop()
     def _get_current_file_state(self) -> Dict[str, Dict[str, str]]:
         """
         Get current file and directory states
@@ -187,6 +220,8 @@ class SystemValidator:
 
         return file_state
 
+    # TODO - REFACTOR - Import differences from .difference
+    @pysnooper.snoop()
     def _compare_states(
         self, config: PyroConfig, current_state: Dict[str, Any]
     ) -> List[Dict[str, Any]]:

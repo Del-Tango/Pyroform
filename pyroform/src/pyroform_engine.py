@@ -38,7 +38,7 @@ class PyroformEngine:
         """
         self.config = config or self._default_config()
         self.stdout = STDOUTMsg(
-            debug_mode=self.config['debug'],
+            debug_mode=True, #self.config['debug'],
             timestamp=self.config['log_timestamp'] or self.config['debug'],
         )
 
@@ -50,11 +50,11 @@ class PyroformEngine:
         # Use mocked flow engine to avoid FlowCTRL dependency issues
         # self._create_mock_flow_engine(stdout=self.stdout)
 
-        self.validator = SystemValidator()
+        self.validator = SystemValidator(stdout=self.stdout, config=self.config)
         self.reporter = ReportGenerator()
 
     # TODO - Make verbose logging
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> bool:
         """
         Execute configure action
@@ -77,6 +77,9 @@ class PyroformEngine:
                 self.stdout.debug(f'Config {config}')
                 sketch = self.sketch_generator.generate_configure_sketch(config)
                 self.stdout.debug(f'Sketch {sketch}')
+                if len(sketch) <= 1:
+                    self.stdout.info(f'Nothing to configure! Skipping Pyro config ({config.label})')
+                    continue
                 success = self.flow_engine.execute_sketch(sketch, ActionType.CONFIGURE)
                 self.stdout.debug(f'Success {success}')
                 if not success:
@@ -97,25 +100,18 @@ class PyroformEngine:
         Returns:
             True if confirmed, False if cancelled
         """
-        print(
-            f"WARNING: Scorch action will remove system resources not specified in '{config.label}'."
+        self.stdout.warn(
+            f"Scorch action will remove system resources not specified in '{config.label}'."
         )
-        print("This includes:")
-        print("  - Users not in the configuration")
-        print("  - Groups not in the configuration")
-        print("  - Mount points not in the configuration")
-        print("  - Files not in the configuration")
-        print("  - Directories not in the configuration")
-        print("  - Symbolic links not in the configuration")
+
+        self.stdout.warn("This is a destructive operation that cannot be undone!")
         print()
-        print("THIS IS A DESTRUCTIVE OPERATION THAT CANNOT BE UNDONE!")
+        response = input("Are you sure about this? [Y/N]: ")
         print()
-        response = input("Are you sure you want to continue? [Y/N]: ")
         return response.lower() in ["yes", "y"]
 
 
-    # TODO - Refactor
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def scorch(self, input_path: str, **kwargs) -> ScorchResult:
         """
         Execute scorch action
@@ -144,10 +140,12 @@ class PyroformEngine:
                 self.stdout.debug(f'Config {config}')
                 sketch = self.sketch_generator.generate_scorch_sketch(config)
                 self.stdout.debug(f'Sketch {sketch}')
-
-                # TODO - Prompt user for confirmation
-                if safety_check:
-                    self._confirm_scorch(config)
+                if len(sketch) <= 1:
+                    self.stdout.info(f'Nothing to scorch! Skipping Pyro config ({config.label})')
+                    continue
+                if safety_check and not self._confirm_scorch(config):
+                    self.stdout.warn(f'Scorch action aborted! Pyro config ({config.label}) not applied.\n')
+                    continue
 
                 success = self.flow_engine.execute_sketch(sketch, ActionType.SCORCH)
                 self.stdout.debug(f'Success {success}')
@@ -158,23 +156,6 @@ class PyroformEngine:
         except Exception as e:
             print(f"Scorch action failed: {e}")
             return False
-
-#           # Use the first configuration for scorch
-#           config = configs[0]
-#           safety_check = not kwargs.get("auto_confirm", False)
-#           dry_run = kwargs.get("dry_run", False)
-
-#           scorch_engine = ScorchEngine(safety_check=safety_check)
-#           return scorch_engine.execute_scorch(config, dry_run=dry_run)
-
-#       except Exception as e:
-#           print(f"Scorch action failed: {e}")
-#           return ScorchResult(
-#               resources_removed=[],
-#               resources_failed=[{"error": str(e)}],
-#               dry_run=kwargs.get("dry_run", False),
-#               success=False,
-#           )
 
     def mount(self, input_path: str, **kwargs) -> bool:
         """
@@ -194,6 +175,9 @@ class PyroformEngine:
 
             for config in configs:
                 sketch = self.sketch_generator.generate_mount_sketch(config)
+                if len(sketch) <= 1:
+                    self.stdout.info(f'Nothing to mount! Skipping Pyro config ({config.label})')
+                    continue
                 success = self.flow_engine.execute_sketch(sketch, ActionType.MOUNT)
                 if not success:
                     return False
@@ -203,7 +187,8 @@ class PyroformEngine:
             print(f"Mount action failed: {e}")
             return False
 
-    @pysnooper.snoop()
+    # TODO -
+    #@pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Execute validate action
@@ -255,9 +240,9 @@ class PyroformEngine:
                 self.stdout.warn(f'({total_issues}) non critical issues identified')
 
             if all_valid:
-                self.stdout.ok('Machine state corresponds!')
+                self.stdout.ok('No further action required!')
             else:
-                self.stdout.nok('Machine state does not correspond!')
+                self.stdout.nok('Run action "Configure" to apply Pyro config!')
 
             summary = {
                 "total_issues": total_issues,
@@ -295,25 +280,4 @@ class PyroformEngine:
         }
 
 # CODE DUMP
-#               self.stdout.info(f'Processing Pyro config {config.label}... Details: {config.__dict__}') #$ % str(json.dumps(config.__dict__, indent=4)))
-
-#   # TODO - DEPRECATED
-#   def _create_mock_flow_engine(self):
-#       """
-#       Create a mock flow engine for testing compatibility
-
-#       Returns:
-#           Mock PyroflowEngine instance
-#       """
-#       from unittest.mock import Mock
-
-#       mock_engine = Mock(spec=PyroflowEngine)
-#       mock_engine.execute_sketch.return_value = True
-#       mock_engine.pause_execution.return_value = True
-#       mock_engine.resume_execution.return_value = True
-#       mock_engine.stop_execution.return_value = True
-#       mock_engine.send_command.return_value = True
-#       mock_engine.purge_data.return_value = True
-#       mock_engine.current_sketch = None
-#       return mock_engine
 

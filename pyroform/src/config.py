@@ -25,7 +25,7 @@ class PyroformConfig:
         """
         self.settings = self._load_config(config_file)
 
-    @pysnooper.snoop()
+    ##@pysnooper.snoop()
     def _load_config(self, config_file: Optional[Path]) -> Dict[str, Any]:
         """
         Load configuration from file with defaults

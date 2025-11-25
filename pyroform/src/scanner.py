@@ -14,13 +14,14 @@ from dataclasses import dataclass
 from .models import FileInfo, PyroConfig
 from .logging import STDOUTMsg
 
+# TODO - Configure from Pyroform interface (config file / CLI args)
 stdout = STDOUTMsg(
-    debug_mode=True,
-    timestamp=True,
+    debug_mode=False,
+    timestamp=False,
 )
 
 
-@pysnooper.snoop()
+#@pysnooper.snoop()
 def get_system_state(
     scan_paths: Optional[List[str]] = None,
     pyro_config: Optional[PyroConfig] = None,
@@ -49,9 +50,11 @@ def get_system_state(
         'mounted_devices': get_mounted_devices_info(scan_paths, max_depth, include_hidden, pyro_config=pyro_config)
     }
 
+    stdout.debug(f'System State:' + json.dumps(system_state, indent=4))
+
     return system_state
 
-@pysnooper.snoop()
+#@pysnooper.snoop()
 def get_users_info(pyro_config: Optional[PyroConfig] = None) -> List[Dict[str, Any]]:
     """Get information about all system users."""
     users = []
@@ -78,7 +81,7 @@ def get_users_info(pyro_config: Optional[PyroConfig] = None) -> List[Dict[str, A
 
     return users
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 def get_user_groups(username: str) -> List[str]:
     """Get all groups a user belongs to."""
     try:
@@ -92,7 +95,7 @@ def get_user_groups(username: str) -> List[str]:
     except (subprocess.CalledProcessError, IndexError, FileNotFoundError):
         return []
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 def get_groups_info(pyro_config: Optional[PyroConfig] = None) -> List[Dict[str, Any]]:
     """Get information about all system groups."""
     groups = []
@@ -114,7 +117,7 @@ def get_groups_info(pyro_config: Optional[PyroConfig] = None) -> List[Dict[str, 
 
     return groups
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 def get_mounted_devices_info(
     scan_paths: Optional[List[str]],
     max_depth: int,
@@ -211,18 +214,6 @@ def get_mounted_devices_info(
                 # Skip if we've already processed this mountpoint
                 if mountpoint in processed_mountpoints:
                     continue
-
-                # TODO - Configure from config file
-                # Skip obviously virtual filesystems but be less restrictive
-#               skip_patterns = ['/proc', '/sys', '/dev/pts', '/dev/shm', 'cgroup', 'mqueue', 'hugetlbfs']
-#               skip_patterns = ['/proc', '/sys', '/dev/pts', '/dev/shm']
-#               if any(pattern in mountpoint for pattern in skip_patterns):
-#                   continue
-
-#               # Skip tmpfs and devtmpfs
-#               if fstype in ['tmpfs', 'devtmpfs']:
-#                   continue
-
                 processed_mountpoints.add(mountpoint)
 
                 # If specific scan paths are provided, only include those
@@ -268,7 +259,7 @@ def get_mounted_devices_info(
 
     return mounted_devices
 
-@pysnooper.snoop()
+#@pysnooper.snoop()
 def get_device_partitions(device: str) -> List[Dict[str, str]]:
     """Get partition information for a device."""
     partitions = []
@@ -306,7 +297,7 @@ def get_device_partitions(device: str) -> List[Dict[str, str]]:
 
     return partitions
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 def get_numeric_permissions(mode: int) -> str:
     """
     Convert file mode to numeric (octal) permissions notation.
@@ -322,7 +313,7 @@ def get_numeric_permissions(mode: int) -> str:
     # Format as 4-digit octal string
     return oct(permissions)[2:].zfill(4)
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 def scan_filesystem(
     path: str,
     device_info: Dict[str, Any],
@@ -399,153 +390,5 @@ def scan_filesystem(
         pass
 
 # CODE DUMP
-
-# Example usage and testing
-#   if __name__ == "__main__":
-#       # Get complete system state
-#       system_state = get_system_state()
-
-#   @dataclass
-#   class FileInfo:
-#       path: str
-#       owner: str
-#       group: str
-#       permissions: str
-#       type: str
-
-
-#   # Enhanced version that scans everything
-#   def get_complete_system_state(max_depth=10, include_hidden=True) -> Dict[str, Any]:
-#       """Get complete system state with all files, directories, and links."""
-#       print("Fetching complete Linux system state...")
-
-#       # Get all mountpoints
-#       system_state = get_linux_system_state(
-#           scan_paths=None,  # Scan all mountpoints
-#           max_depth=10,     # Deeper scanning
-#           include_hidden=True
-#       )
-
-#       return system_state
-
-
-
-#   def get_system_state_summary(system_state: Dict[str, Any]) -> Dict[str, Any]:
-#       """Generate a summary of the system state."""
-#       summary = {
-#           'total_users': len(system_state['users']),
-#           'total_groups': len(system_state['groups']),
-#           'total_mounted_devices': len(system_state['mounted_devices']),
-#           'total_files': 0,
-#           'total_directories': 0,
-#           'total_symlinks': 0
-#       }
-
-#       for device in system_state['mounted_devices']:
-#           summary['total_files'] += len(device['files'])
-#           summary['total_directories'] += len(device['directories'])
-#           summary['total_symlinks'] += len(device['symlinks'])
-
-#       return summary
-
-
-
-
-#   # Utility function to save state to JSON
-#   def save_system_state_to_json(system_state: Dict[str, Any], filename: str) -> None:
-#       """Save system state to JSON file."""
-#       try:
-#           with open(filename, 'w') as f:
-#               json.dump(system_state, f, indent=2, default=str)
-#           print(f"System state saved to {filename}")
-#       except Exception as e:
-#           print(f"Error saving to JSON: {e}")
-
-
-# Display permissions in a more readable format
-#   def display_permission_legend():
-#       """Display a legend for numeric permissions."""
-#       print("\nPermission Legend (Octal Notation):")
-#       print("  First digit: Special permissions (setuid/setgid/sticky)")
-#       print("  Second digit: Owner permissions")
-#       print("  Third digit: Group permissions")
-#       print("  Fourth digit: Other permissions")
-#       print("\nPermission Values:")
-#       print("  4 = read (r), 2 = write (w), 1 = execute (x)")
-#       print("  Examples: 0644 = rw-r--r--, 0755 = rwxr-xr-x")
-#       print("  Special: 4000 = setuid, 2000 = setgid, 1000 = sticky bit")
-#       print("-" * 60)
-
-
-
-#   # Generate summary
-#   summary = get_system_state_summary(system_state)
-#   print("\nSystem State Summary:")
-#   for key, value in summary.items():
-#       print(f"  {key}: {value}")
-
-#   # Display permission legend
-#   display_permission_legend()
-
-#   # Display detailed information with NUMERICAL permissions
-#   print(f"\nUsers ({len(system_state['users'])} total):")
-#   for user in system_state['users']:
-#       print(f"  - {user['username']} (UID: {user['uid']}, GID: {user['gid']}, Home: {user['home_directory']})")
-#       print(f"    Groups: {', '.join(user['groups'])}")
-#       print(f"    Shell: {user['shell']}")
-
-#   print(f"\nGroups ({len(system_state['groups'])} total):")
-#   for group in system_state['groups']:
-#       print(f"  - {group['groupname']} (GID: {group['gid']})")
-#       if group['members']:
-#           print(f"    Members: {', '.join(group['members'])}")
-
-#   print(f"\nMounted Devices ({len(system_state['mounted_devices'])} total):")
-#   for device in system_state['mounted_devices']:
-#       print(f"  - {device['device_path']} mounted at {device['mountpoint']} ({device['filesystem_type']})")
-#       print(f"    Files: {len(device['files'])}")
-#       print(f"    Directories: {len(device['directories'])}")
-#       print(f"    Symlinks: {len(device['symlinks'])}")
-
-#       # Show some samples with NUMERICAL permissions
-#       if device['files']:
-#           print("    Sample files:")
-#           for file in device['files']:
-#               print(f"      {file['path']} ({file['owner']}:{file['group']} {file['permissions']})")
-
-#       if device['directories']:
-#           print("    Sample directories:")
-#           for dir in device['directories']:
-#               print(f"      {dir['path']} ({dir['owner']}:{dir['group']} {dir['permissions']})")
-
-#       if device['symlinks']:
-#           print("    Sample symlinks:")
-#           for link in device['symlinks']:
-#               print(f"      {link['path']} -> {link.get('target', 'broken')} ({link['owner']}:{link['group']} {link['permissions']})")
-
-#   # Save to file (still includes both numerical and symbolic for reference)
-#   save_system_state_to_json(system_state, "complete_system_state.json")
-#   print(f"\nComplete system state saved to complete_system_state.json")
-
-#   # Show some common permission examples
-#   print("\nCommon Permission Examples Found:")
-#   common_perms = {}
-#   for device in system_state['mounted_devices']:
-#       for item in device['files'] + device['directories'] + device['symlinks']:
-#           perm = item['permissions']
-#           common_perms[perm] = common_perms.get(perm, 0) + 1
-
-#   # Show top 10 most common permissions
-#   print("Top 10 most common permissions:")
-#   for perm, count in sorted(common_perms.items(), key=lambda x: x[1], reverse=True)[:10]:
-#       symbolic = None
-#       # Convert back to symbolic for display
-#       try:
-#           # This is a simplified conversion for common cases
-#           perm_int = int(perm, 8)
-#           symbolic = stat.filemode(perm_int)
-#       except:
-#           symbolic = "N/A"
-#       print(f"  {perm} ({symbolic}): {count} occurrences")
 
 

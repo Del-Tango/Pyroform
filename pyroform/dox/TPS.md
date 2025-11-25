@@ -439,6 +439,44 @@ Excludes:
 - Preconditions:
 - Validated by: [TAR TC_10](./TAR/TC_10.md)
 
+## Test Pyro File:
+```yaml
+Label: User Scorch Test
+Users:
+  - label: test_user_1
+    Name: pyrotest1
+    Password: testpass1
+    Groups:
+      - pyrogroup1
+  - label: test_user_2
+    Name: pyrotest2
+    Password: testpass2
+    Groups:
+      - pyrogroup1
+      - pyrogroup2
+Excludes:
+  Users:
+    - root
+    - nobody
+    - man
+    - news
+    - sys
+    - uucp
+    - lp
+    - _apt
+    - bin
+    - irc
+    - daemon
+    - backup
+    - www-data
+    - scorchtest
+    - sync
+    - mail
+    - list
+    - proxy
+    - games
+```
+
 ## Test Steps:
 
 1. Create orphaned user:
@@ -447,15 +485,21 @@ Excludes:
 ```
 2. Run command (no auto-confirm)
 ```bash
-~$ pyroform scorch -i minimal_config.yaml
+~$ pyroform scorch -i scorch_user.pyro.yaml
 # When prompted, answer "no"
 ```
 3. Verify user still exists
+```bash
+~$ id scorchtest2
+```
 4. Run with -y flag
 ```bash
-~$ pyroform scorch -i minimal_config.yaml -y
+~$ pyroform scorch -i scorch_user.pyro.yaml -y
 ```
 5. Verify user removed
+```bash
+~$ id scorchtest2
+```
 
 ## Expected Results:
 
@@ -471,6 +515,11 @@ Excludes:
 - Description: Test system validation against current state
 - Preconditions:
 - Validated by: [TAR TC_11](./TAR/TC_11.md)
+
+## Test Pyro Config
+```yaml
+
+```
 
 ## Test Steps:
 

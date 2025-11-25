@@ -35,7 +35,7 @@ def format_banner():
     return banner_text
 
 
-# @pysnooper.snoop()
+# #@pysnooper.snoop()
 def display_banner():
     """Display the Pyroform banner"""
     banner_text = format_banner()
@@ -43,17 +43,17 @@ def display_banner():
 
 # CLICK
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 class BannerCommand(click.Command):
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def invoke(self, ctx):
         # Display banner for all commands unless help is being shown
         if not ctx.args or not any(arg in ctx.args for arg in ['--help', '-h']):
             self._display_banner()
         return super().invoke(ctx)
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def get_help(self, ctx):
         '''Executed on subcommands'''
         # Display banner before help text
@@ -61,7 +61,7 @@ class BannerCommand(click.Command):
         original_help = super().get_help(ctx)
         return f"{banner}{original_help}"
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
         if return_text:
@@ -69,17 +69,17 @@ class BannerCommand(click.Command):
         click.echo(banner_text)
 
 
-# @pysnooper.snoop()
+# #@pysnooper.snoop()
 class BannerGroup(click.Group):
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
         if return_text:
             return banner_text
         click.echo(banner_text)
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def format_usage(self, ctx, formatter):
         # Ensure banner is included in main cli usage formatting
         banner_text = self._display_banner(return_text=True)
@@ -453,7 +453,7 @@ def workflow(workflow_file: str):
 
 # UTILS
 
-@pysnooper.snoop()
+#@pysnooper.snoop()
 def _get_action_type(
     scorch: bool, mount: bool, configure: bool, validate: bool
 ) -> ActionType:
@@ -469,7 +469,7 @@ def _get_action_type(
     else:
         raise ValueError("No action specified")
 
-@pysnooper.snoop()
+#@pysnooper.snoop()
 def _execute_action(
     action_type: ActionType,
     input_path: Path,
@@ -497,9 +497,6 @@ def _execute_action(
         auto_confirm: Whether to auto-confirm prompts
     """
     start_time = datetime.now().isoformat()
-
-#   if not silent:
-#       click.echo(f"Executing {action_type.value} action with input: {input_path}")
 
     try:
         # Initialize Pyroform with configuration
@@ -570,23 +567,13 @@ def _execute_action(
                 else:
                     click.echo(f"Failed to save report to: {report_file}")
 
-#       if not silent:
-#           if success:
-#               click.echo(
-#                   f"{action_type.value.capitalize()} action completed successfully"
-#               )
-#           else:
-#               click.echo(f"✗ {action_type.value.capitalize()} action failed")
-
     except Exception as e:
-#       if not silent:
-#           click.echo(f"Error during {action_type.value} execution: {e}")
         if debug:
             import traceback
 
             click.echo(traceback.format_exc())
 
-#@pysnooper.snoop()
+##@pysnooper.snoop()
 def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
     """
     Execute a complete Pyroform workflow
@@ -615,8 +602,6 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
                 click.echo(f"Invalid workflow step: {step}")
                 return False
 
-#           click.echo(f"Executing workflow step: {action} with {input_path}")
-
             try:
                 if action == "validate":
                     result = pf.validate(input_path, dry_run=dry_run)
@@ -644,7 +629,6 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
                 )
 
                 if not success:
-#                   click.echo(f"Workflow step failed: {action}")
                     return False
 
             except Exception as e:
@@ -671,23 +655,4 @@ if __name__ == "__main__":
     cli()
 
 # CODE DUMP
-
-#   # Executed on main util
-#   @pysnooper.snoop()
-#   def get_help(self, ctx):
-#       # Display banner before help text
-#       banner = self._display_banner(return_text=True)
-#       original_help = super().get_help(ctx)
-#       return f"{banner}\n{original_help}"
-#       return original_help
-
-
-
-#   @pysnooper.snoop()
-#   def invoke(self, ctx):
-#       # Display banner for all group commands unless help is being shown
-#       if not ctx.args or not any(arg in ctx.args for arg in ['--help', '-h']):
-#           self._display_banner()
-#       return super().invoke(ctx)
-
 

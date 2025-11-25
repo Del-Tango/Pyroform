@@ -42,7 +42,7 @@ class Pyroform:
         self._last_action = None
         self._last_result = None
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> bool:
         """
         Configure system according to Pyro file(s)
@@ -62,7 +62,7 @@ class Pyroform:
         self._last_result = self.engine.configure(input_path, **kwargs)
         return self._last_result
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def scorch(self, input_path: str, **kwargs) -> ScorchResult:
         """
         Remove system resources not specified in Pyro file(s)
@@ -82,7 +82,7 @@ class Pyroform:
         self._last_result = self.engine.scorch(input_path, **kwargs)
         return self._last_result
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def mount(self, input_path: str, **kwargs) -> bool:
         """
         Mount devices according to Pyro file(s)
@@ -102,7 +102,7 @@ class Pyroform:
         self._last_result = self.engine.mount(input_path, **kwargs)
         return self._last_result
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Validate system against Pyro file(s)
@@ -265,7 +265,6 @@ class Pyroform:
             "overall_success": all(r["success"] for r in workflow_results),
         }
 
-    # TODO - Treat excludes
     def _load_config(self, config_file: Optional[str], **kwargs) -> Dict[str, Any]:
         """
         Load configuration from file or use defaults

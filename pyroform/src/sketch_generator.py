@@ -32,7 +32,7 @@ class SketchGenerator:
         )
         self.list_splitter = ListSplitter(chunk_size=self.chunk_size)
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def generate_sketch(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
         """
         Generate FlowCTRL sketch based on action type
@@ -56,7 +56,7 @@ class SketchGenerator:
         else:
             raise ValueError(f"Unsupported action type: {action}")
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def generate_scorch_sketch(self, config: PyroConfig) -> Dict[str, Any]:
         """
         Generate sketch for scorch action (cleanup)
@@ -81,14 +81,12 @@ class SketchGenerator:
         sketch = {k: v for k, v in sketch.items() if v}
         return sketch
 
-
     # TODO - WIP
 #   def _generate_correction_commands(self, config: PyroConfig, system_state: dict, compared: dict) -> List[Dict[str, Any]]:
 #       commands = []
-
 #       return commands
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
         """
         Check if a path has any excluded path as its parent directory.
@@ -113,7 +111,7 @@ class SketchGenerator:
                 continue
         return False
 
-#   @pysnooper.snoop()
+#   #@pysnooper.snoop()
     def _generate_cleanup_commands(self, config: PyroConfig, system_state: dict, compared: dict) -> List[Dict[str, Any]]:
         """
         Generate cleanup commands for scorch action
@@ -122,12 +120,6 @@ class SketchGenerator:
         need to compare current system state with desired state.
         """
         commands = []
-
-        print(f'[ DEBUG ]: system_state - {system_state}')
-#       print('[ DEBUG ]: system_state - ', json.dumps(system_state, indent=4))
-        print(f'[ DEBUG ]: compared - {compared}')
-#       print('[ DEBUG ]: compared - ', json.dumps(compared, indent=4))
-        print(f'[ DEBUG ]: compared[extra_directories] - {compared["extra_directories"]}')
 
         extra_usernames = " ".join([
             user['username']
@@ -219,7 +211,7 @@ class SketchGenerator:
 
         return commands
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def generate_configure_sketch(self, config: PyroConfig) -> Dict[str, Any]:
         """
         Generate sketch for configure action (users, groups, file permissions)
@@ -261,7 +253,7 @@ class SketchGenerator:
         sketch = {k: v for k, v in sketch.items() if v}
         return sketch
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def _generate_user_commands(self, users: List[User], excludes: Union[List[str], None] = None) -> List[Dict[str, Any]]:
         """Generate user management commands"""
         commands = []
@@ -352,7 +344,7 @@ class SketchGenerator:
 
         return commands
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def _generate_device_commands(self, devices: List[Device], excludes: Union[Exclude, None] = None) -> List[Dict[str, Any]]:
         """
         Generate complete device commands including directory structure
@@ -457,7 +449,7 @@ class SketchGenerator:
 
         return commands
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def save_sketch(self, sketch: Dict[str, Any], output_path: Path) -> bool:
         """
         Save sketch to JSON file
@@ -479,66 +471,4 @@ class SketchGenerator:
             return False
 
 # CODE DUMP
-#   def is_parent_path(self, parent_path: Path, child_path: Path) -> bool:
-#       """Check if parent_path is contained within child_path's hierarchy."""
-#       try:
-#           parent_path.resolve().relative_to(child_path.resolve())
-#           return True
-#       except ValueError:
-#           return False
-
-#   @pysnooper.snoop()
-#   def _generate_file_commands(self, devices: List[Device]) -> List[Dict[str, Any]]:
-#       """Generate file and directory creation commands from device states"""
-#       commands = []
-
-#       for device in devices:
-#           for state_entry in device.state:
-#               state_parts = state_entry.split(",")
-#               if len(state_parts) >= 5:
-#                   obj_type, path, owner, group, permissions = state_parts[:5]
-
-#                   if obj_type == "fl":  # file
-#                       file_cmd = {
-#                           "name": f"create_file_{path.replace('/', '_')}",
-#                           "cmd": f"touch {path}",
-#                           "setup-cmd": f"test -f {path}",
-#                           "on-ok-cmd": f"echo 'File {path} exists'",
-#                           "on-nok-cmd": f"echo 'Creating file {path}'",
-#                           "fatal-nok": False,
-#                       }
-#                       commands.append(file_cmd)
-
-#       return commands
-
-
-#           "summary": f"Scorch system according to {config.label}",
-
-#           "Files": self._generate_file_commands(config.devices),
-#           "summary": f"Configure system according to {config.label}",
-
-#           "summary": f"Mount devices according to {config.label}",
-
-        #f"getent group {group.name}",
-        #groupdel {group.name}
-
-#           csv_users = ','.join(member_users)
-
-
-        # username="john"; groups="developers docker admin"; for group in $groups; do groupadd -f $group; done && useradd -m -G $(echo $groups | tr " " ",") $username
-        # f"useradd -m -p {user.password} {user.name}",
-
-
-#           # Add user to groups
-#           for group_name in user.groups:
-#               group_cmd = {
-#                   "name": f"add_user_{user.name}_to_{group_name}",
-#                   "cmd": f"usermod -a -G {group_name} {user.name}",
-#                   "setup-cmd": f"id {user.name} | grep -q '{group_name}'",
-#                   "on-ok-cmd": f"echo 'User {user.name} already in group {group_name}'",
-#                   "on-nok-cmd": f"echo 'Adding user {user.name} to group {group_name}'",
-#                   "fatal-nok": False,
-#               }
-#               commands.append(group_cmd)
-
 

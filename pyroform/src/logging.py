@@ -199,32 +199,3 @@ class STDOUTMsg:
 
 # CODE DUMP
 
-#       formatted_tag = f"[ {tag} ]:"
-
-
-
-#   class STDOUTMsg():
-
-#       RED
-#       BLUE
-#       GREEN
-#       YELLOW
-#       BOLD
-#       RESET
-
-#       def ok(self, *args, silent_flag: bool = False) -> str:
-#           pass
-#       def nok(self, *args, silent_flag: bool = False) -> str:
-#           pass
-#       def info(self, *args, silent_flag: bool = False) -> str:
-#           pass
-#       def warn(self, *args, silent_flag: bool = False) -> str:
-#           pass
-#       def err(self, *args, silent_flag: bool = False) -> str:
-#           pass
-#       def debug(self, *args, silent_flag: bool = False) -> str:
-#           pass
-#       def custom(self, *args, silent_flag: bool = False) -> str:
-#           pass
-
-
