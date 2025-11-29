@@ -11,9 +11,7 @@ from pathlib import Path
 from .models import PyroConfig, User, Group, Device, Exclude, ActionType
 from .logging import STDOUTMsg
 from .splitter import ListSplitter
-
-from .scanner import get_system_state
-from .difference import compare_system_state_with_pyro_file
+from .validator import SystemValidator
 
 
 class SketchGenerator:
@@ -21,7 +19,7 @@ class SketchGenerator:
     Generates FlowCTRL sketch files from PyroConfig objects
     """
 
-    def __init__(self, *args, stdout: STDOUTMsg | None = None, dry_run: bool | None = False, **kwargs):
+    def __init__(self, *args, stdout: STDOUTMsg | None = None, dry_run: bool | None = False, config: dict | None=None, **kwargs):
         self.chunk_size = 500
         self.dry_run = dry_run
         self.cmd_prefix = '' if not self.dry_run else '# '
@@ -30,6 +28,7 @@ class SketchGenerator:
             debug_mode=False,
             timestamp=False,
         )
+        self.validator = SystemValidator(stdout=stdout, config=config)
         self.list_splitter = ListSplitter(chunk_size=self.chunk_size)
 
     #@pysnooper.snoop()
@@ -67,10 +66,10 @@ class SketchGenerator:
         Returns:
             FlowCTRL sketch dictionary
         """
-        system_state = get_system_state(
+        system_state = self.validator.get_system_state(
             pyro_config=config, max_depth=100, include_hidden=True
         )
-        compared = compare_system_state_with_pyro_file(system_state, config)
+        compared = self.validator.compare_system_state_with_pyro_file(system_state, config)
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
             "Cleanup": self._generate_cleanup_commands(config, system_state, compared),
@@ -471,4 +470,9 @@ class SketchGenerator:
             return False
 
 # CODE DUMP
+
+
+#from .scanner import get_system_state
+#from .difference import compare_system_state_with_pyro_file
+
 

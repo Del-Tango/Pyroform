@@ -29,6 +29,7 @@ class PyroformEngine:
     Internal engine that coordinates all Pyroform operations
     """
 
+    @pysnooper.snoop()
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize PyroformEngine
@@ -38,12 +39,15 @@ class PyroformEngine:
         """
         self.config = config or self._default_config()
         self.stdout = STDOUTMsg(
-            debug_mode=True, #self.config['debug'],
+            debug_mode=False, #self.config['debug'],
             timestamp=self.config['log_timestamp'] or self.config['debug'],
         )
-
         self.parser = PyroParser(stdout=self.stdout)
-        self.sketch_generator = SketchGenerator(stdout=self.stdout, dry_run=self.config['dry_run'])
+        self.sketch_generator = SketchGenerator(
+            stdout=self.stdout,
+            config=config,
+            dry_run=self.config['dry_run']
+        )
 
         self.flow_engine = PyroflowEngine(stdout=self.stdout)
 
@@ -188,7 +192,7 @@ class PyroformEngine:
             return False
 
     # TODO -
-    #@pysnooper.snoop()
+    @pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Execute validate action
@@ -200,6 +204,7 @@ class PyroformEngine:
         Returns:
             ValidationResult object
         """
+        system_state = {}
         try:
             configs = self.parser.parse(Path(input_path))
             self.stdout.debug(f'Configs ({configs})')
@@ -226,16 +231,20 @@ class PyroformEngine:
                     self.stdout.ok(f'Machine state corresponds with Pyro config {config.label}')
                 else:
                     self.stdout.nok(f'Machine state does not correspond with Pyro config {config.label}')
+                system_state = self.validator._last_result.system_state
 
+
+            # TODO
             # Create combined summary
-            critical_issues = len(
-                [d for d in all_discrepancies if d.get("critical", False)]
-            )
-            total_issues = len(all_discrepancies)
+#           critical_issues = len(
+#               [d for d in all_discrepancies if d.get("critical", False)]
+#           )
+#           total_issues = len(all_discrepancies)
+            critical_issues = sum([len(item) for item in all_discrepancies if 'mismatch' not in item])
+            total_issues = sum([len(item) for item in all_discrepancies])
 
             if critical_issues:
-                self.stdout.nok(f'({critical_issues}) critical issues identified')
-                self.stdout.nok(f'({total_issues}) total issues identified')
+                self.stdout.nok(f'({critical_issues}) critical issues identified, ({total_issues}) total issues identified!')
             elif total_issues and not critical_issues:
                 self.stdout.warn(f'({total_issues}) non critical issues identified')
 
@@ -251,7 +260,10 @@ class PyroformEngine:
             }
 
             return ValidationResult(
-                is_valid=all_valid, discrepancies=all_discrepancies, summary=summary
+                is_valid=all_valid,
+                discrepancies=all_discrepancies,
+                summary=summary,
+                system_state=system_state,
             )
 
         except Exception as e:
@@ -260,6 +272,7 @@ class PyroformEngine:
                 is_valid=False,
                 discrepancies=[{"error": str(e)}],
                 summary={"total_issues": 1, "critical_issues": 1},
+                system_state=system_state,
             )
 
     def _default_config(self) -> Dict[str, Any]:

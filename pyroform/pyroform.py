@@ -102,7 +102,7 @@ class Pyroform:
         self._last_result = self.engine.mount(input_path, **kwargs)
         return self._last_result
 
-    #@pysnooper.snoop()
+    @pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Validate system against Pyro file(s)
