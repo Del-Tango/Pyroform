@@ -14,6 +14,7 @@ from typing import List, Dict, Any
 from .models import PyroConfig, User, Group, Device, Exclude
 from .logging import STDOUTMsg
 
+
 class PyroParser:
     """
     Parser for Pyro configuration files (JSON and YAML)
@@ -80,7 +81,6 @@ class PyroParser:
 
         return self._parse_single_file_data(data)
 
-    # TODO - Treat excludes
     def _parse_single_file_data(self, data: Dict[str, Any]) -> PyroConfig:
         """
         Parse configuration data from a single file

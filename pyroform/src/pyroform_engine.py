@@ -29,7 +29,7 @@ class PyroformEngine:
     Internal engine that coordinates all Pyroform operations
     """
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize PyroformEngine
@@ -39,7 +39,7 @@ class PyroformEngine:
         """
         self.config = config or self._default_config()
         self.stdout = STDOUTMsg(
-            debug_mode=False, #self.config['debug'],
+            debug_mode=True, #self.config['debug'],
             timestamp=self.config['log_timestamp'] or self.config['debug'],
         )
         self.parser = PyroParser(stdout=self.stdout)
@@ -57,7 +57,26 @@ class PyroformEngine:
         self.validator = SystemValidator(stdout=self.stdout, config=self.config)
         self.reporter = ReportGenerator()
 
-    # TODO - Make verbose logging
+    #@pysnooper.snoop()
+    def snapshot(self, output_path: str, **kwargs) -> dict:
+        """
+        """
+        try:
+            system_state = self.validator.get_system_state(
+                max_depth=100, include_hidden=True
+            )
+            self.stdout.debug(f'system_state {system_state}')
+            pyro_conf = self.sketch_generator.generate_sketch(None, ActionType.SNAPSHOT)
+            self.stdout.debug(f'pyro_conf {pyro_conf}')
+            with open(output_path, 'w') as fl:
+                yaml.dump(pyro_conf, fl)
+            self.stdout.ok(f'Machine state snapshot written to Pyro config {output_path}')
+        except Exception as e:
+            self.stdout.err(f'Error encountered while snapshotting system state! Details: {e}')
+            self.stdout.nok(f'Could not snapshot system state to Pyro config {output_path}')
+            return False
+        return True
+
     #@pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> bool:
         """
@@ -191,8 +210,7 @@ class PyroformEngine:
             print(f"Mount action failed: {e}")
             return False
 
-    # TODO -
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Execute validate action
@@ -223,8 +241,14 @@ class PyroformEngine:
             for config in configs:
                 result = self.validator.validate_configuration(config)
                 self.stdout.debug(f'Result {result}')
+
+                # TODO - Remove 2 down
+                with open('validation.dummy', 'w') as fl:
+                    fl.write(json.dumps(result.discrepancies, indent=4))
+
                 if result.discrepancies:
                     self.stdout.nok(f'Discrepancies %s' % str(json.dumps(result.discrepancies, indent=4)))
+
                 all_discrepancies.extend(result.discrepancies)
                 all_valid = all_valid and result.is_valid
                 if result.is_valid:
@@ -233,13 +257,6 @@ class PyroformEngine:
                     self.stdout.nok(f'Machine state does not correspond with Pyro config {config.label}')
                 system_state = self.validator._last_result.system_state
 
-
-            # TODO
-            # Create combined summary
-#           critical_issues = len(
-#               [d for d in all_discrepancies if d.get("critical", False)]
-#           )
-#           total_issues = len(all_discrepancies)
             critical_issues = sum([len(item) for item in all_discrepancies if 'mismatch' not in item])
             total_issues = sum([len(item) for item in all_discrepancies])
 
@@ -252,6 +269,10 @@ class PyroformEngine:
                 self.stdout.ok('No further action required!')
             else:
                 self.stdout.nok('Run action "Configure" to apply Pyro config!')
+
+            # TODO - Remove 2 down
+            with open('discrepancies.dummy', 'w') as fl:
+                fl.write(json.dumps(all_discrepancies, indent=4))
 
             summary = {
                 "total_issues": total_issues,
@@ -293,4 +314,12 @@ class PyroformEngine:
         }
 
 # CODE DUMP
+
+
+            # TODO
+            # Create combined summary
+#           critical_issues = len(
+#               [d for d in all_discrepancies if d.get("critical", False)]
+#           )
+#           total_issues = len(all_discrepancies)
 

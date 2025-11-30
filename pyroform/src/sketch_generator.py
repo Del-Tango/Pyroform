@@ -3,6 +3,7 @@ FlowCTRL Sketch Generator for Pyroform
 """
 
 import json
+import datetime
 import pysnooper
 
 from typing import Dict, Any, List, Union
@@ -50,10 +51,65 @@ class SketchGenerator:
             return self.generate_mount_sketch(config)
         elif action == ActionType.SCORCH:
             return self.generate_scorch_sketch(config)
+        elif action == ActionType.SNAPSHOT:
+            return self.generate_snapshot_pyro_config(config)
         elif action == ActionType.VALIDATE:
             raise ValueError("Validate action does not generate sketches")
         else:
             raise ValueError(f"Unsupported action type: {action}")
+
+#   @pysnooper.snoop()
+    def generate_snapshot_pyro_config(self, config: PyroConfig) -> Dict[str, Any]:
+        system_state = self.validator.get_system_state(
+            pyro_config=config, max_depth=100, include_hidden=True
+        )
+        timestamp = datetime.datetime.now()
+        snapshot = {
+            'Label': f'Pyroform Snapshot {timestamp}',
+            'Users': [],
+            'Groups': [],
+            'Devices': [],
+        }
+        for user in system_state.get('users', []):
+            user_record = {
+                'label': 'Snapshot of ' + user.get('username', ''),
+                'Name': user.get('username', ''),
+                'Password': '',
+                'Groups': user.get('groups', []),
+            }
+            snapshot['Users'].append(user_record)
+        for group in system_state.get('groups', []):
+            group_record = {
+                'label': 'Snapshot of ' + group.get('groupname', ''),
+                'Nane': group.get('groupname', ''),
+                'Users': group.get('members', []),
+            }
+            snapshot['Groups'].append(group_record)
+        for device in system_state.get('mounted_devices', []):
+            device_record = {
+                'label': 'Snapshot of ' + device.get('device_path', ''),
+                'Path': device.get('device_path', ''),
+                'Partition': device.get('partition', ''),
+                'Mountpoint': device.get('mountpoint', ''),
+                'State': []
+            }
+            for directory in device.get('directories', []):
+                dir_record = ','.join([
+                    'dir', directory['path'], directory['owner'], directory['group'], directory['permissions']
+                ])
+                device_record['State'].append(dir_record)
+            for file in device.get('files', []):
+                fl_record = ','.join([
+                    'fl', file['path'], file['owner'], file['group'], file['permissions']
+                ])
+                device_record['State'].append(fl_record)
+            for link in device.get('symlinks', []):
+                ln_record = ','.join([
+                    'ln', link['path'], link['owner'], link['group'], link['permissions'], link['target']
+                ])
+                device_record['State'].append(fl_record)
+            snapshot['Devices'].append(device_record)
+        return snapshot
 
     #@pysnooper.snoop()
     def generate_scorch_sketch(self, config: PyroConfig) -> Dict[str, Any]:

@@ -33,7 +33,7 @@ class SystemValidator:
     Validates current system state against desired Pyro configuration
     """
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def __init__(self, stdout: STDOUTMsg | None = None, config: dict | None = None) -> None:
         self._last_result: ValidationResult = None
         self.config = config or {}
@@ -42,7 +42,7 @@ class SystemValidator:
             timestamp=self.config.get('log_timestamp') or self.config.get('debug', False),
         )
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def validate_configuration(self, config: PyroConfig) -> ValidationResult:
         """
         Compare current system state with desired configuration
@@ -82,7 +82,7 @@ class SystemValidator:
 
         return self._last_result
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def get_validation_report(self) -> Dict[str, Any]:
         """
         Generate detailed validation report
@@ -167,7 +167,7 @@ class SystemValidator:
         """Get information about all system users."""
         users = []
         try:
-            if not pyro_config.users:
+            if pyro_config and not pyro_config.users:
                 return users
             for user in pwd.getpwall():
                 try:
@@ -208,7 +208,7 @@ class SystemValidator:
         """Get information about all system groups."""
         groups = []
         try:
-            if not pyro_config.groups:
+            if pyro_config and not pyro_config.groups:
                 return groups
             for group in grp.getgrall():
                 try:
@@ -225,7 +225,7 @@ class SystemValidator:
 
         return groups
 
-    ##@pysnooper.snoop()
+    #@pysnooper.snoop()
     def get_mounted_devices_info(
         self,
         scan_paths: Optional[List[str]],
@@ -238,7 +238,7 @@ class SystemValidator:
 
         try:
 
-            if not pyro_config.devices:
+            if pyro_config and not pyro_config.devices:
                 return mounted_devices
 
             # Get mount information using multiple methods
@@ -330,12 +330,16 @@ class SystemValidator:
                         if not any(mountpoint.startswith(path) for path in scan_paths):
                             continue
 
+                    partitions = self.get_device_partitions(device)
+                    mounted_partition = [part['name'] for part in partitions if part['mountpoint'] == mountpoint]
+
                     device_info = {
                         'device_path': device,
                         'mountpoint': mountpoint,
                         'filesystem_type': fstype or 'unknown',
                         'mount_options': options,
-                        'partitions': get_device_partitions(device),
+                        'partition': '' if not mounted_partition else mounted_partition[0],
+                        'partitions': partitions,
                         'files': [],
                         'directories': [],
                         'symlinks': []
@@ -346,7 +350,7 @@ class SystemValidator:
                     # Scan filesystem contents
                     if os.path.exists(mountpoint) and os.path.isdir(mountpoint):
                         try:
-                            scan_filesystem(
+                            self.scan_filesystem(
                                 mountpoint,
                                 device_info,
                                 max_depth,
@@ -475,7 +479,7 @@ class SystemValidator:
                         device_info['directories'].append(file_info)
                         # Recursively scan directories
                         if current_depth < max_depth:
-                            scan_filesystem(
+                            self.scan_filesystem(
                                 full_path,
                                 device_info,
                                 max_depth,
@@ -762,7 +766,7 @@ class SystemValidator:
                 })
 
             for state_entry in config_states:
-                config_item = parse_config_state_entry(state_entry)
+                config_item = self.parse_config_state_entry(state_entry)
                 if not config_item:
                     continue
 

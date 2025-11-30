@@ -410,6 +410,72 @@ def validate(input_path: str, output_path: Optional[str], config_file: Optional[
         dry_run=dry_run,
     )
 
+# ACTION SNAPSHOT
+
+@cli.command(cls=BannerCommand)
+@click.option(
+    "-i",
+    "--input",
+    "input_path",
+    type=click.Path(exists=False),
+    help="Path to Pyro file (JSON|YAML) or directory containing Pyro files",
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(exists=False),
+    help="Path to FlowCTRL sketch file (JSON) or directory for generated files",
+)
+@click.option(
+    "-c",
+    "--config-file",
+    "config_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform config file (JSON|YAML)",
+)
+@click.option(
+    "-l",
+    "--log-file",
+    "log_file",
+    type=click.Path(exists=False),
+    help="Path to Pyroform and FlowCTRL log file",
+)
+@click.option(
+    "-r",
+    "--dump-report",
+    is_flag=True,
+    help="Flag to generate report file with STDOUT, STDERR plus summary",
+)
+@click.option("-s", "--silent", is_flag=True, help="Flag to suppress STDOUT")
+@click.option(
+    "-d",
+    "--debug",
+    is_flag=True,
+    help="Flag that makes logging and STDOUT messages more verbose",
+)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Flag to confirm all manual prompts such that manual interaction from user is not required",
+)
+def snapshot(input_path: Optional[str], output_path: Optional[str], config_file: Optional[str],
+            log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
+            yes: bool):
+    """Validate system against Pyro file(s)"""
+    _execute_action(
+        action_type=ActionType.SNAPSHOT,
+        input_path=Path(input_path) if input_path else None,
+        output_path=Path(output_path) if output_path else None,
+        config_file=Path(config_file) if config_file else None,
+        log_file=Path(log_file) if log_file else None,
+        dump_report=dump_report,
+        silent=silent,
+        debug=debug,
+        auto_confirm=yes,
+    )
+
 # COMPOSED ACTION WORKFLOW
 
 @cli.command(cls=BannerCommand)
@@ -472,15 +538,15 @@ def _get_action_type(
 #@pysnooper.snoop()
 def _execute_action(
     action_type: ActionType,
-    input_path: Path,
-    output_path: Optional[Path],
-    config_file: Optional[Path],
-    log_file: Optional[Path],
-    dump_report: bool,
-    silent: bool,
-    debug: bool,
-    auto_confirm: bool,
-    dry_run: bool,
+    input_path: Optional[Path] = None,
+    output_path: Optional[Path] = None,
+    config_file: Optional[Path] = None,
+    log_file: Optional[Path] = None,
+    dump_report: bool = False,
+    silent: bool = False,
+    debug: bool = False,
+    auto_confirm: bool = False,
+    dry_run: bool = False,
 ):
     """
     Execute the specified action with given parameters
@@ -537,6 +603,9 @@ def _execute_action(
             success = result
         elif action_type == ActionType.VALIDATE:
             result = pf.validate(str(input_path), **action_kwargs)
+            success = result.is_valid
+        elif action_type == ActionType.SNAPSHOT:
+            result = pf.snapshot(str(output_path), **action_kwargs)
             success = result.is_valid
         else:
             raise ValueError(f"Unsupported action type: {action_type}")

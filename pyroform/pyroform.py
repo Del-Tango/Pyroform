@@ -43,6 +43,12 @@ class Pyroform:
         self._last_result = None
 
     #@pysnooper.snoop()
+    def snapshot(self, input_path: str | None = None, output_path: str | None = None, **kwargs) -> bool:
+        self._last_action = ActionType.SNAPSHOT
+        self._last_result = self.engine.snapshot(output_path, **kwargs)
+        return self._last_result
+
+    #@pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> bool:
         """
         Configure system according to Pyro file(s)
@@ -102,7 +108,7 @@ class Pyroform:
         self._last_result = self.engine.mount(input_path, **kwargs)
         return self._last_result
 
-    @pysnooper.snoop()
+    #@pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Validate system against Pyro file(s)
@@ -153,6 +159,7 @@ class Pyroform:
             print(f"Failed to generate report: {e}")
             return False
 
+    # TODO - Support snapshot
     def execute_workflow(self, workflow_steps: List[Dict[str, Any]]) -> bool:
         """
         Execute a complete workflow with multiple steps
@@ -168,6 +175,7 @@ class Pyroform:
         for step in workflow_steps:
             action = step.get("action")
             input_path = step.get("input_path")
+            output_path = step.get("output_path")
             dry_run = step.get("dry_run", False)
 
             if not action or not input_path:
@@ -188,6 +196,9 @@ class Pyroform:
                     success = result
                 elif action == "scorch":
                     result = self.scorch(input_path, dry_run=dry_run)
+                    success = result.success
+                elif action == "snapshot":
+                    result = self.snapshot(input_path, output_path)
                     success = result.success
                 else:
                     print(f"Unknown action in workflow: {action}")
