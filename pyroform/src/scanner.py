@@ -19,6 +19,7 @@ from .models import (
     SystemUser, SystemGroup, MountedDevice, ValidationSummary
 )
 from .logging import STDOUTMsg
+from .exclusion_checker import ExclusionChecker
 
 
 class SystemStateScanner:
@@ -29,8 +30,11 @@ class SystemStateScanner:
     and filesystem entries from the live system.
     """
 
-    def __init__(self, stdout: STDOUTMsg):
+    def __init__(self, stdout: STDOUTMsg) -> None:
         self.stdout = stdout
+        self.exclusion_checker = ExclusionChecker()
+        # , exclusion_checker: Any
+#       self.exclusion_checker = exclusion_checker
 
     @pysnooper.snoop()
     def scan_system_state(
@@ -441,30 +445,32 @@ class SystemStateScanner:
                 return part['name']
         return ''
 
+
+    # TODO - Remove - moved to exclusion checker
 #   @pysnooper.snoop()
-    def _has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
-        """
-        Check if a path has any excluded path as its parent directory.
+#   def _has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
+#       """
+#       Check if a path has any excluded path as its parent directory.
 
-        Args:
-            path: The path to check
-            excluded_paths: List of paths that should not be parents
+#       Args:
+#           path: The path to check
+#           excluded_paths: List of paths that should not be parents
 
-        Returns:
-            bool: True if any excluded path is a parent of the given path
-        """
-        path_obj = Path(path).resolve()
-        for excluded in excluded_paths:
-            excluded_obj = Path(excluded).resolve()
-            try:
-                # If path starts with excluded path, excluded is a parent
-                path_obj.relative_to(excluded_obj)
-                self.stdout.debug(f'Excluding: {path}')
-                return True
-            except ValueError:
-                # excluded is not a parent of path
-                continue
-        return False
+#       Returns:
+#           bool: True if any excluded path is a parent of the given path
+#       """
+#       path_obj = Path(path).resolve()
+#       for excluded in excluded_paths:
+#           excluded_obj = Path(excluded).resolve()
+#           try:
+#               # If path starts with excluded path, excluded is a parent
+#               path_obj.relative_to(excluded_obj)
+#               self.stdout.debug(f'Excluding: {path}')
+#               return True
+#           except ValueError:
+#               # excluded is not a parent of path
+#               continue
+#       return False
 
     # Exclusion check methods
     def _should_exclude_user(self, username: str, pyro_config: Optional[PyroConfig]) -> bool:
@@ -481,32 +487,39 @@ class SystemStateScanner:
 
     # TODO - Take into account excluded higher level directories
     def _should_exclude_file(self, filepath: str, pyro_config: Optional[PyroConfig]) -> bool:
-        return (
-            pyro_config
-            and pyro_config.excludes
-            and (
-                filepath in pyro_config.excludes.files
-                or self._has_excluded_parent(filepath, pyro_config.excludes.directories)
-            )
-        )
+        return self.exclusion_checker.should_exclude_path(filepath, pyro_config.excludes.files) \
+            or self.exclusion_checker.has_excluded_parent(filepath, pyro_config.excludes.directories)
+
+#       (
+#           pyro_config
+#           and pyro_config.excludes
+#           and (
+#               filepath in pyro_config.excludes.files
+#               or self._has_excluded_parent(filepath, pyro_config.excludes.directories)
+#           )
+#       )
 
     def _should_exclude_directory(self, dirpath: str, pyro_config: Optional[PyroConfig]) -> bool:
-        return (
-            pyro_config
-            and pyro_config.excludes
-            and (
-                dirpath in pyro_config.excludes.directories
-                or self._has_excluded_parent(dirpath, pyro_config.excludes.directories)
-            )
-        )
+        return self.exclusion_checker.should_exclude_path(dirpath, pyro_config.excludes.directories) \
+            or self.exclusion_checker.has_excluded_parent(dirpath, pyro_config.excludes.directories)
+#       return (
+#           pyro_config
+#           and pyro_config.excludes
+#           and (
+#               dirpath in pyro_config.excludes.directories
+#               or self._has_excluded_parent(dirpath, pyro_config.excludes.directories)
+#           )
+#       )
 
     def _should_exclude_link(self, linkpath: str, pyro_config: Optional[PyroConfig]) -> bool:
-        return (
-            pyro_config
-            and pyro_config.excludes
-            and (
-                linkpath in pyro_config.excludes.links
-                or self._has_excluded_parent(linkpath, pyro_config.excludes.directories)
-            )
-        )
+        return self.exclusion_checker.should_exclude_path(linkpath, pyro_config.excludes.links) \
+            or self.exclusion_checker.has_excluded_parent(linkpath, pyro_config.excludes.directories)
+#       return (
+#           pyro_config
+#           and pyro_config.excludes
+#           and (
+#               linkpath in pyro_config.excludes.links
+#               or self._has_excluded_parent(linkpath, pyro_config.excludes.directories)
+#           )
+#       )
 

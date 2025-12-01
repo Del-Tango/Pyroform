@@ -3,9 +3,6 @@ System Validation Module for Pyroform
 
 Provides comprehensive system state validation against Pyro configuration files.
 Validates users, groups, filesystem permissions, mount points, and device configurations.
-
-Author: Pyroform Team
-Version: 1.0.0
 """
 import json
 import os
@@ -26,6 +23,7 @@ from .models import (
 )
 from .scanner import SystemStateScanner
 from .comparator import SystemStateComparator
+from .exclusion_checker import ExclusionChecker
 from .logging import STDOUTMsg
 
 
@@ -51,8 +49,8 @@ class SystemValidator:
             debug_mode=self.config.get('debug', False),
             timestamp=self.config.get('log_timestamp') or self.config.get('debug', False),
         )
-
-        self.scanner = SystemStateScanner(self.stdout)
+#       self.exclusion_checker = ExclusionChecker()
+        self.scanner = SystemStateScanner(self.stdout) #, exclusion_checker
         self.comparator = SystemStateComparator(self.stdout)
 
 #   @pysnooper.snoop()

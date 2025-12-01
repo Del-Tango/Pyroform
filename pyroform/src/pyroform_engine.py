@@ -7,6 +7,7 @@ including snapshotting, configuration, validation, and destructive operations.
 
 import json
 import yaml
+
 import pysnooper
 
 from pathlib import Path
@@ -146,6 +147,7 @@ class PyroformEngine:
                 'output_path': output_path
             }
 
+    @pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> Dict[str, Any]:
         """
         Apply configuration from Pyro files to the system.
@@ -407,6 +409,7 @@ class PyroformEngine:
                 'config_label': config.label
             }
 
+    @pysnooper.snoop()
     def _execute_scorch_config(self, config: PyroConfig, auto_confirm: bool,
                              dry_run: bool) -> Dict[str, Any]:
         """

@@ -3,13 +3,13 @@ FlowCTRL Sketch Generator for Pyroform
 
 Generates executable FlowCTRL sketch files from Pyro configuration objects.
 Supports multiple action types including configuration, mounting, cleanup, and snapshot generation.
-
-Author: Pyroform Team
-Version: 1.0.0
 """
 
 import json
 import datetime
+
+import pysnooper
+
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 
@@ -17,292 +17,11 @@ from .models import PyroConfig, User, Group, Device, Exclude, ActionType
 from .logging import STDOUTMsg
 from .splitter import ListSplitter
 from .validator import SystemValidator
-
-
-class CommandGenerator:
-    """
-    Generates individual FlowCTRL commands for different system operations.
-
-    Separates command generation logic from sketch assembly for better testability.
-    """
-
-    def __init__(self, dry_run: bool = False, stdout: Optional[STDOUTMsg] = None):
-        self.dry_run = dry_run
-        self.cmd_prefix = '' if not dry_run else '# '
-        self.stdout = stdout or STDOUTMsg(debug_mode=False, timestamp=False)
-
-    def generate_user_command(self, user: User) -> Dict[str, Any]:
-        """Generate user creation command."""
-        group_membership = [str(grp) for grp in user.groups]
-        csv_groups = ','.join(group_membership)
-        groups = " ".join(group_membership)
-
-        return {
-            "name": f"Creating System User {user.name}",
-            "cmd": f"{self.cmd_prefix}for group in {groups}; do groupadd -f $group; done && "
-                   f"useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}' || exit 0",
-            "setup-cmd": f"id {user.name} && echo 'User {user.name} already exists' || exit 0",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'User {user.name} exists or created successfully'",
-            "on-nok-cmd": f"echo 'Failed to create user {user.name}'",
-            "fatal-nok": False,
-        }
-
-    def generate_group_command(self, group: Group) -> Dict[str, Any]:
-        """Generate group creation command."""
-        member_users = [str(usr) for usr in group.users]
-        users = " ".join(member_users)
-
-        return {
-            "name": f"Creating System Group {group.name}",
-            "cmd": f"{self.cmd_prefix}groupadd -f '{group.name}' && "
-                   f"for user in {users}; do id $user || useradd -m $user; "
-                   f"usermod -a -G '{group.name}' $user; done",
-            "setup-cmd": f"getent group {group.name} && echo 'Group {group.name} already exists' || exit 0",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'Group {group.name} exists'",
-            "on-nok-cmd": f"echo 'Failed to create group {group.name}'",
-            "fatal-nok": False,
-        }
-
-    def generate_mountpoint_command(self, device: Device) -> Dict[str, Any]:
-        """Generate mountpoint directory creation command."""
-        return {
-            "name": f"Creating System Mountpoint Directory {device.mountpoint}",
-            "cmd": f"{self.cmd_prefix}mkdir -p '{device.mountpoint}'",
-            "setup-cmd": f"test -d {device.mountpoint}",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'Mountpoint {device.mountpoint} exists'",
-            "on-nok-cmd": f"echo 'Creating mountpoint {device.mountpoint}'",
-            "fatal-nok": True,
-        }
-
-    def generate_mount_command(self, device: Device) -> Dict[str, Any]:
-        """Generate device mounting command."""
-        partition_suffix = device.partition if device.partition else ""
-
-        return {
-            "name": f"Mounting Block Device {device.label}",
-            "cmd": f"{self.cmd_prefix}mount '{device.path}{partition_suffix}' '{device.mountpoint}'",
-            "setup-cmd": f"mount | grep -q '{device.path} on {device.mountpoint}'",
-            "teardown-cmd": f"umount {device.mountpoint}",
-            "on-ok-cmd": f"echo 'Device {device.path} already mounted to {device.mountpoint}'",
-            "on-nok-cmd": f"echo 'Mounting {device.path} to {device.mountpoint}'",
-            "fatal-nok": True,
-        }
-
-    def generate_directory_command(self, path: str) -> Dict[str, Any]:
-        """Generate directory creation command."""
-        return {
-            "name": f"Creating Directory {path}",
-            "cmd": f"{self.cmd_prefix}mkdir -p {path}",
-            "setup-cmd": f"test -d {path}",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'Directory {path} exists'",
-            "on-nok-cmd": f"echo 'Creating directory {path}'",
-            "fatal-nok": True,
-        }
-
-    def generate_file_command(self, path: str) -> Dict[str, Any]:
-        """Generate file creation command."""
-        return {
-            "name": f"Creating Regular File {path}",
-            "cmd": f"{self.cmd_prefix}touch {path}",
-            "setup-cmd": f"test -f {path}",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'File {path} exists'",
-            "on-nok-cmd": f"echo 'Creating file {path}'",
-            "fatal-nok": True,
-        }
-
-    def generate_symlink_command(self, path: str, target: str) -> Dict[str, Any]:
-        """Generate symbolic link creation command."""
-        return {
-            "name": f"Creating Symbolic Link {path}",
-            "cmd": f"{self.cmd_prefix}ln -s {target} {path}",
-            "setup-cmd": f"test -L {path}",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'File {path} exists'",
-            "on-nok-cmd": f"echo 'Creating file {path}'",
-            "fatal-nok": True,
-        }
-
-    def generate_permission_command(self, path: str, owner: str, group: str, permissions: str) -> Dict[str, Any]:
-        """Generate permission setting command."""
-        return {
-            "name": f"Setting Permissions For {path}",
-            "cmd": f"{self.cmd_prefix}chown {owner}:{group} {path} && chmod {permissions} {path}",
-            "setup-cmd": f"stat -c '%U:%G %a' {path} | grep -q '{owner}:{group} {permissions}'",
-            "teardown-cmd": "",
-            "on-ok-cmd": f"echo 'Permissions for {path} are correct'",
-            "on-nok-cmd": f"echo 'Setting permissions for {path}'",
-            "fatal-nok": True,
-        }
-
-    def generate_cleanup_user_command(self, usernames: str) -> Dict[str, Any]:
-        """Generate user cleanup command."""
-        return {
-            "name": "Cleanup extra users",
-            "cmd": f"{self.cmd_prefix}for user in {usernames}; do userdel -f -r $user; done",
-            "setup-cmd": "",
-            "on-ok-cmd": f"echo 'Eliminated: {usernames}'",
-            "on-nok-cmd": f"echo 'Could not scorch extra system users! Details: {usernames}'",
-            "fatal-nok": False,
-        }
-
-    def generate_cleanup_group_command(self, groups: str) -> Dict[str, Any]:
-        """Generate group cleanup command."""
-        return {
-            "name": "Cleanup extra groups",
-            "cmd": f"{self.cmd_prefix}for group in {groups}; do groupdel $group; done",
-            "setup-cmd": "",
-            "on-ok-cmd": f"echo 'Eliminated: {groups}'",
-            "on-nok-cmd": f"echo 'Could not scorch extra system groups! Details: {groups}'",
-            "fatal-nok": False,
-        }
-
-    def generate_cleanup_directories_command(self, directories: str) -> Dict[str, Any]:
-        """Generate directory cleanup command."""
-        return {
-            "name": "Cleanup extra directories",
-            "cmd": f"{self.cmd_prefix}rm -rf {directories}",
-            "setup-cmd": "",
-            "on-ok-cmd": f"echo 'Eliminated: {directories}'",
-            "on-nok-cmd": f"echo 'Could not scorch extra directories! Details: {directories}'",
-            "fatal-nok": False,
-        }
-
-    def generate_cleanup_files_command(self, files: str) -> Dict[str, Any]:
-        """Generate file cleanup command."""
-        return {
-            "name": "Cleanup extra files and links",
-            "cmd": f"{self.cmd_prefix}rm -f {files}",
-            "setup-cmd": "",
-            "on-ok-cmd": f"echo 'Eliminated: {files}'",
-            "on-nok-cmd": f"echo 'Could not scorch extra files and links! Details: {files}'",
-            "fatal-nok": False,
-        }
-
-
-class ExclusionChecker:
-    """
-    Handles exclusion logic for system resources.
-
-    Determines whether specific resources should be excluded from processing
-    based on configuration exclusions.
-    """
-
-    def __init__(self, stdout: Optional[STDOUTMsg] = None):
-        self.stdout = stdout or STDOUTMsg(debug_mode=False, timestamp=False)
-
-    def should_exclude_user(self, username: str, excludes: List[str]) -> bool:
-        """Check if a user should be excluded."""
-        if excludes and username in excludes:
-            self.stdout.info(f'Excluding system user: {username}')
-            return True
-        return False
-
-    def should_exclude_group(self, groupname: str, excludes: List[str]) -> bool:
-        """Check if a group should be excluded."""
-        if excludes and groupname in excludes:
-            self.stdout.info(f'Excluding system group: {groupname}')
-            return True
-        return False
-
-    def should_exclude_device(self, device_path: str, excludes: List[str]) -> bool:
-        """Check if a device should be excluded."""
-        if excludes and device_path in excludes:
-            self.stdout.info(f'Excluding block storage device: {device_path}')
-            return True
-        return False
-
-    def should_exclude_path(self, path: str, excludes: List[str]) -> bool:
-        """Check if a filesystem path should be excluded."""
-        if excludes and path in excludes:
-            self.stdout.info(f'Excluding path: {path}')
-            return True
-        return False
-
-    def has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
-        """
-        Check if a path has any excluded path as its parent directory.
-
-        Args:
-            path: The path to check
-            excluded_paths: List of paths that should not be parents
-
-        Returns:
-            True if any excluded path is a parent of the given path
-        """
-        path_obj = Path(path).resolve()
-
-        for excluded in excluded_paths:
-            excluded_obj = Path(excluded).resolve()
-            try:
-                # If path starts with excluded path, excluded is a parent
-                path_obj.relative_to(excluded_obj)
-                self.stdout.debug(f'Excluding: {path}')
-                return True
-            except ValueError:
-                # excluded is not a parent of path
-                continue
-        return False
-
-
-class StateEntryParser:
-    """Parses and validates state entries from device configuration."""
-
-    @staticmethod
-    def parse_state_entry(state_entry: str) -> Optional[Dict[str, str]]:
-        """
-        Parse configuration state entries like 'dir,/path,owner,group,permissions'.
-
-        Args:
-            state_entry: State entry string to parse
-
-        Returns:
-            Parsed state dictionary or None if invalid
-        """
-        parts = state_entry.split(",")
-        if len(parts) < 5:
-            return None
-
-        obj_type = parts[0].lower()
-        path = parts[1]
-        owner = parts[2]
-        group = parts[3]
-        permissions = parts[4]
-
-        result = {
-            'type': obj_type,
-            'path': path,
-            'owner': owner,
-            'group': group,
-            'permissions': permissions
-        }
-
-        # Handle symlink target
-        if obj_type in ('l', 'ln', 'link') and len(parts) >= 6:
-            result['target'] = parts[5]
-
-        return result
-
-    @staticmethod
-    def is_valid_state_entry(parsed_entry: Dict[str, str]) -> bool:
-        """Validate parsed state entry."""
-        required_fields = ['type', 'path', 'owner', 'group', 'permissions']
-        return all(field in parsed_entry for field in required_fields)
-
-    @staticmethod
-    def get_entry_type_category(obj_type: str) -> str:
-        """Categorize state entry type."""
-        type_mapping = {
-            'd': 'directory', 'dir': 'directory', 'directory': 'directory',
-            'f': 'file', 'fl': 'file', 'file': 'file',
-            'l': 'symlink', 'ln': 'symlink', 'link': 'symlink'
-        }
-        return type_mapping.get(obj_type, 'unknown')
-
+from .command_generator import CommandGenerator
+from .exclusion_checker import ExclusionChecker
+from .fs_state_entry_parser import StateEntryParser
+from .scanner import SystemStateScanner
+from .comparator import SystemStateComparator
 
 class SketchGenerator:
     """
@@ -338,6 +57,9 @@ class SketchGenerator:
         self.state_parser = StateEntryParser()
         self.list_splitter = ListSplitter(chunk_size=chunk_size)
         self.validator = SystemValidator(stdout=stdout, config=config)
+
+        self.scanner = self.validator.scanner
+        self.comparator = self.validator.comparator
 
     def generate_sketch(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
         """
@@ -467,6 +189,7 @@ class SketchGenerator:
 
         return state_entries
 
+    @pysnooper.snoop()
     def generate_scorch_sketch(self, config: PyroConfig) -> Dict[str, Any]:
         """
         Generate sketch for scorch action (cleanup).
@@ -479,10 +202,15 @@ class SketchGenerator:
         Returns:
             FlowCTRL sketch dictionary for cleanup operations
         """
-        system_state = self.validator.get_system_state(
+        # TODO - FIX ME
+        system_state = self.scanner.scan_system_state(
             pyro_config=config, max_depth=100, include_hidden=True
         )
-        compared = self.validator.compare_system_state_with_pyro_file(system_state, config)
+        compared = self.comparator.compare_states(system_state, config)
+#       system_state = self.validator.get_system_state(
+#           pyro_config=config, max_depth=100, include_hidden=True
+#       )
+#       compared = self.validator.compare_system_state_with_pyro_file(system_state, config)
 
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
