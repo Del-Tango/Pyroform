@@ -1,0 +1,22 @@
+@startuml
+actor User
+participant CLI
+participant PyroformEngine
+participant Parser
+participant Validator
+participant SketchGenerator
+participant FlowEngine
+
+User -> CLI: configure -i config.pyro.yaml
+CLI -> PyroformEngine: configure(input_path)
+PyroformEngine -> Parser: parse(config.pyro.yaml)
+Parser --> PyroformEngine: PyroConfig objects
+PyroformEngine -> Validator: validate_configuration()
+Validator --> PyroformEngine: ValidationResult
+PyroformEngine -> SketchGenerator: generate_sketch()
+SketchGenerator --> PyroformEngine: FlowCTRL sketch
+PyroformEngine -> FlowEngine: execute_sketch()
+FlowEngine --> PyroformEngine: success/failure
+PyroformEngine --> CLI: operation result
+CLI --> User: Success/Failure message
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+actor User
+participant CLI
+participant PyroformEngine
+participant Scanner
+participant Validator
+participant ScorchEngine
+
+User -> CLI: scorch -i config.pyro.yaml -y
+CLI -> PyroformEngine: scorch(input_path, auto_confirm=true)
+PyroformEngine -> Scanner: scan_system_state()
+Scanner --> PyroformEngine: Current system state
+PyroformEngine -> Validator: compare_states()
+Validator --> PyroformEngine: Differences identified
+alt safety_check and not auto_confirm
+    PyroformEngine -> User: Request confirmation
+    User --> PyroformEngine: Confirm/Reject
+end
+PyroformEngine -> ScorchEngine: execute_scorch()
+ScorchEngine -> ScorchEngine: Remove unmanaged resources
+ScorchEngine --> PyroformEngine: ScorchResult
+PyroformEngine --> CLI: cleanup report
+CLI --> User: Resources removed/failed
+@enduml

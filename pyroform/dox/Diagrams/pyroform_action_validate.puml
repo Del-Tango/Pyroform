@@ -1,0 +1,21 @@
+@startuml
+actor User
+participant CLI
+participant PyroformEngine
+participant Scanner
+participant Comparator
+participant Reporter
+
+User -> CLI: validate -i config.pyro.yaml -r
+CLI -> PyroformEngine: validate(input_path)
+PyroformEngine -> Scanner: scan_system_state()
+Scanner --> PyroformEngine: Current system state
+PyroformEngine -> Comparator: compare_states()
+Comparator --> PyroformEngine: Discrepancies
+PyroformEngine -> Reporter: generate_validation_report()
+Reporter --> PyroformEngine: ValidationReport
+PyroformEngine --> CLI: ValidationResult
+CLI -> Reporter: save_report()
+Reporter --> CLI: Report saved
+CLI --> User: Validation summary + report path
+@enduml
