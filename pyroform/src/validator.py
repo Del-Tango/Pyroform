@@ -14,18 +14,8 @@ from typing import Dict, List, Any, Tuple, Set, Optional
 from dataclasses import dataclass
 from pathlib import Path
 
-from .models import PyroConfig, User, Group, Device, Exclude
+from .models import PyroConfig, User, Group, Device, Exclude, ValidationResult
 from .logging import STDOUTMsg
-
-
-@dataclass
-class ValidationResult:
-    """Result of system validation"""
-
-    is_valid: bool
-    system_state: Dict[str, list]
-    discrepancies: Dict[str, list]
-    summary: Dict[str, Any]
 
 
 class SystemValidator:

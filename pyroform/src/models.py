@@ -88,5 +88,16 @@ class ScorchResult:
     success: bool
 
 
+@dataclass
+class ValidationResult:
+    """Result of system validation"""
+
+    is_valid: bool
+    system_state: Dict[str, list]
+    discrepancies: Dict[str, list]
+    summary: Dict[str, Any]
+
+
+
 # CODE DUMP
 
