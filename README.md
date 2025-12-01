@@ -41,10 +41,10 @@
 ### 4. Disaster Recovery & Replication
 ```bash
 # Capture system state
-pyroform snapshot -o system_snapshot.pyro.yaml
+~$ pyroform snapshot -o system_snapshot.pyro.yaml
 
 # Restore to another system
-pyroform configure -i system_snapshot.pyro.yaml -y
+~$ pyroform configure -i system_snapshot.pyro.yaml -y
 ```
 
 ### 5. Multi-Step Workflows
