@@ -177,7 +177,7 @@ class PyroParser:
         Returns:
             List of PyroConfig objects
         """
-        self.stout.info('Input path is a directory. Scanning for Pyro state file patterns...')
+        self.stdout.info('Input path is a directory. Scanning for Pyro state file patterns...')
         configs = []
 
         # Look for JSON files with pyro_ prefix
