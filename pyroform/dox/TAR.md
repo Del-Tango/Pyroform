@@ -3611,7 +3611,7 @@ root@1e1b62138bef:/app/Pyroform# ls -allah /tmp/shall_not_be_scorched.dummy
 # Archive
 
 ## 1. Create test Pyro file
-```text
+```yaml
 Label: User Scorch Test
 Users:
   - label: test_user_1
