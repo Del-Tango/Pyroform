@@ -1,0 +1,87 @@
+@startuml Pyroform_Class_Dependencies
+title Pyroform Main Class Dependencies
+
+class Pyroform {
+  +configure()
+  +scorch()
+  +mount()
+  +validate()
+  +snapshot()
+  -engine: PyroformEngine
+  -config: dict
+}
+
+class PyroformEngine {
+  +snapshot()
+  +configure()
+  +scorch()
+  +mount()
+  +validate()
+  -parser: PyroParser
+  -sketch_generator: SketchGenerator
+  -flow_engine: PyroflowEngine
+  -validator: SystemValidator
+  -reporter: ReportGenerator
+}
+
+class PyroParser {
+  +parse()
+  -_parse_single_file()
+  -_parse_directory()
+}
+
+class SketchGenerator {
+  +generate_sketch()
+  -_generate_user_commands()
+  -_generate_group_commands()
+  -_generate_device_commands()
+  -command_generator: CommandGenerator
+}
+
+class PyroflowEngine {
+  +execute_sketch()
+  -_load_config()
+  -flow_engine: FlowEngine
+}
+
+class SystemValidator {
+  +validate_configuration()
+  -scanner: SystemStateScanner
+  -comparator: SystemStateComparator
+}
+
+class ReportGenerator {
+  +generate_action_report()
+  +generate_validation_report()
+  +save_report()
+}
+
+class PyroConfig {
+  +label: str
+  +users: List[User]
+  +groups: List[Group]
+  +devices: List[Device]
+  +excludes: Exclude
+}
+
+class User {
+  +label: str
+  +name: str
+  +password: str
+  +groups: List[str]
+}
+
+Pyroform --> PyroformEngine : contains
+PyroformEngine --> PyroParser : uses
+PyroformEngine --> SketchGenerator : uses
+PyroformEngine --> PyroflowEngine : uses
+PyroformEngine --> SystemValidator : uses
+PyroformEngine --> ReportGenerator : uses
+PyroformEngine --> PyroConfig : processes
+
+SketchGenerator ..> User : generates commands for
+SketchGenerator ..> PyroConfig : reads from
+
+SystemValidator ..> PyroConfig : validates against
+
+@enduml

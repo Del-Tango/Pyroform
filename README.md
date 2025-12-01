@@ -106,15 +106,40 @@ flowctrl:
   continue_on_failure: false
 ```
 
-## Architecture Sequence Diagrams
-### Configuration Workflow
+## Architecture High Level Overview
+
+### Component Architecture
+![Component Architecture Diagram](./pyroform/dox/Diagrams/pyroform_high_level_component_architecture_diagram.png)
+
+### Action Flow Comparison
+![Action Flow Comparison](./pyroform/dox/Diagrams/pyroform_action_high_level_flow_diagram.png)
+
+### Action Snapshot Sequence
+![Action Snapshot Sequence](./pyroform/dox/Diagrams/pyroform_action_snapshot_sequence.png)
+
+### Action Configure Sequence
 ![Action Configure Sequence](./pyroform/dox/Diagrams/pyroform_action_configure_sequence.png)
 
-### Scorch (Cleanup) Operation
+### Action Scorch Sequence
 ![Action Scorch Sequence](./pyroform/dox/Diagrams/pyroform_action_scorch_sequence.png)
 
-### Validation Workflow
+### Action Validate Sequence
 ![Action Validate Sequence](./pyroform/dox/Diagrams/pyroform_action_validate_sequence.png)
+
+### Action Mount Sequence
+![Action Mount Sequence](./pyroform/dox/Diagrams/pyroform_action_mount_sequence.png)
+
+### Action Workflow Sequence
+![Action Workflow Sequence](./pyroform/dox/Diagrams/pyroform_action_workflow_sequence.png)
+
+### Class Dependencies
+![Class Dependency Diagram](./pyroform/dox/Diagrams/pyroform_class_dependency_diagram.png)
+
+### Data Flow
+![Data Flow Diagram](./pyroform/dox/Diagrams/pyroform_data_flow_diagram.png)
+
+### Project Structure
+![Project Structure Diagram](./pyroform/dox/Diagrams/pyroform_project_structure_diagram.png)
 
 ## Configuration File Formats
 ### Pyro Configuration (JSON/YAML) - config.pyro.yaml

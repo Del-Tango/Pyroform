@@ -1,0 +1,36 @@
+@startuml Pyroform_Data_Flow
+title Pyroform Data Flow and Transformations
+
+storage "YAML/JSON Config Files" as ConfigFiles
+storage "System State (Live)" as SystemState
+database "FlowCTRL Sketch" as FlowSketch
+database "Reports (JSON/YAML)" as Reports
+rectangle "Pyroform Processing Pipeline" {
+  [PyroParser] as Parser
+  [Data Models] as Models
+  [SketchGenerator] as SketchGen
+  [SystemValidator] as Validator
+  [PyroflowEngine] as FlowEngine
+  [ReportGenerator] as Reporter
+}
+
+ConfigFiles --> Parser : reads
+Parser --> Models : creates\nPyroConfig objects
+Models --> SketchGen : input for\nsketch generation
+Models --> Validator : desired state\nfor comparison
+
+SystemState --> Validator : current state\nfor validation
+Validator --> Models : creates\nValidationResult
+
+SketchGen --> FlowSketch : writes
+FlowSketch --> FlowEngine : executes
+FlowEngine --> SystemState : modifies system
+
+Validator --> Reporter : validation results
+FlowEngine --> Reporter : execution results
+Reporter --> Reports : writes
+
+Models --> Reporter : structured data
+SystemState --> Reporter : system state data
+
+@enduml

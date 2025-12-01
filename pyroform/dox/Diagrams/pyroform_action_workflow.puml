@@ -1,0 +1,70 @@
+@startuml Pyroform_Workflow_Sequence
+title Pyroform Workflow Execution Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+participant "Workflow Steps" as Steps
+participant Reporter
+
+User -> CLI: pyroform workflow -w workflow.yaml
+CLI -> CLI: read_workflow_file(workflow.yaml)
+CLI -> Pyroform: __init__(config_file, auto_confirm)
+CLI -> Pyroform: execute_workflow(workflow_steps)
+Pyroform -> Pyroform: initialize workflow_results = []
+
+loop For each workflow step
+    group Execute Step Based on Action Type
+        alt step.action == "validate"
+            Pyroform -> Pyroform: validate(step.input_path, dry_run=step.dry_run)
+            Pyroform -> PyroformEngine: validate(input_path)
+            PyroformEngine -> PyroformEngine: execute validation pipeline
+            PyroformEngine --> Pyroform: ValidationResult
+            Pyroform -> Pyroform: success = result.is_valid
+
+        else step.action == "configure"
+            Pyroform -> Pyroform: configure(step.input_path, dry_run=step.dry_run)
+            Pyroform -> PyroformEngine: configure(input_path, dry_run)
+            PyroformEngine -> PyroformEngine: execute configuration pipeline
+            PyroformEngine --> Pyroform: configuration result
+            Pyroform -> Pyroform: success = result.success
+
+        else step.action == "mount"
+            Pyroform -> Pyroform: mount(step.input_path, dry_run=step.dry_run)
+            Pyroform -> PyroformEngine: mount(input_path, dry_run)
+            PyroformEngine -> PyroformEngine: execute mount pipeline
+            PyroformEngine --> Pyroform: mount result
+            Pyroform -> Pyroform: success = result.success
+
+        else step.action == "scorch"
+            Pyroform -> Pyroform: scorch(step.input_path, dry_run=step.dry_run)
+            Pyroform -> PyroformEngine: scorch(input_path, dry_run)
+            PyroformEngine -> PyroformEngine: execute scorch pipeline
+            PyroformEngine --> Pyroform: scorch result
+            Pyroform -> Pyroform: success = result.success
+
+        else step.action == "snapshot"
+            Pyroform -> Pyroform: snapshot(step.input_path, step.output_path)
+            Pyroform -> PyroformEngine: snapshot(output_path)
+            PyroformEngine -> PyroformEngine: execute snapshot pipeline
+            PyroformEngine --> Pyroform: snapshot result
+            Pyroform -> Pyroform: success = result.success
+        end
+    end
+end
+
+group Generate Workflow Report
+    Pyroform -> Pyroform: _generate_workflow_report(workflow_results, output_path)
+    Pyroform -> Reporter: generate_combined_report(workflow_results)
+    Reporter -> Reporter: _generate_combined_summary()
+    Reporter --> Pyroform: combined report
+    Pyroform -> Pyroform: save report to file
+end
+
+Pyroform --> CLI: workflow success (bool)
+CLI -> CLI: display workflow summary
+CLI -> CLI: show step-by-step results
+CLI --> User: workflow execution complete
+
+@enduml

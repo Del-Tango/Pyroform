@@ -1,0 +1,60 @@
+@startuml Pyroform_Architecture_Overview
+title Pyroform High-Level Architecture
+
+package "CLI Layer" {
+  [CLI Interface] as CLI
+  [BannerCommand/BannerGroup] as Banner
+  [Action Handlers] as Actions
+}
+
+package "Core Engine" {
+  [Pyroform] as PyroformMain
+  [PyroformEngine] as Engine
+  [PyroParser] as Parser
+  [SketchGenerator] as SketchGen
+  [PyroflowEngine] as FlowEngine
+  [SystemValidator] as Validator
+  [ReportGenerator] as Reporter
+}
+
+package "Data Models" {
+  [PyroConfig] as ConfigModel
+  [User/Group/Device] as Entities
+  [ActionType Enum] as ActionsEnum
+  [ValidationResult] as ValidationModel
+}
+
+package "System Interaction" {
+  [SystemStateScanner] as Scanner
+  [SystemStateComparator] as Comparator
+  [CommandGenerator] as CmdGen
+  [ExclusionChecker] as Exclusion
+}
+
+package "Utilities" {
+  [STDOUTMsg] as Logging
+  [ListSplitter] as Splitter
+  [PyroformConfig] as ConfigMgr
+}
+
+CLI --> PyroformMain : invokes
+PyroformMain --> Engine : uses
+Engine --> Parser : parses configs
+Engine --> SketchGen : generates sketches
+Engine --> FlowEngine : executes sketches
+Engine --> Validator : validates system
+Engine --> Reporter : generates reports
+
+Parser --> ConfigModel : creates
+SketchGen --> ConfigModel : reads
+SketchGen --> CmdGen : generates commands
+Validator --> Scanner : scans system
+Validator --> Comparator : compares states
+Validator --> ConfigModel : validates against
+
+Scanner --> Logging : logs activity
+CmdGen --> Logging : logs commands
+SketchGen --> Splitter : splits large lists
+Engine --> ConfigMgr : reads config
+
+@enduml

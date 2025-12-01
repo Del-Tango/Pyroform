@@ -1,0 +1,65 @@
+@startuml Pyroform_Execution_Flow
+title Pyroform Execution Flow Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+participant PyroParser
+participant SketchGenerator
+participant PyroflowEngine
+participant FlowCTRL
+participant SystemValidator
+participant Reporter
+
+User -> CLI: pyroform configure -i config.yaml
+CLI -> Pyroform: __init__()
+Pyroform -> PyroformEngine: __init__()
+PyroformEngine -> PyroParser: __init__()
+PyroformEngine -> SketchGenerator: __init__()
+PyroformEngine -> PyroflowEngine: __init__()
+PyroformEngine -> SystemValidator: __init__()
+PyroformEngine -> Reporter: __init__()
+
+CLI -> Pyroform: configure(input_path)
+Pyroform -> PyroformEngine: configure(input_path)
+
+alt Parse Configurations
+  PyroformEngine -> PyroParser: parse(input_path)
+  PyroParser -> PyroParser: _parse_directory() or _parse_single_file()
+  PyroParser -> PyroParser: _parse_single_file_data()
+  PyroParser -> PyroParser: create PyroConfig objects
+  PyroParser --> PyroformEngine: list of PyroConfig
+end
+
+loop For each PyroConfig
+  alt Generate Sketch
+    PyroformEngine -> SketchGenerator: generate_sketch(config, CONFIGURE)
+    SketchGenerator -> SketchGenerator: _generate_user_commands()
+    SketchGenerator -> SketchGenerator: _generate_group_commands()
+    SketchGenerator -> SketchGenerator: _generate_device_commands()
+    SketchGenerator --> PyroformEngine: FlowCTRL sketch
+  end
+
+  alt Execute Sketch
+    PyroformEngine -> PyroflowEngine: execute_sketch(sketch, CONFIGURE)
+    PyroflowEngine -> PyroflowEngine: save sketch to temp file
+    PyroflowEngine -> FlowCTRL: load_procedure()
+    PyroflowEngine -> FlowCTRL: start_procedure()
+    FlowCTRL --> PyroflowEngine: execution result
+    PyroflowEngine --> PyroformEngine: success/failure
+  end
+end
+
+alt Generate Report
+  PyroformEngine -> Reporter: generate_action_report()
+  Reporter -> Reporter: _generate_summary()
+  Reporter -> Reporter: _generate_details()
+  Reporter --> PyroformEngine: report dict
+end
+
+PyroformEngine --> Pyroform: result dictionary
+Pyroform --> CLI: success/failure
+CLI --> User: output and exit code
+
+@enduml
