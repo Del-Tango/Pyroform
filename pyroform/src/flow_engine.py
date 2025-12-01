@@ -98,7 +98,8 @@ class PyroflowEngine:
         """
         try:
 
-            self.stdout.info('FlowCTRL Sketch - %s' % str(json.dumps(sketch, indent=4)))
+            # TODO - Remove,duplication
+#           self.stdout.info('FlowCTRL Sketch - %s' % str(json.dumps(sketch, indent=4)))
 
             # TODO - Set --output path from config / cli args
             # Save sketch to temporary file

@@ -28,7 +28,7 @@
 ```
 5. Run command with multiple actions
 ```
-~$ pyroform --configure --scorch
+~$ pyroform configure scorch
 ~$ echo $?
 ```
 

@@ -1,7 +1,7 @@
 # CLI Help and Version
-- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
-- Date: 11/11/2025
+- Date: 01/12/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_1](../TPS/TC_1.md)
 - Status:
@@ -9,28 +9,25 @@
 [ ] FAIL
 [ ] BLOCKED
 
-# Remarks
-
-- Help messages on action sub-commands would be betters suited if they addressed only the action in question.
-
 # Archive:
 
 ## 1. Display Version
 ```text
-    bash-5.2# pyroform --version
+    root@1e1b62138bef:/app/Pyroform# pyroform --version
 
         ___________________________________________________________________________
 
         *                          *   Pyroform   *                           *
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
+
 
     Pyroform version 1.0.0
 ```
 
 ## 2. Display Help
 ```text
-    bash-5.2# pyroform --help
+    root@1e1b62138bef:/app/Pyroform# pyroform --help
 
         ___________________________________________________________________________
 
@@ -38,15 +35,41 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform [OPTIONS] COMMAND [ARGS]...
 
     Pyroform Linux Configurator
 
+    A tool that receives input file(s) containing list of users, user groups,
+    block storage device mountpoints, files and directories with owners and
+    permissions, generates on the fly FlowCTRL sketch files based on input pyro
+    file(s), and runs them using the flow_ctrl library.
+
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
+    --version  Display PyrDisplay Pyroform  version
+    --help     Show this message and exit.
+
+    Commands:
+    configure  Configure system according to Pyro file(s)
+    mount      Mount devices according to Pyro file(s)
+    scorch     Remove system resources not specified in Pyro file(s)
+    snapshot   Validate system against Pyro file(s)
+    validate   Validate system against Pyro file(s)
+    workflow   Execute a complete Pyroform workflow from configuration file
+
+
+    root@1e1b62138bef:/app/Pyroform# pyroform snapshot --help
+
+        ___________________________________________________________________________
+
+        *                          *   Pyroform   *                           *
+        ___________________________________________________________________________
+                        Regards, the Alveare Solutions #!/Society -x
+
+    Usage: pyroform snapshot [OPTIONS]
+
+    Validate system against Pyro file(s)
+
+    Options:
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
                             containing Pyro files
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
@@ -58,13 +81,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform configure --help
+    root@1e1b62138bef:/app/Pyroform# pyroform configure --help
 
         ___________________________________________________________________________
 
@@ -72,17 +95,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform configure [OPTIONS]
 
-    Pyroform Linux Configurator
+    Configure system according to Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -92,13 +111,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform scorch --help
+    root@1e1b62138bef:/app/Pyroform# pyroform scorch --help
 
         ___________________________________________________________________________
 
@@ -106,17 +125,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform scorch [OPTIONS]
 
-    Pyroform Linux Configurator
+    Remove system resources not specified in Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -126,13 +141,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform mount --help
+    root@1e1b62138bef:/app/Pyroform# pyroform mount --help
 
         ___________________________________________________________________________
 
@@ -140,17 +155,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform mount [OPTIONS]
 
-    Pyroform Linux Configurator
+    Mount devices according to Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -160,13 +171,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform validate --help
+    root@1e1b62138bef:/app/Pyroform# pyroform validate --help
 
         ___________________________________________________________________________
 
@@ -174,17 +185,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform validate [OPTIONS]
 
-    Pyroform Linux Configurator
+    Validate system against Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -194,14 +201,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-
-    bash-5.2# pyroform workflow --help
+    root@1e1b62138bef:/app/Pyroform# pyroform workflow --help
 
         ___________________________________________________________________________
 
@@ -209,28 +215,12 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform workflow [OPTIONS]
 
-    Pyroform Linux Configurator
+    Execute a complete Pyroform workflow from configuration file
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
-    -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
-    -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
-                            generated files
-    -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
-    -l, --log-file PATH     Path to Pyroform and FlowCTRL log file
-    -r, --dump-report       Flag to generate report file with STDOUT, STDERR
-                            plus summary
-    -s, --silent            Flag to suppress STDOUT
-    -d, --debug             Flag that makes logging and STDOUT messages more
-                            verbose
-    -v, --version           Action that displays Pyroform version
-    -y, --yes               Flag to confirm all manual prompts such that manual
-                            interaction from user is not required
-    --help                  Show this message and exit.
+    -w, --workflow-file PATH  Path to workflow configuration file (JSON/YAML)
+                                [required]
+    --help                    Show this message and exit.
 ```

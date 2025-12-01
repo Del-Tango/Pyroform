@@ -353,3 +353,25 @@ Excludes:
   Directories: ["/", "/etc", "/bin", "/sbin", "/usr"]
   Files: ["/etc/passwd", "/etc/group", "/etc/shadow"]
 ```
+
+## Known Issues
+
+### Usability
+- YAML snapshots cannot be directly used for actions configure/validate/scorch without manual intervention
+- Action workflows partially functional
+- Action reports partially functional
+- Tooling file based configuration partially functional
+- No bootstrap / plug(&)play setup script
+
+### Observability
+- Inner workings not properly logged
+- STDOUT messages not yet standardized / in flux
+
+### Reliability
+- Linters, checkers and formatter configs not yet standardized
+
+### Robustness
+- Autotester suit incomplete
+- TPS not fully executed
+
+

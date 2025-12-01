@@ -1,23 +1,22 @@
 # Invalid CLI Usage
-- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
-- Date: 11/11/2025
+- Date: 01/12/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_2](../TPS/TC_2.md)
 - Status:
-[x] PASS
+[X] PASS
 [ ] FAIL
 [ ] BLOCKED
 
 # Remarks
-
-- Case 4 should have better error messages. In it's current form can be missleading.
+N/A
 
 # Archive
 
 ## 1. No arguments
 ```text
-    bash-5.2# pyroform
+    root@1e1b62138bef:/app/Pyroform# pyroform
 
         ___________________________________________________________________________
 
@@ -25,54 +24,34 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
+    Usage: pyroform [OPTIONS] COMMAND [ARGS]...
 
-    Error: No action specified. Use --scorch, --mount, --configure, or --validate
+    Pyroform Linux Configurator
 
-    bash-5.2# echo $?
+    A tool that receives input file(s) containing list of users, user groups,
+    block storage device mountpoints, files and directories with owners and
+    permissions, generates on the fly FlowCTRL sketch files based on input pyro
+    file(s), and runs them using the flow_ctrl library.
+
+    Options:
+    --version  Display PyrDisplay Pyroform  version
+    --help     Show this message and exit.
+
+    Commands:
+    configure  Configure system according to Pyro file(s)
+    mount      Mount devices according to Pyro file(s)
+    scorch     Remove system resources not specified in Pyro file(s)
+    snapshot   Validate system against Pyro file(s)
+    validate   Validate system against Pyro file(s)
+    workflow   Execute a complete Pyroform workflow from configuration file
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
     2
 ```
 
 ## 2. Invalid action
 ```text
-    bash-5.2# pyroform invalid-command
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
-
-    Error: Got unexpected extra argument (invalid-command)
-
-    bash-5.2# echo $?
-    2
-```
-
-## 3. Invalid option flag
-```text
-    bash-5.2# pyroform configure --invalid-flag
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
-
-    Error: No such option: --invalid-flag Did you mean --validate?
-
-    bash-5.2# echo $?
-    2
-```
-
-## 4. Incomplete command
-```text
-    bash-5.2# pyroform configure
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
-
-    Error: Got unexpected extra argument (configure)
-
-    bash-5.2# echo $?
-    2
-```
-
-## 5. Multiple actions
-```text
-    bash-5.2# pyroform --configure --scorch
+    root@1e1b62138bef:/app/Pyroform# pyroform invalid-command
 
         ___________________________________________________________________________
 
@@ -80,11 +59,47 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform [OPTIONS] COMMAND [ARGS]...
     Try 'pyroform --help' for help.
 
-    Error: Exactly one action must be specified: --scorch, --mount, --configure, or --validate
+    Error: No such command 'invalid-command'.
 
-    bash-5.2# echo $?
+    root@1e1b62138bef:/app/Pyroform# echo $?
+    2
+```
+
+## 3. Invalid option flag
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure --invalid-flag
+    Usage: pyroform configure [OPTIONS]
+    Try 'pyroform configure --help' for help.
+
+    Error: No such option: --invalid-flag
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
+    2
+```
+
+## 4. Incomplete command
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure
+    Usage: pyroform configure [OPTIONS]
+    Try 'pyroform configure --help' for help.
+
+    Error: Missing option '-i' / '--input'.
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
+    2
+```
+
+## 5. Multiple actions
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure scorch
+    Usage: pyroform configure [OPTIONS]
+    Try 'pyroform configure --help' for help.
+
+    Error: Missing option '-i' / '--input'.
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
     2
 ```

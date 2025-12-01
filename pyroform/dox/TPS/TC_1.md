@@ -13,6 +13,7 @@
 2. Run help commands
 ```bash
 ~$ pyroform --help
+~$ pyroform snapshot --help
 ~$ pyroform configure --help
 ~$ pyroform scorch --help
 ~$ pyroform mount --help

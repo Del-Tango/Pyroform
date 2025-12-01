@@ -55,7 +55,7 @@ class SystemValidator:
         self.scanner = SystemStateScanner(self.stdout)
         self.comparator = SystemStateComparator(self.stdout)
 
-    @pysnooper.snoop()
+#   @pysnooper.snoop()
     def validate_configuration(self, config: PyroConfig) -> ValidationResult:
         """
         Compare current system state with desired configuration.
@@ -72,8 +72,11 @@ class SystemValidator:
 
         differences = self.comparator.compare_states(current_state, config)
 
-        critical_issues = sum(len(item) for item in differences.values() if 'mismatch' not in item)
-        total_issues = sum(len(item) for item in differences.values())
+#       critical_issues = sum(len(item) for item in differences.values() if 'mismatch' not in item)
+#       total_issues = sum(len(item) for item in differences.values())
+
+        critical_issues = sum([len(v) for k, v in differences.items() if 'mismatch' not in str(k).lower()])
+        total_issues = sum([len(v) for k, v in differences.items() ])
 
         summary = {
             "total_issues": total_issues,

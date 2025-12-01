@@ -12,7 +12,7 @@ import pysnooper
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Any, Set, Optional, Tuple
+from typing import Dict, List, Any, Set, Optional, Tuple, Union
 
 from .models import (
     PyroConfig, User, Group, Device, Exclude, ValidationResult, FileSystemEntry,
@@ -32,6 +32,7 @@ class SystemStateScanner:
     def __init__(self, stdout: STDOUTMsg):
         self.stdout = stdout
 
+    @pysnooper.snoop()
     def scan_system_state(
         self,
         pyro_config: Optional[PyroConfig] = None,
@@ -61,7 +62,7 @@ class SystemStateScanner:
             )
         }
 
-        self.stdout.debug(f'System State: {json.dumps(system_state, indent=4)}')
+        self.stdout.debug(f'System State: {system_state}')
         return system_state
 
     def _scan_users(self, pyro_config: Optional[PyroConfig]) -> List[Dict[str, Any]]:
@@ -121,6 +122,7 @@ class SystemStateScanner:
 
         return groups
 
+#   @pysnooper.snoop()
     def _scan_mounted_devices(
         self,
         pyro_config: Optional[PyroConfig],
@@ -236,6 +238,7 @@ class SystemStateScanner:
 
         return None, None, None
 
+    @pysnooper.snoop()
     def _scan_device_contents(
         self,
         device_info: MountedDevice,
@@ -262,13 +265,14 @@ class SystemStateScanner:
             )
 
             self.stdout.debug(
-                f"  Found {len(device_info.files)} files, "
+                f"Found {len(device_info.files)} files, "
                 f"{len(device_info.directories)} directories, "
                 f"{len(device_info.symlinks)} symlinks"
             )
         except Exception as e:
-            self.stdout.err(f"  Error scanning {mountpoint}: {e}")
+            self.stdout.err(f"Error scanning {mountpoint}: {e}")
 
+#   @pysnooper.snoop()
     def _scan_filesystem_recursive(
         self,
         path: str,
@@ -297,6 +301,7 @@ class SystemStateScanner:
         except (OSError, PermissionError):
             pass  # Skip directories we can't access
 
+#   @pysnooper.snoop()
     def _process_filesystem_entry(
         self,
         full_path: str,
@@ -313,20 +318,30 @@ class SystemStateScanner:
             group = self._get_groupname(stat_info.st_gid)
             permissions = self._get_numeric_permissions(stat_info.st_mode)
 
-            file_info = FileSystemEntry(
-                path=full_path,
-                owner=owner,
-                group=group,
-                permissions=permissions,
-                mountpoint=device_info.mountpoint
-            )
+            # TODO - FIX ME
+#           file_info = FileSystemEntry(
+#               path=full_path,
+#               owner=owner,
+#               group=group,
+#               permissions=permissions,
+#               mountpoint=device_info.mountpoint
+#           )
+            file_info = {
+                'path':full_path,
+                'owner':owner,
+                'group':group,
+                'permissions':permissions,
+                'mountpoint':device_info.mountpoint,
+            }
 
             if stat.S_ISREG(stat_info.st_mode):
                 if not self._should_exclude_file(full_path, pyro_config):
-                    device_info.files.append(file_info)
+#                   device_info.files.append(file_info)
+                    device_info.files.append(FileSystemEntry(type='file', **file_info))
             elif stat.S_ISDIR(stat_info.st_mode):
                 if not self._should_exclude_directory(full_path, pyro_config):
-                    device_info.directories.append(file_info)
+#                   device_info.directories.append(file_info)
+                    device_info.directories.append(FileSystemEntry(type='directory', **file_info))
                     if current_depth < max_depth:
                         self._scan_filesystem_recursive(
                             full_path, device_info, max_depth, include_hidden,
@@ -334,8 +349,10 @@ class SystemStateScanner:
                         )
             elif stat.S_ISLNK(stat_info.st_mode):
                 if not self._should_exclude_link(full_path, pyro_config):
-                    file_info.target = self._read_symlink_target(full_path)
-                    device_info.symlinks.append(file_info)
+                    file_info_obj = FileSystemEntry(type='symlink', **file_info)
+                    file_info_obj.target = self._read_symlink_target(full_path)
+#                   device_info.symlinks.append(file_info)
+                    device_info.symlinks.append(file_info_obj)
 
         except (OSError, PermissionError):
             pass  # Skip files we can't access
@@ -424,6 +441,31 @@ class SystemStateScanner:
                 return part['name']
         return ''
 
+#   @pysnooper.snoop()
+    def _has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
+        """
+        Check if a path has any excluded path as its parent directory.
+
+        Args:
+            path: The path to check
+            excluded_paths: List of paths that should not be parents
+
+        Returns:
+            bool: True if any excluded path is a parent of the given path
+        """
+        path_obj = Path(path).resolve()
+        for excluded in excluded_paths:
+            excluded_obj = Path(excluded).resolve()
+            try:
+                # If path starts with excluded path, excluded is a parent
+                path_obj.relative_to(excluded_obj)
+                self.stdout.debug(f'Excluding: {path}')
+                return True
+            except ValueError:
+                # excluded is not a parent of path
+                continue
+        return False
+
     # Exclusion check methods
     def _should_exclude_user(self, username: str, pyro_config: Optional[PyroConfig]) -> bool:
         return (pyro_config and pyro_config.excludes and
@@ -437,15 +479,34 @@ class SystemStateScanner:
         return (pyro_config and pyro_config.excludes and
                 device in pyro_config.excludes.devices)
 
+    # TODO - Take into account excluded higher level directories
     def _should_exclude_file(self, filepath: str, pyro_config: Optional[PyroConfig]) -> bool:
-        return (pyro_config and pyro_config.excludes and
-                filepath in pyro_config.excludes.files)
+        return (
+            pyro_config
+            and pyro_config.excludes
+            and (
+                filepath in pyro_config.excludes.files
+                or self._has_excluded_parent(filepath, pyro_config.excludes.directories)
+            )
+        )
 
     def _should_exclude_directory(self, dirpath: str, pyro_config: Optional[PyroConfig]) -> bool:
-        return (pyro_config and pyro_config.excludes and
-                dirpath in pyro_config.excludes.directories)
+        return (
+            pyro_config
+            and pyro_config.excludes
+            and (
+                dirpath in pyro_config.excludes.directories
+                or self._has_excluded_parent(dirpath, pyro_config.excludes.directories)
+            )
+        )
 
     def _should_exclude_link(self, linkpath: str, pyro_config: Optional[PyroConfig]) -> bool:
-        return (pyro_config and pyro_config.excludes and
-                linkpath in pyro_config.excludes.links)
+        return (
+            pyro_config
+            and pyro_config.excludes
+            and (
+                linkpath in pyro_config.excludes.links
+                or self._has_excluded_parent(linkpath, pyro_config.excludes.directories)
+            )
+        )
 

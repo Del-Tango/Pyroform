@@ -327,15 +327,18 @@ class PyroformEngine:
                 if result.discrepancies:
                     self._log_validation_discrepancies(config.label, result.discrepancies)
 
-                all_discrepancies.extend(result.discrepancies)
+#               all_discrepancies.extend(result.discrepancies)
+                all_discrepancies.append(result.discrepancies)
                 all_valid = all_valid and result.is_valid
 
                 # Update issue counts
-                config_critical = sum(
-                    1 for discrepancy in result.discrepancies
-                    if 'mismatch' not in str(discrepancy).lower()
-                )
-                config_total = len(result.discrepancies)
+#               config_critical = sum(
+#                   1 for discrepancy in result.discrepancies
+#                   if 'mismatch' not in str(discrepancy).lower()
+#               )
+#               config_total = len(result.discrepancies)
+                config_critical = sum([len(v) for k, v in result.discrepancies.items() if 'mismatch' not in str(k).lower()])
+                config_total = sum([len(v) for k, v in result.discrepancies.items()])
 
                 critical_issues += config_critical
                 total_issues += config_total
