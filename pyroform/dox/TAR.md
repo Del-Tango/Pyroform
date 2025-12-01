@@ -10,9 +10,9 @@
 
 # [ TC 1 ]: CLI Help and Version
 
-- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
-- Date: 11/11/2025
+- Date: 01/12/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_1](./TPS/TC_1.md)
 - Status:
@@ -20,28 +20,25 @@
 [ ] FAIL
 [ ] BLOCKED
 
-# Remarks
-
-- Help messages on action sub-commands would be betters suited if they addressed only the action in question.
-
 # Archive:
 
 ## 1. Display Version
 ```text
-    bash-5.2# pyroform --version
+    root@1e1b62138bef:/app/Pyroform# pyroform --version
 
         ___________________________________________________________________________
 
         *                          *   Pyroform   *                           *
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
+
 
     Pyroform version 1.0.0
 ```
 
 ## 2. Display Help
 ```text
-    bash-5.2# pyroform --help
+    root@1e1b62138bef:/app/Pyroform# pyroform --help
 
         ___________________________________________________________________________
 
@@ -49,15 +46,41 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform [OPTIONS] COMMAND [ARGS]...
 
     Pyroform Linux Configurator
 
+    A tool that receives input file(s) containing list of users, user groups,
+    block storage device mountpoints, files and directories with owners and
+    permissions, generates on the fly FlowCTRL sketch files based on input pyro
+    file(s), and runs them using the flow_ctrl library.
+
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
+    --version  Display PyrDisplay Pyroform  version
+    --help     Show this message and exit.
+
+    Commands:
+    configure  Configure system according to Pyro file(s)
+    mount      Mount devices according to Pyro file(s)
+    scorch     Remove system resources not specified in Pyro file(s)
+    snapshot   Validate system against Pyro file(s)
+    validate   Validate system against Pyro file(s)
+    workflow   Execute a complete Pyroform workflow from configuration file
+
+
+    root@1e1b62138bef:/app/Pyroform# pyroform snapshot --help
+
+        ___________________________________________________________________________
+
+        *                          *   Pyroform   *                           *
+        ___________________________________________________________________________
+                        Regards, the Alveare Solutions #!/Society -x
+
+    Usage: pyroform snapshot [OPTIONS]
+
+    Validate system against Pyro file(s)
+
+    Options:
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
                             containing Pyro files
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
@@ -69,13 +92,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform configure --help
+    root@1e1b62138bef:/app/Pyroform# pyroform configure --help
 
         ___________________________________________________________________________
 
@@ -83,17 +106,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform configure [OPTIONS]
 
-    Pyroform Linux Configurator
+    Configure system according to Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -103,13 +122,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform scorch --help
+    root@1e1b62138bef:/app/Pyroform# pyroform scorch --help
 
         ___________________________________________________________________________
 
@@ -117,17 +136,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform scorch [OPTIONS]
 
-    Pyroform Linux Configurator
+    Remove system resources not specified in Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -137,13 +152,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform mount --help
+    root@1e1b62138bef:/app/Pyroform# pyroform mount --help
 
         ___________________________________________________________________________
 
@@ -151,17 +166,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform mount [OPTIONS]
 
-    Pyroform Linux Configurator
+    Mount devices according to Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -171,13 +182,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-    bash-5.2# pyroform validate --help
+    root@1e1b62138bef:/app/Pyroform# pyroform validate --help
 
         ___________________________________________________________________________
 
@@ -185,17 +196,13 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform validate [OPTIONS]
 
-    Pyroform Linux Configurator
+    Validate system against Pyro file(s)
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
     -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
+                            containing Pyro files  [required]
     -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
                             generated files
     -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
@@ -205,14 +212,13 @@
     -s, --silent            Flag to suppress STDOUT
     -d, --debug             Flag that makes logging and STDOUT messages more
                             verbose
-    -v, --version           Action that displays Pyroform version
     -y, --yes               Flag to confirm all manual prompts such that manual
                             interaction from user is not required
+    --dry-run               Perform a trial run without making any changes
     --help                  Show this message and exit.
 
 
-
-    bash-5.2# pyroform workflow --help
+    root@1e1b62138bef:/app/Pyroform# pyroform workflow --help
 
         ___________________________________________________________________________
 
@@ -220,55 +226,38 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform workflow [OPTIONS]
 
-    Pyroform Linux Configurator
+    Execute a complete Pyroform workflow from configuration file
 
     Options:
-    -S, --scorch            Trigger action scorch using input Pyro file(s)
-    -M, --mount             Trigger action mount using input Pyro file(s)
-    -C, --configure         Trigger action configure using input Pyro file(s)
-    -V, --validate          Trigger action validate using input Pyro file(s)
-    -i, --input PATH        Path to Pyro file (JSON|YAML) or directory
-                            containing Pyro files
-    -o, --output PATH       Path to FlowCTRL sketch file (JSON) or directory for
-                            generated files
-    -c, --config-file PATH  Path to Pyroform config file (JSON|YAML)
-    -l, --log-file PATH     Path to Pyroform and FlowCTRL log file
-    -r, --dump-report       Flag to generate report file with STDOUT, STDERR
-                            plus summary
-    -s, --silent            Flag to suppress STDOUT
-    -d, --debug             Flag that makes logging and STDOUT messages more
-                            verbose
-    -v, --version           Action that displays Pyroform version
-    -y, --yes               Flag to confirm all manual prompts such that manual
-                            interaction from user is not required
-    --help                  Show this message and exit.
+    -w, --workflow-file PATH  Path to workflow configuration file (JSON/YAML)
+                                [required]
+    --help                    Show this message and exit.
 ```
 
 --------------------------------------------------------------------------------
 
 # [ TC 2 ]: Invalid CLI Usage
 
-- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
-- Date: 11/11/2025
+- Date: 01/12/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_2](./TPS/TC_2.md)
 - Status:
-[x] PASS
+[X] PASS
 [ ] FAIL
 [ ] BLOCKED
 
 # Remarks
-
-- Case 4 should have better error messages. In it's current form can be missleading.
+N/A
 
 # Archive
 
 ## 1. No arguments
 ```text
-    bash-5.2# pyroform
+    root@1e1b62138bef:/app/Pyroform# pyroform
 
         ___________________________________________________________________________
 
@@ -276,54 +265,34 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
+    Usage: pyroform [OPTIONS] COMMAND [ARGS]...
 
-    Error: No action specified. Use --scorch, --mount, --configure, or --validate
+    Pyroform Linux Configurator
 
-    bash-5.2# echo $?
+    A tool that receives input file(s) containing list of users, user groups,
+    block storage device mountpoints, files and directories with owners and
+    permissions, generates on the fly FlowCTRL sketch files based on input pyro
+    file(s), and runs them using the flow_ctrl library.
+
+    Options:
+    --version  Display PyrDisplay Pyroform  version
+    --help     Show this message and exit.
+
+    Commands:
+    configure  Configure system according to Pyro file(s)
+    mount      Mount devices according to Pyro file(s)
+    scorch     Remove system resources not specified in Pyro file(s)
+    snapshot   Validate system against Pyro file(s)
+    validate   Validate system against Pyro file(s)
+    workflow   Execute a complete Pyroform workflow from configuration file
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
     2
 ```
 
 ## 2. Invalid action
 ```text
-    bash-5.2# pyroform invalid-command
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
-
-    Error: Got unexpected extra argument (invalid-command)
-
-    bash-5.2# echo $?
-    2
-```
-
-## 3. Invalid option flag
-```text
-    bash-5.2# pyroform configure --invalid-flag
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
-
-    Error: No such option: --invalid-flag Did you mean --validate?
-
-    bash-5.2# echo $?
-    2
-```
-
-## 4. Incomplete command
-```text
-    bash-5.2# pyroform configure
-    Usage: pyroform [OPTIONS]
-    Try 'pyroform --help' for help.
-
-    Error: Got unexpected extra argument (configure)
-
-    bash-5.2# echo $?
-    2
-```
-
-## 5. Multiple actions
-```text
-    bash-5.2# pyroform --configure --scorch
+    root@1e1b62138bef:/app/Pyroform# pyroform invalid-command
 
         ___________________________________________________________________________
 
@@ -331,12 +300,48 @@
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
-    Usage: pyroform [OPTIONS]
+    Usage: pyroform [OPTIONS] COMMAND [ARGS]...
     Try 'pyroform --help' for help.
 
-    Error: Exactly one action must be specified: --scorch, --mount, --configure, or --validate
+    Error: No such command 'invalid-command'.
 
-    bash-5.2# echo $?
+    root@1e1b62138bef:/app/Pyroform# echo $?
+    2
+```
+
+## 3. Invalid option flag
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure --invalid-flag
+    Usage: pyroform configure [OPTIONS]
+    Try 'pyroform configure --help' for help.
+
+    Error: No such option: --invalid-flag
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
+    2
+```
+
+## 4. Incomplete command
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure
+    Usage: pyroform configure [OPTIONS]
+    Try 'pyroform configure --help' for help.
+
+    Error: Missing option '-i' / '--input'.
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
+    2
+```
+
+## 5. Multiple actions
+```text
+    root@1e1b62138bef:/app/Pyroform# pyroform configure scorch
+    Usage: pyroform configure [OPTIONS]
+    Try 'pyroform configure --help' for help.
+
+    Error: Missing option '-i' / '--input'.
+
+    root@1e1b62138bef:/app/Pyroform# echo $?
     2
 ```
 
@@ -344,9 +349,9 @@
 
 # [ TC 3 ]: YAML Configuration Parsing
 
-- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
-- Date: 16/11/2025, 14/11/2025, 11/11/2025
+- Date: 01/12/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_3](./TPS/TC_3.md)
 - Status:
@@ -359,114 +364,123 @@ N/A
 
 # Archive
 
-## 1. Create dummy Pyro file
+## 1. Create dummy Pyro file (test_simple_config.pyro.yaml)
 ```text
-    bash-5.2# cat test_config.pyro.yaml
-    Label: "Test Configuration"
-    Users:
-    - label: "test_user"
-        Name: "testuser"
-        Password: "test123"
-        Groups: ["testgroup"]
-    Groups:
-    - label: "test_group"
-        Name: "testgroup"
-        Users: ["testuser"]
-    Devices:
-    - label: "test_device"
-        Path: "/tmp/test_mount"
-        Partition: 1
-        Mountpoint: "/mnt/test"
-        State: []
+Label: "Test Simple Configuration"
+Users:
+  - label: "test_user"
+    Name: "testuser"
+    Password: "test123"
+    Groups: ["testgroup"]
+Groups:
+  - label: "test_group"
+    Name: "testgroup"
+    Users: ["testuser"]
+Devices:
+  - label: "test_device"
+    Path: "/tmp/test_mount"
+    Partition: 1
+    Mountpoint: "/mnt/test"
+    State: []
+Excludes:
+  Users:
+  - root
+  - daemon
+  - bin
+  - sys
+  - sync
+  - games
+  - man
+  - lp
+  - mail
+  - news
+  - uucp
+  - proxy
+  - www-data
+  - backup
+  - list
+  - irc
+  - _apt
+  - nobody
+  Groups:
+  - root
+  - daemon
+  - bin
+  - sys
+  - adm
+  - tty
+  - disk
+  - lp
+  - mail
+  - news
+  - uucp
+  - man
+  - proxy
+  - kmem
+  - dialout
+  - fax
+  - voice
+  - cdrom
+  - floppy
+  - tape
+  - sudo
+  - audio
+  - dip
+  - www-data
+  - backup
+  - operator
+  - list
+  - irc
+  - src
+  - shadow
+  - utmp
+  - video
+  - sasl
+  - plugdev
+  - staff
+  - games
+  - users
+  - nogroup
+  - _ssh
+  Directories:
+  - /app
+  - /bin
+  - /boot
+  - /dev
+  - /etc
+  - /home
+  - /lib
+  - /lib64
+  - /media
+  - /mnt
+  - /opt
+  - /proc
+  - /protected
+  - /root
+  - /run
+  - /sbin
+  - /srv
+  - /sys
+  - /usr
+  - /var
 ```
 
 ## 2. Run validation command using previously created Pyro file
 ```text
-    bash-5.2# pyroform validate -i test_config.pyro.yaml
-
-        ___________________________________________________________________________
-
-        *                          *   Pyroform   *                           *
-        ___________________________________________________________________________
-                        Regards, the Alveare Solutions #!/Society -x
-
-
-    [ INFO ]: Parsing Pyro state file (test_config.pyro.yaml)...
-    [ INFO ]: State file data: {
-        "Label": "Test Configuration",
-        "Users": [
-            {
-                "label": "test_user",
-                "Name": "testuser",
-                "Password": "test123",
-                "Groups": [
-                    "testgroup"
-                ]
-            }
-        ],
-        "Groups": [
-            {
-                "label": "test_group",
-                "Name": "testgroup",
-                "Users": [
-                    "testuser"
-                ]
-            }
-        ],
-        "Devices": [
-            {
-                "label": "test_device",
-                "Path": "/tmp/test_mount",
-                "Partition": 1,
-                "Mountpoint": "/mnt/test",
-                "State": []
-            }
-        ]
-    }
-    [ NOK ]: Discrepancies [
-        {
-            "type": "user",
-            "name": "testuser",
-            "issue": "User does not exist",
-            "critical": true
-        },
-        {
-            "type": "group",
-            "name": "testgroup",
-            "issue": "Group does not exist",
-            "critical": true
-        },
-        {
-            "type": "mount",
-            "device": "/tmp/test_mount",
-            "mountpoint": "/mnt/test",
-            "issue": "Device not mounted",
-            "critical": false
-        }
-    ]
-    [ NOK ]: Machine state does not correspond with Pyro config Test Configuration
-    [ NOK ]: (2) critical issues identified
-    [ NOK ]: (3) total issues identified
-    [ NOK ]: Machine state does not correspond!
-
-```
-
-## 3. Dry-run of configuration
-```text
-    bash-5.2# pyroform --configure -i test_config.pyro.yaml --dry-run
+root@1e1b62138bef:/app/Pyroform# pyroform validate -i test_simple_config.pyro.yaml
 
     ___________________________________________________________________________
 
-    *                          *   Pyroform   *                           *
+      *                          *   Pyroform   *                           *
     ___________________________________________________________________________
                     Regards, the Alveare Solutions #!/Society -x
 
 
-[ INFO ]: Logging configured: /tmp/pyroflow/pyroflow.log
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
 [ INFO ]: State monitoring configured for inter-process control
-[ INFO ]: Parsing Pyro state file (dump/test_config.pyro.yaml)...
+[ INFO ]: Parsing Pyro state file (test_simple_config.pyro.yaml)...
 [ INFO ]: State file data: {
-    "Label": "Test Configuration",
+    "Label": "Test Simple Configuration",
     "Users": [
         {
             "label": "test_user",
@@ -494,15 +508,431 @@ N/A
             "Mountpoint": "/mnt/test",
             "State": []
         }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ],
+        "Groups": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "adm",
+            "tty",
+            "disk",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "man",
+            "proxy",
+            "kmem",
+            "dialout",
+            "fax",
+            "voice",
+            "cdrom",
+            "floppy",
+            "tape",
+            "sudo",
+            "audio",
+            "dip",
+            "www-data",
+            "backup",
+            "operator",
+            "list",
+            "irc",
+            "src",
+            "shadow",
+            "utmp",
+            "video",
+            "sasl",
+            "plugdev",
+            "staff",
+            "games",
+            "users",
+            "nogroup",
+            "_ssh"
+        ],
+        "Directories": [
+            "/app",
+            "/bin",
+            "/boot",
+            "/dev",
+            "/etc",
+            "/home",
+            "/lib",
+            "/lib64",
+            "/media",
+            "/mnt",
+            "/opt",
+            "/proc",
+            "/protected",
+            "/root",
+            "/run",
+            "/sbin",
+            "/srv",
+            "/sys",
+            "/usr",
+            "/var"
+        ]
+    }
+}
+[ INFO ]: Scanning current machine state (users, groups, filesystem)...
+[ WARNING ]: Excluding user root
+[ WARNING ]: Excluding user daemon
+[ WARNING ]: Excluding user bin
+[ WARNING ]: Excluding user sys
+[ WARNING ]: Excluding user sync
+[ WARNING ]: Excluding user games
+[ WARNING ]: Excluding user man
+[ WARNING ]: Excluding user lp
+[ WARNING ]: Excluding user mail
+[ WARNING ]: Excluding user news
+[ WARNING ]: Excluding user uucp
+[ WARNING ]: Excluding user proxy
+[ WARNING ]: Excluding user www-data
+[ WARNING ]: Excluding user backup
+[ WARNING ]: Excluding user list
+[ WARNING ]: Excluding user irc
+[ WARNING ]: Excluding user _apt
+[ WARNING ]: Excluding user nobody
+[ WARNING ]: Excluding group root
+[ WARNING ]: Excluding group daemon
+[ WARNING ]: Excluding group bin
+[ WARNING ]: Excluding group sys
+[ WARNING ]: Excluding group adm
+[ WARNING ]: Excluding group tty
+[ WARNING ]: Excluding group disk
+[ WARNING ]: Excluding group lp
+[ WARNING ]: Excluding group mail
+[ WARNING ]: Excluding group news
+[ WARNING ]: Excluding group uucp
+[ WARNING ]: Excluding group man
+[ WARNING ]: Excluding group proxy
+[ WARNING ]: Excluding group kmem
+[ WARNING ]: Excluding group dialout
+[ WARNING ]: Excluding group fax
+[ WARNING ]: Excluding group voice
+[ WARNING ]: Excluding group cdrom
+[ WARNING ]: Excluding group floppy
+[ WARNING ]: Excluding group tape
+[ WARNING ]: Excluding group sudo
+[ WARNING ]: Excluding group audio
+[ WARNING ]: Excluding group dip
+[ WARNING ]: Excluding group www-data
+[ WARNING ]: Excluding group backup
+[ WARNING ]: Excluding group operator
+[ WARNING ]: Excluding group list
+[ WARNING ]: Excluding group irc
+[ WARNING ]: Excluding group src
+[ WARNING ]: Excluding group shadow
+[ WARNING ]: Excluding group utmp
+[ WARNING ]: Excluding group video
+[ WARNING ]: Excluding group sasl
+[ WARNING ]: Excluding group plugdev
+[ WARNING ]: Excluding group staff
+[ WARNING ]: Excluding group games
+[ WARNING ]: Excluding group users
+[ WARNING ]: Excluding group nogroup
+[ WARNING ]: Excluding group _ssh
+[ INFO ]: Comparing current system state with Pyro file...
+[ NOK ]: Validation discrepancies for Pyro config (Test Simple Configuration):
+{
+    "missing_users": [
+        {
+            "label": "test_user",
+            "username": "testuser",
+            "password": "test123",
+            "groups": [
+                "testgroup"
+            ]
+        }
+    ],
+    "extra_users": [
+        {
+            "username": "pyrotest1",
+            "uid": 1003,
+            "home_directory": "/home/pyrotest1"
+        },
+        {
+            "username": "pyrotest2",
+            "uid": 1004,
+            "home_directory": "/home/pyrotest2"
+        },
+        {
+            "username": "scorchtest",
+            "uid": 1002,
+            "home_directory": "/home/scorchtest"
+        },
+        {
+            "username": "intruder",
+            "uid": 1005,
+            "home_directory": "/home/intruder"
+        }
+    ],
+    "missing_groups": [
+        {
+            "label": "test_group",
+            "groupname": "testgroup",
+            "members": [
+                "testuser"
+            ]
+        }
+    ],
+    "extra_groups": [
+        {
+            "groupname": "scorchtest",
+            "gid": 1004,
+            "members": []
+        },
+        {
+            "groupname": "intruder",
+            "gid": 1008,
+            "members": []
+        },
+        {
+            "groupname": "pyrotest2",
+            "gid": 1007,
+            "members": [
+                "pyrotest2"
+            ]
+        },
+        {
+            "groupname": "pyrogroup2",
+            "gid": 1006,
+            "members": [
+                "pyrotest2"
+            ]
+        },
+        {
+            "groupname": "pyrogroup1",
+            "gid": 1005,
+            "members": [
+                "pyrotest1"
+            ]
+        },
+        {
+            "groupname": "pyrotest1",
+            "gid": 1003,
+            "members": [
+                "pyrotest1"
+            ]
+        }
+    ],
+    "extra_directories": [
+        {
+            "path": "/tmp/pytest-of-root/pytest-13/test_setup_logging_log_file_di0",
+            "owner": "root",
+            "group": "root",
+            "permissions": "0700"
+        },
+        ...
+        {
+            "path": "/tmp/pytest-of-root/pytest-12/test_parse_invalid_path_type0",
+            "owner": "root",
+            "group": "root",
+            "permissions": "0700"
+        }
+    ],
+    "extra_files": [
+        {
+            "path": "/tmp/pytest-of-root/pytest-13/test_load_config_json_decode_e0/invalid.json",
+            "owner": "root",
+            "group": "root",
+            "permissions": "0644"
+        },
+        ...
+        {
+            "path": "/tmp/pytest-of-root/pytest-12/test_load_config_yml_extension0/config.yml",
+            "owner": "root",
+            "group": "root",
+            "permissions": "0644"
+        }
+    ],
+    "extra_symlinks": [
+        {
+            "path": "/tmp/pytest-of-root/pytest-12/test_parse_yaml_errorcurrent",
+            "owner": "root",
+            "group": "root",
+            "permissions": "0777",
+            "target": "/tmp/pytest-of-root/pytest-12/test_parse_yaml_error0"
+        },
+        ...
+        {
+            "path": "/tmp/pytest-of-root/pytest-13/test_parse_string_pathcurrent",
+            "owner": "root",
+            "group": "root",
+            "permissions": "0777",
+            "target": "/tmp/pytest-of-root/pytest-13/test_parse_string_path0"
+        }
+    ],
+    "missing_mountpoints": [
+        {
+            "label": "test_device",
+            "mountpoint": "/mnt/test"
+        }
     ]
 }
-[ INFO ]: FlowCTRL Sketch {
-    "name": "Pyroform Auto-Generated Sketch Test Configuration",
+[ NOK ]: System state mismatch for (Test Simple Configuration) (352 critical, 352 total issues)
+[ NOK ]: Found 352 critical issues, 352 total issues
+[ NOK ]: System state validation failed - run "configure" to apply changes
+```
+
+## 3. Dry-run of configuration
+```text
+root@1e1b62138bef:/app/Pyroform# pyroform configure -i test_simple_config.pyro.yaml --dry-run
+
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
+[ INFO ]: State monitoring configured for inter-process control
+[ INFO ]: Parsing Pyro state file (test_simple_config.pyro.yaml)...
+[ INFO ]: State file data: {
+    "Label": "Test Simple Configuration",
+    "Users": [
+        {
+            "label": "test_user",
+            "Name": "testuser",
+            "Password": "test123",
+            "Groups": [
+                "testgroup"
+            ]
+        }
+    ],
+    "Groups": [
+        {
+            "label": "test_group",
+            "Name": "testgroup",
+            "Users": [
+                "testuser"
+            ]
+        }
+    ],
+    "Devices": [
+        {
+            "label": "test_device",
+            "Path": "/tmp/test_mount",
+            "Partition": 1,
+            "Mountpoint": "/mnt/test",
+            "State": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ],
+        "Groups": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "adm",
+            "tty",
+            "disk",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "man",
+            "proxy",
+            "kmem",
+            "dialout",
+            "fax",
+            "voice",
+            "cdrom",
+            "floppy",
+            "tape",
+            "sudo",
+            "audio",
+            "dip",
+            "www-data",
+            "backup",
+            "operator",
+            "list",
+            "irc",
+            "src",
+            "shadow",
+            "utmp",
+            "video",
+            "sasl",
+            "plugdev",
+            "staff",
+            "games",
+            "users",
+            "nogroup",
+            "_ssh"
+        ],
+        "Directories": [
+            "/app",
+            "/bin",
+            "/boot",
+            "/dev",
+            "/etc",
+            "/home",
+            "/lib",
+            "/lib64",
+            "/media",
+            "/mnt",
+            "/opt",
+            "/proc",
+            "/protected",
+            "/root",
+            "/run",
+            "/sbin",
+            "/srv",
+            "/sys",
+            "/usr",
+            "/var"
+        ]
+    }
+}
+[ INFO ]: FlowCTRL Sketch: {
+    "name": "Pyroform Auto-Generated Sketch Test Simple Configuration",
     "Users": [
         {
             "name": "Creating System User testuser",
-            "cmd": "# for group in 'testgroup'; do groupadd -f $group; done && useradd -m -p 'test123' -G 'testgroup' 'testuser'",
-            "setup-cmd": "id testuser",
+            "cmd": "# for group in testgroup; do groupadd -f $group; done && useradd -m -p 'test123' -G 'testgroup' 'testuser' || exit 0",
+            "setup-cmd": "id testuser && echo 'User testuser already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'User testuser exists or created successfully'",
             "on-nok-cmd": "echo 'Failed to create user testuser'",
@@ -512,18 +942,18 @@ N/A
     "Groups": [
         {
             "name": "Creating System Group testgroup",
-            "cmd": "# groupadd -f 'testgroup' && for user in 'testuser'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'testgroup' $user; done",
-            "setup-cmd": "groupadd testgroup",
+            "cmd": "# groupadd -f 'testgroup' && for user in testuser; do id $user || useradd -m $user; usermod -a -G 'testgroup' $user; done",
+            "setup-cmd": "getent group testgroup && echo 'Group testgroup already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'Group testgroup exists'",
-            "on-nok-cmd": "echo 'Creating group testgroup'",
+            "on-nok-cmd": "echo 'Failed to create group testgroup'",
             "fatal-nok": false
         }
     ],
     "Devices": [
         {
-            "name": "Creating System Mountpoint Directory mnt_test",
-            "cmd": "# mkdir -p /mnt/test",
+            "name": "Creating System Mountpoint Directory /mnt/test",
+            "cmd": "# mkdir -p '/mnt/test'",
             "setup-cmd": "test -d /mnt/test",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'Mountpoint /mnt/test exists'",
@@ -532,9 +962,9 @@ N/A
         },
         {
             "name": "Mounting Block Device test_device",
-            "cmd": "# mount /tmp/test_mount /mnt/test",
+            "cmd": "# mount '/tmp/test_mount1' '/mnt/test'",
             "setup-cmd": "mount | grep -q '/tmp/test_mount on /mnt/test'",
-            "teardown-cmd": "",
+            "teardown-cmd": "umount /mnt/test",
             "on-ok-cmd": "echo 'Device /tmp/test_mount already mounted to /mnt/test'",
             "on-nok-cmd": "echo 'Mounting /tmp/test_mount to /mnt/test'",
             "fatal-nok": true
@@ -544,7 +974,7 @@ N/A
 [ INFO ]: Purging all state and report data
 [ OK ]: All data purged
 [ INFO ]: Loading sketch file: pyroflow.sketch.json
-[ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Test Configuration
+[ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Test Simple Configuration
 [ INFO ]: Starting procedure execution with state monitoring
 [ INFO ]: Procedure state set to STARTED
 [ INFO ]: State monitoring active - process can be controlled externally
@@ -552,12 +982,10 @@ N/A
 [ INFO ]: Processing stage: Users
 [ INFO ]: Processing action: Creating System User testuser
 [ INFO ]: Executing Procedure Stage Action: Creating System User testuser
-CMD> id testuser
+CMD> id testuser && echo 'User testuser already exists' || exit 0
 
 
-[ NOK ]: id: ‘testuser’: no such user
-
-CMD> # for group in 'testgroup'; do groupadd -f $group; done && useradd -m -p 'test123' -G 'testgroup' 'testuser'
+CMD> # for group in testgroup; do groupadd -f $group; done && useradd -m -p 'test123' -G 'testgroup' 'testuser' || exit 0
 
 
 CMD> echo 'User testuser exists or created successfully'
@@ -566,46 +994,53 @@ User testuser exists or created successfully
 [ OK ]: Action completed: Creating System User testuser
 [ OK ]: Stage completed: Users
 [ INFO ]: Processing stage: Groups
-[ INFO ]: Processing action: create_group_testgroup
-[ INFO ]: Executing Procedure Stage Action: create_group_testgroup
-CMD> groupadd testgroup
+[ INFO ]: Processing action: Creating System Group testgroup
+[ INFO ]: Executing Procedure Stage Action: Creating System Group testgroup
+CMD> getent group testgroup && echo 'Group testgroup already exists' || exit 0
 
 
-[ NOK ]: /bin/sh: line 1: groupadd: command not found
-
-CMD> # groupadd -f 'testgroup' && for user in 'testuser'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'testgroup' $user; done
+CMD> # groupadd -f 'testgroup' && for user in testuser; do id $user || useradd -m $user; usermod -a -G 'testgroup' $user; done
 
 
 CMD> echo 'Group testgroup exists'
 Group testgroup exists
 
-[ OK ]: Action completed: create_group_testgroup
+[ OK ]: Action completed: Creating System Group testgroup
 [ OK ]: Stage completed: Groups
 [ INFO ]: Processing stage: Devices
-[ INFO ]: Processing action: create_mountpoint__mnt_test
-[ INFO ]: Executing Procedure Stage Action: create_mountpoint__mnt_test
+[ INFO ]: Processing action: Creating System Mountpoint Directory /mnt/test
+[ INFO ]: Executing Procedure Stage Action: Creating System Mountpoint Directory /mnt/test
 CMD> test -d /mnt/test
 
 
-CMD> # mkdir -p /mnt/test
+[ NOK ]:
+
+CMD> # mkdir -p '/mnt/test'
 
 
 CMD> echo 'Mountpoint /mnt/test exists'
 Mountpoint /mnt/test exists
 
-[ OK ]: Action completed: create_mountpoint__mnt_test
-[ INFO ]: Processing action: mount_device_test_device
-[ INFO ]: Executing Procedure Stage Action: mount_device_test_device
+[ OK ]: Action completed: Creating System Mountpoint Directory /mnt/test
+[ INFO ]: Processing action: Mounting Block Device test_device
+[ INFO ]: Executing Procedure Stage Action: Mounting Block Device test_device
 CMD> mount | grep -q '/tmp/test_mount on /mnt/test'
 
 
-CMD> # mount /tmp/test_mount /mnt/test
+[ NOK ]:
+
+CMD> # mount '/tmp/test_mount1' '/mnt/test'
 
 
 CMD> echo 'Device /tmp/test_mount already mounted to /mnt/test'
 Device /tmp/test_mount already mounted to /mnt/test
 
-[ OK ]: Action completed: mount_device_test_device
+CMD> umount /mnt/test
+
+
+[ NOK ]: umount: /mnt/test: must be superuser to unmount.
+
+[ OK ]: Action completed: Mounting Block Device test_device
 [ OK ]: Stage completed: Devices
 [ OK ]: Procedure completed: SUCCESS
 ```
