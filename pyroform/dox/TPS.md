@@ -111,85 +111,85 @@ Devices:
     State: []
 Excludes:
   Users:
-  - root
-  - daemon
-  - bin
-  - sys
-  - sync
-  - games
-  - man
-  - lp
-  - mail
-  - news
-  - uucp
-  - proxy
-  - www-data
-  - backup
-  - list
-  - irc
-  - _apt
-  - nobody
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
   Groups:
-  - root
-  - daemon
-  - bin
-  - sys
-  - adm
-  - tty
-  - disk
-  - lp
-  - mail
-  - news
-  - uucp
-  - man
-  - proxy
-  - kmem
-  - dialout
-  - fax
-  - voice
-  - cdrom
-  - floppy
-  - tape
-  - sudo
-  - audio
-  - dip
-  - www-data
-  - backup
-  - operator
-  - list
-  - irc
-  - src
-  - shadow
-  - utmp
-  - video
-  - sasl
-  - plugdev
-  - staff
-  - games
-  - users
-  - nogroup
-  - _ssh
+    - root
+    - daemon
+    - bin
+    - sys
+    - adm
+    - tty
+    - disk
+    - lp
+    - mail
+    - news
+    - uucp
+    - man
+    - proxy
+    - kmem
+    - dialout
+    - fax
+    - voice
+    - cdrom
+    - floppy
+    - tape
+    - sudo
+    - audio
+    - dip
+    - www-data
+    - backup
+    - operator
+    - list
+    - irc
+    - src
+    - shadow
+    - utmp
+    - video
+    - sasl
+    - plugdev
+    - staff
+    - games
+    - users
+    - nogroup
+    - _ssh
   Directories:
-  - /app
-  - /bin
-  - /boot
-  - /dev
-  - /etc
-  - /home
-  - /lib
-  - /lib64
-  - /media
-  - /mnt
-  - /opt
-  - /proc
-  - /protected
-  - /root
-  - /run
-  - /sbin
-  - /srv
-  - /sys
-  - /usr
-  - /var
+    - /app
+    - /bin
+    - /boot
+    - /dev
+    - /etc
+    - /home
+    - /lib
+    - /lib64
+    - /media
+    - /mnt
+    - /opt
+    - /proc
+    - /protected
+    - /root
+    - /run
+    - /sbin
+    - /srv
+    - /sys
+    - /usr
+    - /var
 ```
 
 ## Test Steps:
@@ -219,26 +219,119 @@ Excludes:
 - Preconditions:
 - Validated by: [TAR TC_4](./TAR/TC_4.md)
 
-## Test Data (test_config.pyro.json):
+## Test Data (test_simple_config.pyro.json):
 ```json
 {
-  "Label": "Test JSON Config",
+  "Label": "Test Simple Configuration",
   "Users": [
     {
-      "label": "json_user",
-      "Name": "jsonuser",
-      "Password": "json123",
-      "Groups": ["jsongroup"]
+      "label": "test_user",
+      "Name": "testuser",
+      "Password": "test123",
+      "Groups": ["testgroup"]
     }
   ],
   "Groups": [
     {
-      "label": "json_group",
-      "Name": "jsongroup",
-      "Users": ["jsonuser"]
+      "label": "test_group",
+      "Name": "testgroup",
+      "Users": ["testuser"]
     }
   ],
-  "Devices": []
+  "Devices": [
+    {
+      "label": "test_device",
+      "Path": "/tmp/test_mount",
+      "Partition": 1,
+      "Mountpoint": "/mnt/test",
+      "State": []
+    }
+  ],
+  "Excludes": {
+    "Users": [
+      "root",
+      "daemon",
+      "bin",
+      "sys",
+      "sync",
+      "games",
+      "man",
+      "lp",
+      "mail",
+      "news",
+      "uucp",
+      "proxy",
+      "www-data",
+      "backup",
+      "list",
+      "irc",
+      "_apt",
+      "nobody"
+    ],
+    "Groups": [
+      "root",
+      "daemon",
+      "bin",
+      "sys",
+      "adm",
+      "tty",
+      "disk",
+      "lp",
+      "mail",
+      "news",
+      "uucp",
+      "man",
+      "proxy",
+      "kmem",
+      "dialout",
+      "fax",
+      "voice",
+      "cdrom",
+      "floppy",
+      "tape",
+      "sudo",
+      "audio",
+      "dip",
+      "www-data",
+      "backup",
+      "operator",
+      "list",
+      "irc",
+      "src",
+      "shadow",
+      "utmp",
+      "video",
+      "sasl",
+      "plugdev",
+      "staff",
+      "games",
+      "users",
+      "nogroup",
+      "_ssh"
+    ],
+    "Directories": [
+      "/app",
+      "/bin",
+      "/boot",
+      "/dev",
+      "/etc",
+      "/home",
+      "/lib",
+      "/lib64",
+      "/media",
+      "/mnt",
+      "/opt",
+      "/proc",
+      "/protected",
+      "/root",
+      "/run",
+      "/sbin",
+      "/srv",
+      "/sys",
+      "/usr",
+      "/var"
+    ]
+  }
 }
 ```
 
@@ -269,15 +362,100 @@ Excludes:
 - Preconditions:
 - Validated by: [TAR TC_5](./TAR/TC_5.md)
 
+## Test Data:
+
+### Pyro file with invalid JSON syntax (invalid_syntax.pyro.json)
+```json
+{
+  "Label": "Test Invalid JSON Syntax Configuration",
+  "Users": [
+    {
+      "label": "json_user",
+      "Name": "jsonuser",
+      "Password": "json123",
+      "Groups": ["jsongroup"],
+    }
+  ],
+  "Groups": [
+    {
+      "label": "json_group",
+      "Name": "jsongroup",
+      "Users": ["jsonuser"],
+    }
+  ],
+  "Devices": []
+}
+```
+
+### Pyro file with invalid YAML syntax (invalid_syntax.pyro.yaml)
+```yaml
+Label: "Test Invalid YAML Syntax Configuration"
+Users:
+  - label: "test_user"
+    Name: "testuser"
+    Password: "test123"
+    Groups: ["testgroup"]
+Groups
+  - label: "test_group"
+    Name: "testgroup"
+    Users: ["testuser"]
+Devices:
+  - label "test_device"
+    Path: "/tmp/test_mount"
+    Partition: 1
+    Mountpoint: "/mnt/test"
+    State: []
+```
+
+### Pyro file with missing required fields (missing_fields.pyro.yaml)
+```yaml
+Label: "Test Missing Fields YAML Configuration"
+Users:
+  - label: "test_user"
+    Password: "test123"
+    Groups: ["testgroup"]
+Groups:
+    Name: "testgroup"
+    Users: ["testuser"]
+Devices:
+  - label: "test_device"
+    Path: "/tmp/test_mount"
+    Partition: 1
+    Mountpoint: "/mnt/test"
+```
+
+### Pyro file with invalid field types (invalid_fields.pyro.yaml)
+```yaml
+Label: "Test Invalid Fields YAML Configuration"
+Users:
+  - label: "test_user"
+    Name: "testuser"
+    Password: true
+    Groups: ["testgroup"]
+Groups:
+  - label: "test_group"
+    Name: "testgroup"
+    Users: false
+Devices:
+  - label: "test_device"
+    Path: "/tmp/test_mount"
+    Partition: 1
+    Mountpoint: "/mnt/test"
+    State: 123
+```
+
 ## Test Steps:
 
-1. Create file with invalid YAML syntax
-2. Create file with invalid JSON syntax
-3. Create file missing required fields
-4. Create file with invalid field types
-5. Attempt to parse each with pyroform validate
+1. Create file with invalid YAML syntax (invalid_syntax.pyro.yaml)
+2. Create file with invalid JSON syntax (invalid_syntax.pyro.json)
+3. Create file missing required fields  (missing_fields.pyro.yaml)
+4. Create file with invalid field types (invalid_fields.pyro.yaml)
+5. Attempt to parse each with pyroform validate commands
 ```bash
-~$ pyroform validate -i test_invalid.pyro.yaml
+~$ pyroform validate -i invalid_syntax.pyro.yaml
+~$ pyroform validate -i invalid_syntax.pyro.json
+~$ pyroform validate -i missing_fields.pyro.yaml
+~$ pyroform validate -i invalid_fields.pyro.yaml
 ```
 
 ## Expected Results:
@@ -314,22 +492,83 @@ Groups:
   - label: "group_2"
     Name: "pyrogroup2"
     Users: ["pyrotest2"]
+Excludes:
+  Users:
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
+  Groups:
+    - root
+    - daemon
+    - bin
+    - sys
+    - adm
+    - tty
+    - disk
+    - lp
+    - mail
+    - news
+    - uucp
+    - man
+    - proxy
+    - kmem
+    - dialout
+    - fax
+    - voice
+    - cdrom
+    - floppy
+    - tape
+    - sudo
+    - audio
+    - dip
+    - www-data
+    - backup
+    - operator
+    - list
+    - irc
+    - src
+    - shadow
+    - utmp
+    - video
+    - sasl
+    - plugdev
+    - staff
+    - games
+    - users
+    - nogroup
+    - _ssh
 ```
 
 ## Test Steps:
 
-1. Verify users don't exist:
+1. Create Pyro file with content specified in test data (users_test.pyro.yaml)
+2. Verify users don't exist:
 ```bash
-~$ id pyrotest1 && id pyrotest2
+~$ id pyrotest1; id pyrotest2
 ```
-2. Run command
+3. Run command
 ```bash
-~$ pyroform configure -i users_test.yaml --dry-run
+~$ pyroform configure -i users_test.pyro.yaml --dry-run
 ```
-3. Check output for planned user/group operations
-4. Verify users still don't exist after dry-run
+4. Check output for planned user/group operations
+5. Verify users still don't exist after dry-run
 ```bash
-~$ id pyrotest1 && id pyrotest2
+~$ id pyrotest1; id pyrotest2
 ```
 
 ## Expected Results:
@@ -344,31 +583,33 @@ Groups:
 
 - Priority: High
 - Description: Test actual user and group creation
-- Preconditions: Test users don't exist on system
+- Preconditions:
+    - Pyro file `users_test.pyro.yaml` created during execution of [TC_6](./TAR/TC_6.md);
+    - Test users don't exist on system;
 - Validated by: [TAR TC_7](./TAR/TC_7.md)
 
 ## Test Steps:
 
 1. Run configure command (auto-confirm)
 ```bash
-~$ pyroform configure -i users_test.yaml -y
+~$ pyroform configure -i users_test.pyro.yaml -y
 ```
 2. Verify users created:
 ```bash
-~$ id pyrotest1 && id pyrotest2
+~$ id pyrotest1; id pyrotest2
 ```
 3. Verify groups created:
 ```bash
-~$ getent group pyrogroup1 && getent group pyrogroup2
+~$ getent group pyrogroup1; getent group pyrogroup2
 ```
 4. Verify group membership:
 ```bash
-~$ groups pyrotest1 && groups pyrotest2
+~$ groups pyrotest1; groups pyrotest2
 ```
 5. Cleanup:
 ```bash
-~$ userdel -r pyrotest1 && userdel -r pyrotest2
-~$ groupdel pyrogroup1 && groupdel pyrogroup2; echo $?
+~$ userdel -r pyrotest1; userdel -r pyrotest2
+~$ groupdel pyrogroup1; groupdel pyrogroup2; echo $?
 ```
 
 ## Expected Results:
@@ -389,7 +630,7 @@ Groups:
 
 ## Test Data (fs_test.pyro.yaml):
 ```yaml
-Label: "Filesystem Test"
+Label: "Filesystem Test Without Block Device Path"
 Devices:
   - label: "test_fs"
     Path: ""
@@ -401,21 +642,53 @@ Devices:
       - "dir,/tmp/pyrotest/logs,root,pyrogroup1,775"
       - "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644"
       - "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
+Excludes:
+  Directories:
+    - /app
+    - /bin
+    - /boot
+    - /dev
+    - /etc
+    - /home
+    - /lib
+    - /lib64
+    - /media
+    - /mnt
+    - /opt
+    - /proc
+    - /protected
+    - /root
+    - /run
+    - /sbin
+    - /srv
+    - /sys
+    - /usr
+    - /var
 ```
 
 ## Test Steps:
 
-1. Run configure command with dry-run option flag
+1. Create Pyro file with content from test data (fs_test.pyro.yaml)
 ```bash
-~$ pyroform configure -i fs_test.yaml --dry-run
+~$ vim fs_test.pyro.yaml
 ```
-2. Run configure command
+2. Run configure command with dry-run option flag
 ```bash
-~$ pyroform configure -i fs_test.yaml -y
+~$ pyroform configure -i fs_test.pyro.yaml --dry-run
 ```
-3. Verify directory structure created
-4. Verify ownership and permissions
-5. Clean up
+3. Run configure command (auto-confirm)
+```bash
+~$ pyroform configure -i fs_test.pyro.yaml -y
+```
+4. Verify created directory structure
+```bash
+~$ tree /tmp/pyrotest
+```
+5. Verify ownership and permissions
+```bash
+~$ ls -allah /tmp/pyrotest
+```
+6. Clean up
 ```bash
 ~$ rm -rf /tmp/pyrotest; echo $?
 ```
@@ -436,7 +709,7 @@ Devices:
 - Preconditions: System has some test users/groups/files not in config
 - Validated by: [TAR TC_9](./TAR/TC_9.md)
 
-Test Data (Pyro File)
+## Test Data (full_system.pyro.yaml)
 ```yaml
 Label: "Full System Management Test"
 Users:
@@ -467,44 +740,53 @@ Devices:
       - "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644"
       - "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
 Excludes:
-  Users: []
-  Groups: []
-  Devices:
-    - "/dev/sda"
   Directories:
-    - "/proc"
-    - "/sys"
-    - "/dev"
-    - "/boot"
-    - "/lib"
-    - "/lib64"
-    - "/sbin"
-    - "/usr"
-    - "/var"
-    - "/app"
-    - "/etc"
-    - "/usr"
-    - "/root"
-  Files: []
-  Links: []
+    - /app
+    - /bin
+    - /boot
+    - /dev
+    - /etc
+    - /home
+    - /lib
+    - /lib64
+    - /media
+    - /mnt
+    - /opt
+    - /proc
+    - /protected
+    - /root
+    - /run
+    - /sbin
+    - /srv
+    - /sys
+    - /usr
+    - /var
 ```
 
 ## Test Steps:
 
-1. Create extra user:
+1. Create Pyro file full_system.pyro.yaml with content from test data
+```bash
+~$ vim full_system.pyro.yaml
+```
+2. Create extra user:
 ```bash
 ~$ useradd scorchtest; echo $?
 ```
-2. Create extra file:
+3. Create extra file:
 ```bash
 ~$ touch /tmp/shall_not_be_scorched.dummy; echo $?
 ```
-3. Run commands
+4. Dry run scorch command
 ```bash
-~$ pyroform scorch -i minimal_config.pyro.yaml --dry-run
+~$ pyroform scorch -i full_system.pyro.yaml --dry-run
 ```
-4. Review what would be removed
-5. Verify nothing actually removed
+5. Review what would be removed
+6. Verify nothing actually removed
+```
+~$ id scorchtest
+~$ ls -allah /tmp/shall_not_be_scorched.dummy
+```
 
 ## Expected Results:
 
@@ -521,7 +803,7 @@ Excludes:
 - Preconditions:
 - Validated by: [TAR TC_10](./TAR/TC_10.md)
 
-## Test Pyro File:
+## Test data (scorch_user.pyro.yaml)
 ```yaml
 Label: User Scorch Test
 Users:
@@ -539,48 +821,51 @@ Users:
 Excludes:
   Users:
     - root
-    - nobody
-    - man
-    - news
-    - sys
-    - uucp
-    - lp
-    - _apt
-    - bin
-    - irc
     - daemon
-    - backup
-    - www-data
-    - scorchtest
+    - bin
+    - sys
     - sync
-    - mail
-    - list
-    - proxy
     - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
 ```
 
 ## Test Steps:
 
-1. Create orphaned user:
+1. Create Pyro file with content presented in test data (scorch_user.pyro.yaml)
 ```bash
-~$ useradd scorchtest2
+~$ vim scorch_user.pyro.yaml
 ```
-2. Run command (no auto-confirm)
+2. Create orphaned user:
+```bash
+~$ useradd scorchtest; echo $?
+```
+3. Run command (no auto-confirm)
 ```bash
 ~$ pyroform scorch -i scorch_user.pyro.yaml
-# When prompted, answer "no"
+# When prompted, answer "n|no|N|NO"
 ```
-3. Verify user still exists
+4. Verify user still exists
 ```bash
-~$ id scorchtest2
+~$ id scorchtest
 ```
-4. Run with -y flag
+5. Run with -y flag
 ```bash
 ~$ pyroform scorch -i scorch_user.pyro.yaml -y
 ```
-5. Verify user removed
+6. Verify user removed
 ```bash
-~$ id scorchtest2
+~$ id scorchtest
 ```
 
 ## Expected Results:
@@ -598,9 +883,9 @@ Excludes:
 - Preconditions:
 - Validated by: [TAR TC_11](./TAR/TC_11.md)
 
-## Test Pyro Config
+## Test data (validate_user.pyro.yaml)
 ```yaml
-Label: "User Management Test"
+Label: "System User Validation Test"
 Users:
   - label: "test_user_1"
     Name: "pyrotest1"
@@ -625,85 +910,87 @@ Groups:
     Users: ["pyrotest2"]
 Excludes:
   Users:
-  - root
-  - daemon
-  - bin
-  - sys
-  - sync
-  - games
-  - man
-  - lp
-  - mail
-  - news
-  - uucp
-  - proxy
-  - www-data
-  - backup
-  - list
-  - irc
-  - _apt
-  - nobody
-  - scorchtest
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
   Groups:
-  - root
-  - daemon
-  - bin
-  - sys
-  - adm
-  - tty
-  - disk
-  - lp
-  - mail
-  - news
-  - uucp
-  - man
-  - proxy
-  - kmem
-  - dialout
-  - fax
-  - voice
-  - cdrom
-  - floppy
-  - tape
-  - sudo
-  - audio
-  - dip
-  - www-data
-  - backup
-  - operator
-  - list
-  - irc
-  - src
-  - shadow
-  - utmp
-  - video
-  - sasl
-  - plugdev
-  - staff
-  - games
-  - users
-  - nogroup
-  - _ssh
-  - scorchtest
+    - root
+    - daemon
+    - bin
+    - sys
+    - adm
+    - tty
+    - disk
+    - lp
+    - mail
+    - news
+    - uucp
+    - man
+    - proxy
+    - kmem
+    - dialout
+    - fax
+    - voice
+    - cdrom
+    - floppy
+    - tape
+    - sudo
+    - audio
+    - dip
+    - www-data
+    - backup
+    - operator
+    - list
+    - irc
+    - src
+    - shadow
+    - utmp
+    - video
+    - sasl
+    - plugdev
+    - staff
+    - games
+    - users
+    - nogroup
+    - _ssh
 ```
 
 ## Test Steps:
 
-1. Configure system with known state
-```
-~$ pyroform configure -i known_state.pyro.yaml
-```
-2. Run validate command. Verify validation passes (no discrepancies)
+1. Create Pyro file with content from test data
 ```bash
-~$ pyroform validate -i known_state.pyro.yaml
+~$ vim validate_user.pyro.yaml
 ```
-3. Make intentional changes to break configuration
+2. Configure system with known state
+```bash
+~$ pyroform configure -i validate_user.pyro.yaml
+```
+3. Run validate command. Verify validation passes (no discrepancies)
+```bash
+~$ pyroform validate -i validate_user.pyro.yaml
+```
+4. Make intentional changes to break configuration
 ```bash
 ~$ useradd intruder; echo $?
 ```
-4. Run validation again, verify failures detected
+5. Run validation again, verify failures detected
 ```bash
-~$ pyroform validate -i known_state.pyro.yaml
+~$ pyroform validate -i validate_user.pyro.yaml
 ```
 
 ## Expected Results:

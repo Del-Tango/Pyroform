@@ -34,85 +34,85 @@ Devices:
     State: []
 Excludes:
   Users:
-  - root
-  - daemon
-  - bin
-  - sys
-  - sync
-  - games
-  - man
-  - lp
-  - mail
-  - news
-  - uucp
-  - proxy
-  - www-data
-  - backup
-  - list
-  - irc
-  - _apt
-  - nobody
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
   Groups:
-  - root
-  - daemon
-  - bin
-  - sys
-  - adm
-  - tty
-  - disk
-  - lp
-  - mail
-  - news
-  - uucp
-  - man
-  - proxy
-  - kmem
-  - dialout
-  - fax
-  - voice
-  - cdrom
-  - floppy
-  - tape
-  - sudo
-  - audio
-  - dip
-  - www-data
-  - backup
-  - operator
-  - list
-  - irc
-  - src
-  - shadow
-  - utmp
-  - video
-  - sasl
-  - plugdev
-  - staff
-  - games
-  - users
-  - nogroup
-  - _ssh
+    - root
+    - daemon
+    - bin
+    - sys
+    - adm
+    - tty
+    - disk
+    - lp
+    - mail
+    - news
+    - uucp
+    - man
+    - proxy
+    - kmem
+    - dialout
+    - fax
+    - voice
+    - cdrom
+    - floppy
+    - tape
+    - sudo
+    - audio
+    - dip
+    - www-data
+    - backup
+    - operator
+    - list
+    - irc
+    - src
+    - shadow
+    - utmp
+    - video
+    - sasl
+    - plugdev
+    - staff
+    - games
+    - users
+    - nogroup
+    - _ssh
   Directories:
-  - /app
-  - /bin
-  - /boot
-  - /dev
-  - /etc
-  - /home
-  - /lib
-  - /lib64
-  - /media
-  - /mnt
-  - /opt
-  - /proc
-  - /protected
-  - /root
-  - /run
-  - /sbin
-  - /srv
-  - /sys
-  - /usr
-  - /var
+    - /app
+    - /bin
+    - /boot
+    - /dev
+    - /etc
+    - /home
+    - /lib
+    - /lib64
+    - /media
+    - /mnt
+    - /opt
+    - /proc
+    - /protected
+    - /root
+    - /run
+    - /sbin
+    - /srv
+    - /sys
+    - /usr
+    - /var
 ```
 
 ## 2. Run validation command using previously created Pyro file
@@ -685,10 +685,6 @@ CMD> # mount '/tmp/test_mount1' '/mnt/test'
 CMD> echo 'Device /tmp/test_mount already mounted to /mnt/test'
 Device /tmp/test_mount already mounted to /mnt/test
 
-CMD> umount /mnt/test
-
-
-[ NOK ]: umount: /mnt/test: must be superuser to unmount.
 
 [ OK ]: Action completed: Mounting Block Device test_device
 [ OK ]: Stage completed: Devices

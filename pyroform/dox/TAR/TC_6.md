@@ -1,5 +1,5 @@
 # User Creation (Dry Run)
-- Test Environment: Docker container with Amazon Linux 2023.6.20241121 6.6.15-amd64
+- Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
 - Date: 17/11/2025
 - Pyroform Version: 1.0.0
@@ -11,7 +11,7 @@
 
 # Archive
 
-## 1. Create Pyro file
+## 1. Create Pyro file (users_test.pyro.yaml)
 ```yaml
 Label: "User Management Test"
 Users:
@@ -30,28 +30,89 @@ Groups:
   - label: "group_2"
     Name: "pyrogroup2"
     Users: ["pyrotest2"]
+Excludes:
+  Users:
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
+  Groups:
+    - root
+    - daemon
+    - bin
+    - sys
+    - adm
+    - tty
+    - disk
+    - lp
+    - mail
+    - news
+    - uucp
+    - man
+    - proxy
+    - kmem
+    - dialout
+    - fax
+    - voice
+    - cdrom
+    - floppy
+    - tape
+    - sudo
+    - audio
+    - dip
+    - www-data
+    - backup
+    - operator
+    - list
+    - irc
+    - src
+    - shadow
+    - utmp
+    - video
+    - sasl
+    - plugdev
+    - staff
+    - games
+    - users
+    - nogroup
+    - _ssh
 ```
 
 ## 2. Check that mentioned users don't exist on the system
 ```text
-    bash-5.2# id pyrotest1 && id pyrotest2
-    id: 'pyrotest1': no such user
+root@1e1b62138bef:/app/Pyroform# id pyrotest1; id pyrotest2
+id: 'pyrotest1': no such user
+id: 'pyrotest2': no such user
 ```
 
-## 3. Run configure acion with the dry-run option flag
+## 3. Run configure action with the dry-run option flag
 ```text
-bash-5.2# pyroform configure -i dump/users_test.pyro.yaml --dry-run 2> /dev/null | grep -v DEBUG
+root@1e1b62138bef:/app/Pyroform# pyroform configure -i users_test.pyro.yaml --dry-run 2> /dev/null
 
     ___________________________________________________________________________
 
-    *                          *   Pyroform   *                           *
+      *                          *   Pyroform   *                           *
     ___________________________________________________________________________
                     Regards, the Alveare Solutions #!/Society -x
 
 
-[ INFO ]: Logging configured: /tmp/pyroflow/pyroflow.log
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
 [ INFO ]: State monitoring configured for inter-process control
-[ INFO ]: Parsing Pyro state file (dump/users_test.pyro.yaml)...
+[ INFO ]: Parsing Pyro state file (users_test.pyro.yaml)...
 [ INFO ]: State file data: {
     "Label": "User Management Test",
     "Users": [
@@ -89,15 +150,78 @@ bash-5.2# pyroform configure -i dump/users_test.pyro.yaml --dry-run 2> /dev/null
                 "pyrotest2"
             ]
         }
-    ]
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ],
+        "Groups": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "adm",
+            "tty",
+            "disk",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "man",
+            "proxy",
+            "kmem",
+            "dialout",
+            "fax",
+            "voice",
+            "cdrom",
+            "floppy",
+            "tape",
+            "sudo",
+            "audio",
+            "dip",
+            "www-data",
+            "backup",
+            "operator",
+            "list",
+            "irc",
+            "src",
+            "shadow",
+            "utmp",
+            "video",
+            "sasl",
+            "plugdev",
+            "staff",
+            "games",
+            "users",
+            "nogroup",
+            "_ssh"
+        ]
+    }
 }
-[ INFO ]: FlowCTRL Sketch {
+[ INFO ]: FlowCTRL Sketch: {
     "name": "Pyroform Auto-Generated Sketch User Management Test",
     "Users": [
         {
             "name": "Creating System User pyrotest1",
-            "cmd": "# for group in 'pyrogroup1'; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1'",
-            "setup-cmd": "id pyrotest1",
+            "cmd": "# for group in pyrogroup1; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1' || exit 0",
+            "setup-cmd": "id pyrotest1 && echo 'User pyrotest1 already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'User pyrotest1 exists or created successfully'",
             "on-nok-cmd": "echo 'Failed to create user pyrotest1'",
@@ -105,8 +229,8 @@ bash-5.2# pyroform configure -i dump/users_test.pyro.yaml --dry-run 2> /dev/null
         },
         {
             "name": "Creating System User pyrotest2",
-            "cmd": "# for group in 'pyrogroup1 pyrogroup2'; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2'",
-            "setup-cmd": "id pyrotest2",
+            "cmd": "# for group in pyrogroup1 pyrogroup2; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2' || exit 0",
+            "setup-cmd": "id pyrotest2 && echo 'User pyrotest2 already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'User pyrotest2 exists or created successfully'",
             "on-nok-cmd": "echo 'Failed to create user pyrotest2'",
@@ -115,21 +239,21 @@ bash-5.2# pyroform configure -i dump/users_test.pyro.yaml --dry-run 2> /dev/null
     ],
     "Groups": [
         {
-            "name": "create_group_pyrogroup1",
-            "cmd": "# groupadd -f 'pyrogroup1' && for user in 'pyrotest1 pyrotest2'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done",
-            "setup-cmd": "groupadd pyrogroup1",
+            "name": "Creating System Group pyrogroup1",
+            "cmd": "# groupadd -f 'pyrogroup1' && for user in pyrotest1 pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done",
+            "setup-cmd": "getent group pyrogroup1 && echo 'Group pyrogroup1 already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'Group pyrogroup1 exists'",
-            "on-nok-cmd": "echo 'Creating group pyrogroup1'",
+            "on-nok-cmd": "echo 'Failed to create group pyrogroup1'",
             "fatal-nok": false
         },
         {
-            "name": "create_group_pyrogroup2",
-            "cmd": "# groupadd -f 'pyrogroup2' && for user in 'pyrotest2'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done",
-            "setup-cmd": "groupadd pyrogroup2",
+            "name": "Creating System Group pyrogroup2",
+            "cmd": "# groupadd -f 'pyrogroup2' && for user in pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done",
+            "setup-cmd": "getent group pyrogroup2 && echo 'Group pyrogroup2 already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": "echo 'Group pyrogroup2 exists'",
-            "on-nok-cmd": "echo 'Creating group pyrogroup2'",
+            "on-nok-cmd": "echo 'Failed to create group pyrogroup2'",
             "fatal-nok": false
         }
     ]
@@ -148,7 +272,7 @@ bash-5.2# pyroform configure -i dump/users_test.pyro.yaml --dry-run 2> /dev/null
 CMD> id pyrotest1 && echo 'User pyrotest1 already exists' || exit 0
 
 
-CMD> # for group in 'pyrogroup1'; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1'
+CMD> # for group in pyrogroup1; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1' || exit 0
 
 
 CMD> echo 'User pyrotest1 exists or created successfully'
@@ -160,7 +284,7 @@ User pyrotest1 exists or created successfully
 CMD> id pyrotest2 && echo 'User pyrotest2 already exists' || exit 0
 
 
-CMD> # for group in 'pyrogroup1 pyrogroup2'; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2'
+CMD> # for group in pyrogroup1 pyrogroup2; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2' || exit 0
 
 
 CMD> echo 'User pyrotest2 exists or created successfully'
@@ -172,9 +296,10 @@ User pyrotest2 exists or created successfully
 [ INFO ]: Processing action: Creating System Group pyrogroup1
 [ INFO ]: Executing Procedure Stage Action: Creating System Group pyrogroup1
 CMD> getent group pyrogroup1 && echo 'Group pyrogroup1 already exists' || exit 0
+pyrogroup1:x:1005:
+Group pyrogroup1 already exists
 
-
-CMD> # groupadd -f 'pyrogroup1' && for user in 'pyrotest1 pyrotest2'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done
+CMD> # groupadd -f 'pyrogroup1' && for user in pyrotest1 pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done
 
 
 CMD> echo 'Group pyrogroup1 exists'
@@ -184,9 +309,10 @@ Group pyrogroup1 exists
 [ INFO ]: Processing action: Creating System Group pyrogroup2
 [ INFO ]: Executing Procedure Stage Action: Creating System Group pyrogroup2
 CMD> getent group pyrogroup2 && echo 'Group pyrogroup2 already exists' || exit 0
+pyrogroup2:x:1006:
+Group pyrogroup2 already exists
 
-
-CMD> # groupadd -f 'pyrogroup2' && for user in 'pyrotest2'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done
+CMD> # groupadd -f 'pyrogroup2' && for user in pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done
 
 
 CMD> echo 'Group pyrogroup2 exists'
@@ -200,14 +326,16 @@ Group pyrogroup2 exists
 ## 4. Analiza commands generated by Pyro action configure
 ```text
 ...
-CMD> # for group in 'pyrogroup1'; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1'
-CMD> # for group in 'pyrogroup1 pyrogroup2'; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2'
-CMD> # groupadd -f 'pyrogroup1' && for user in 'pyrotest1 pyrotest2'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done
-CMD> # groupadd -f 'pyrogroup2' && for user in 'pyrotest2'; do id $user &>/dev/null || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done
+CMD> # for group in pyrogroup1; do groupadd -f $group; done && useradd -m -p 'testpass1' -G 'pyrogroup1' 'pyrotest1' || exit 0
+CMD> # for group in pyrogroup1 pyrogroup2; do groupadd -f $group; done && useradd -m -p 'testpass2' -G 'pyrogroup1,pyrogroup2' 'pyrotest2' || exit 0
+CMD> # groupadd -f 'pyrogroup1' && for user in pyrotest1 pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup1' $user; done
+CMD> # groupadd -f 'pyrogroup2' && for user in pyrotest2; do id $user || useradd -m $user; usermod -a -G 'pyrogroup2' $user; done
 ...
 ```
+
 ## 5. Verify users still don't exist after dry-run
 ```text
-bash-5.2#  id pyrotest1 && id pyrotest2
+root@1e1b62138bef:/app/Pyroform# id pyrotest1; id pyrotest2
 id: 'pyrotest1': no such user
+id: 'pyrotest2': no such user
 ```

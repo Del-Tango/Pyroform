@@ -4,26 +4,119 @@
 - Preconditions:
 - Validated by: [TAR TC_4](../TAR/TC_4.md)
 
-## Test Data (test_config.pyro.json):
+## Test Data (test_simple_config.pyro.json):
 ```json
 {
-  "Label": "Test JSON Config",
+  "Label": "Test Simple Configuration",
   "Users": [
     {
-      "label": "json_user",
-      "Name": "jsonuser",
-      "Password": "json123",
-      "Groups": ["jsongroup"]
+      "label": "test_user",
+      "Name": "testuser",
+      "Password": "test123",
+      "Groups": ["testgroup"]
     }
   ],
   "Groups": [
     {
-      "label": "json_group",
-      "Name": "jsongroup",
-      "Users": ["jsonuser"]
+      "label": "test_group",
+      "Name": "testgroup",
+      "Users": ["testuser"]
     }
   ],
-  "Devices": []
+  "Devices": [
+    {
+      "label": "test_device",
+      "Path": "/tmp/test_mount",
+      "Partition": 1,
+      "Mountpoint": "/mnt/test",
+      "State": []
+    }
+  ],
+  "Excludes": {
+    "Users": [
+      "root",
+      "daemon",
+      "bin",
+      "sys",
+      "sync",
+      "games",
+      "man",
+      "lp",
+      "mail",
+      "news",
+      "uucp",
+      "proxy",
+      "www-data",
+      "backup",
+      "list",
+      "irc",
+      "_apt",
+      "nobody"
+    ],
+    "Groups": [
+      "root",
+      "daemon",
+      "bin",
+      "sys",
+      "adm",
+      "tty",
+      "disk",
+      "lp",
+      "mail",
+      "news",
+      "uucp",
+      "man",
+      "proxy",
+      "kmem",
+      "dialout",
+      "fax",
+      "voice",
+      "cdrom",
+      "floppy",
+      "tape",
+      "sudo",
+      "audio",
+      "dip",
+      "www-data",
+      "backup",
+      "operator",
+      "list",
+      "irc",
+      "src",
+      "shadow",
+      "utmp",
+      "video",
+      "sasl",
+      "plugdev",
+      "staff",
+      "games",
+      "users",
+      "nogroup",
+      "_ssh"
+    ],
+    "Directories": [
+      "/app",
+      "/bin",
+      "/boot",
+      "/dev",
+      "/etc",
+      "/home",
+      "/lib",
+      "/lib64",
+      "/media",
+      "/mnt",
+      "/opt",
+      "/proc",
+      "/protected",
+      "/root",
+      "/run",
+      "/sbin",
+      "/srv",
+      "/sys",
+      "/usr",
+      "/var"
+    ]
+  }
 }
 ```
 

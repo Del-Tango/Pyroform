@@ -550,7 +550,7 @@ def _get_action_type(
     else:
         raise ValueError("No action specified")
 
-#@pysnooper.snoop()
+@pysnooper.snoop()
 def _execute_action(
     action_type: ActionType,
     input_path: Optional[Path] = None,

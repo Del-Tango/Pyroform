@@ -6,7 +6,7 @@
 
 ## Test Data (fs_test.pyro.yaml):
 ```yaml
-Label: "Filesystem Test"
+Label: "Filesystem Test Without Block Device Path"
 Devices:
   - label: "test_fs"
     Path: ""
@@ -18,21 +18,53 @@ Devices:
       - "dir,/tmp/pyrotest/logs,root,pyrogroup1,775"
       - "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644"
       - "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
+Excludes:
+  Directories:
+    - /app
+    - /bin
+    - /boot
+    - /dev
+    - /etc
+    - /home
+    - /lib
+    - /lib64
+    - /media
+    - /mnt
+    - /opt
+    - /proc
+    - /protected
+    - /root
+    - /run
+    - /sbin
+    - /srv
+    - /sys
+    - /usr
+    - /var
 ```
 
 ## Test Steps:
 
-1. Run configure command with dry-run option flag
+1. Create Pyro file with content from test data (fs_test.pyro.yaml)
 ```bash
-~$ pyroform configure -i fs_test.yaml --dry-run
+~$ vim fs_test.pyro.yaml
 ```
-2. Run configure command
+2. Run configure command with dry-run option flag
 ```bash
-~$ pyroform configure -i fs_test.yaml -y
+~$ pyroform configure -i fs_test.pyro.yaml --dry-run
 ```
-3. Verify directory structure created
-4. Verify ownership and permissions
-5. Clean up
+3. Run configure command (auto-confirm)
+```bash
+~$ pyroform configure -i fs_test.pyro.yaml -y
+```
+4. Verify created directory structure
+```bash
+~$ tree /tmp/pyrotest
+```
+5. Verify ownership and permissions
+```bash
+~$ ls -allah /tmp/pyrotest
+```
+6. Clean up
 ```bash
 ~$ rm -rf /tmp/pyrotest; echo $?
 ```

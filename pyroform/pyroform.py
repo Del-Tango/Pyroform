@@ -40,7 +40,7 @@ class Pyroform:
         self._last_result = self.engine.snapshot(output_path, **kwargs)
         return self._last_result
 
-    #@pysnooper.snoop()
+    @pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> bool:
         """
         Configure system according to Pyro file(s)

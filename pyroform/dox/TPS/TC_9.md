@@ -4,7 +4,7 @@
 - Preconditions: System has some test users/groups/files not in config
 - Validated by: [TAR TC_9](../TAR/TC_9.md)
 
-Test Data (Pyro File)
+## Test Data (full_system.pyro.yaml)
 ```yaml
 Label: "Full System Management Test"
 Users:
@@ -35,44 +35,53 @@ Devices:
       - "fl,/tmp/pyrotest/README,pyrotest1,pyrogroup1,644"
       - "ln,/tmp/pyrotest/readme_shortcut,pyrotest1,pyrogroup1,777,/tmp/pyrotest/README"
 Excludes:
-  Users: []
-  Groups: []
-  Devices:
-    - "/dev/sda"
   Directories:
-    - "/proc"
-    - "/sys"
-    - "/dev"
-    - "/boot"
-    - "/lib"
-    - "/lib64"
-    - "/sbin"
-    - "/usr"
-    - "/var"
-    - "/app"
-    - "/etc"
-    - "/usr"
-    - "/root"
-  Files: []
-  Links: []
+    - /app
+    - /bin
+    - /boot
+    - /dev
+    - /etc
+    - /home
+    - /lib
+    - /lib64
+    - /media
+    - /mnt
+    - /opt
+    - /proc
+    - /protected
+    - /root
+    - /run
+    - /sbin
+    - /srv
+    - /sys
+    - /usr
+    - /var
 ```
 
 ## Test Steps:
 
-1. Create extra user:
+1. Create Pyro file full_system.pyro.yaml with content from test data
+```bash
+~$ vim full_system.pyro.yaml
+```
+2. Create extra user:
 ```bash
 ~$ useradd scorchtest; echo $?
 ```
-2. Create extra file:
+3. Create extra file:
 ```bash
 ~$ touch /tmp/shall_not_be_scorched.dummy; echo $?
 ```
-3. Run commands
+4. Dry run scorch command
 ```bash
-~$ pyroform scorch -i minimal_config.pyro.yaml --dry-run
+~$ pyroform scorch -i full_system.pyro.yaml --dry-run
 ```
-4. Review what would be removed
-5. Verify nothing actually removed
+5. Review what would be removed
+6. Verify nothing actually removed
+```
+~$ id scorchtest
+~$ ls -allah /tmp/shall_not_be_scorched.dummy
+```
 
 ## Expected Results:
 
