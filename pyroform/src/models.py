@@ -3,7 +3,7 @@ Pyroform Data Models
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Any, Set, Union
+from typing import List, Dict, Any, Set, Union, Optional
 from enum import Enum
 
 
@@ -97,6 +97,63 @@ class ValidationResult:
     discrepancies: Dict[str, list]
     summary: Dict[str, Any]
 
+
+@dataclass
+class FileSystemEntry:
+    """Represents a filesystem entry (file, directory, or symlink)."""
+    path: str
+    type: str  # 'file', 'directory', or 'symlink'
+    owner: str
+    group: str
+    permissions: str
+    mountpoint: str
+    target: Optional[str] = None
+
+
+@dataclass
+class SystemUser:
+    """Represents a system user."""
+    username: str
+    uid: int
+    gid: int
+    home_directory: str
+    shell: str
+    gecos: str
+    groups: List[str]
+
+
+@dataclass
+class SystemGroup:
+    """Represents a system group."""
+    groupname: str
+    gid: int
+    members: List[str]
+
+
+@dataclass
+class MountedDevice:
+    """Represents a mounted device."""
+    device_path: str
+    mountpoint: str
+    filesystem_type: str
+    mount_options: str
+    partition: str
+    partitions: List[Dict[str, str]]
+    files: List[FileSystemEntry]
+    directories: List[FileSystemEntry]
+    symlinks: List[FileSystemEntry]
+
+
+@dataclass
+class ValidationSummary:
+    """Summary of validation results."""
+    total_checks: int
+    passed: int
+    failed: int
+    warnings: int
+    total_issues: int
+    critical_issues: int
+    is_valid: bool
 
 
 # CODE DUMP
