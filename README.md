@@ -108,83 +108,13 @@ flowctrl:
 
 ## Architecture Sequence Diagrams
 ### Configuration Workflow
-```plantuml
-@startuml
-actor User
-participant CLI
-participant PyroformEngine
-participant Parser
-participant Validator
-participant SketchGenerator
-participant FlowEngine
-
-User -> CLI: configure -i config.yaml
-CLI -> PyroformEngine: configure(input_path)
-PyroformEngine -> Parser: parse(config.yaml)
-Parser --> PyroformEngine: PyroConfig objects
-PyroformEngine -> Validator: validate_configuration()
-Validator --> PyroformEngine: ValidationResult
-PyroformEngine -> SketchGenerator: generate_sketch()
-SketchGenerator --> PyroformEngine: FlowCTRL sketch
-PyroformEngine -> FlowEngine: execute_sketch()
-FlowEngine --> PyroformEngine: success/failure
-PyroformEngine --> CLI: operation result
-CLI --> User: Success/Failure message
-@enduml
-```
+![Action Configure Sequence](./pyroform/dox/Diagrams/pyroform_action_configure_sequence.png)
 
 ### Scorch (Cleanup) Operation
-```plantuml
-@startuml
-actor User
-participant CLI
-participant PyroformEngine
-participant Scanner
-participant Validator
-participant ScorchEngine
-
-User -> CLI: scorch -i config.yaml -y
-CLI -> PyroformEngine: scorch(input_path, auto_confirm=true)
-PyroformEngine -> Scanner: scan_system_state()
-Scanner --> PyroformEngine: Current system state
-PyroformEngine -> Validator: compare_states()
-Validator --> PyroformEngine: Differences identified
-alt safety_check and not auto_confirm
-    PyroformEngine -> User: Request confirmation
-    User --> PyroformEngine: Confirm/Reject
-end
-PyroformEngine -> ScorchEngine: execute_scorch()
-ScorchEngine -> ScorchEngine: Remove unmanaged resources
-ScorchEngine --> PyroformEngine: ScorchResult
-PyroformEngine --> CLI: cleanup report
-CLI --> User: Resources removed/failed
-@enduml
-```
+![Action Scorch Sequence](./pyroform/dox/Diagrams/pyroform_action_scorch_sequence.png)
 
 ### Validation Workflow
-```plantuml
-@startuml
-actor User
-participant CLI
-participant PyroformEngine
-participant Scanner
-participant Comparator
-participant Reporter
-
-User -> CLI: validate -i config.yaml -r
-CLI -> PyroformEngine: validate(input_path)
-PyroformEngine -> Scanner: scan_system_state()
-Scanner --> PyroformEngine: Current system state
-PyroformEngine -> Comparator: compare_states()
-Comparator --> PyroformEngine: Discrepancies
-PyroformEngine -> Reporter: generate_validation_report()
-Reporter --> PyroformEngine: ValidationReport
-PyroformEngine --> CLI: ValidationResult
-CLI -> Reporter: save_report()
-Reporter --> CLI: Report saved
-CLI --> User: Validation summary + report path
-@enduml
-```
+![Action Validate Sequence](./pyroform/dox/Diagrams/pyroform_action_validate_sequence.png)
 
 ## Configuration File Formats
 ### Pyro Configuration (JSON/YAML) - config.pyro.yaml
