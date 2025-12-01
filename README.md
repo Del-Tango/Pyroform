@@ -320,7 +320,10 @@ if success:
 ## Testing
 ### Running Tests
 ``` bash
-# Run all tests
+# Run all autotesters
+~$ ./build --test
+
+# Run all python autotesters
 ~$ python -m pytest pyroform/tst/ -v
 ```
 
@@ -332,13 +335,12 @@ if success:
 [ WARNING ]: This is a DESTRUCTIVE operation that cannot be undone!
 
 Are you sure about this? [Y/N]>
-
 ```
 ### Dry-run Mode
 ```bash
 # Preview changes without execution
-~$ pyroform configure -i config.yaml --dry-run
-~$ pyroform scorch -i baseline.yaml --dry-run
+~$ pyroform configure -i config.pyro.yaml --dry-run
+~$ pyroform scorch -i baseline.pyro.yaml --dry-run
 ```
 
 ### Pyro File Exclusion Lists
