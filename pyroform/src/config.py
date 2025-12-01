@@ -61,19 +61,6 @@ class PyroformConfig:
                     "report_dir": "/var/log/pyroform/reports"
                 }
             },
-            "scorch": {
-                "safety_check": True,
-                "protected_users": ["root", "daemon", "bin", "sys", "sync", "games"],
-                "protected_groups": ["root", "daemon", "bin", "sys", "adm"],
-                "protected_mounts": ["/", "/boot", "/home", "/var", "/tmp", "/proc", "/sys"]
-            },
-            "validation": {
-                "check_users": True,
-                "check_groups": True,
-                "check_mounts": True,
-                "check_files": True,
-                "check_permissions": True
-            }
         }
 
         # If no config file provided, return defaults

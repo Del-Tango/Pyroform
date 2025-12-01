@@ -1,3 +1,0 @@
-"""
-Pyroform Unit Tests
-"""

@@ -9,11 +9,8 @@ import pysnooper
 
 from pathlib import Path
 from typing import Dict, Any, Optional
-# List
-# from datetime import datetime
 
 from .models import ActionType, PyroConfig
-# from .models import PyroConfig, ScorchResult
 from .parser import PyroParser
 from .sketch_generator import SketchGenerator
 from .flow_engine import PyroflowEngine
@@ -48,13 +45,10 @@ class PyroformEngine:
             config=config,
             dry_run=self.config['dry_run']
         )
-
         self.flow_engine = PyroflowEngine(stdout=self.stdout)
-
-        # Use mocked flow engine to avoid FlowCTRL dependency issues
-        # self._create_mock_flow_engine(stdout=self.stdout)
-
         self.validator = SystemValidator(stdout=self.stdout, config=self.config)
+
+        # TODO - Currently unused
         self.reporter = ReportGenerator()
 
     #@pysnooper.snoop()
@@ -242,36 +236,15 @@ class PyroformEngine:
                 result = self.validator.validate_configuration(config)
                 self.stdout.debug(f'Result {result}')
 
-                # TODO - Remove 2 down
-                with open('validation.dummy', 'w') as fl:
-                    fl.write(json.dumps(result.discrepancies, indent=4))
-
                 if result.discrepancies:
                     self.stdout.nok(f'Discrepancies %s' % str(json.dumps(result.discrepancies, indent=4)))
-
-                # TODO - FIX ME
-#               all_discrepancies.extend(result.discrepancies)
                 all_discrepancies.append(result.discrepancies)
-
                 all_valid = all_valid and result.is_valid
                 if result.is_valid:
                     self.stdout.ok(f'Machine state corresponds with Pyro config {config.label}')
                 else:
                     self.stdout.nok(f'Machine state does not correspond with Pyro config {config.label}')
                 system_state = self.validator._last_result.system_state
-
-
-
-
-
-#           self.stdout.info(f'[ DEBUG ]: all_discrepancies - {all_discrepancies}')
-#           critical_list = [len(v) for item in all_discrepancies for k, v in item.items() if 'mismatch' not in k]
-#           self.stdout.info(f'[ DEBUG ]: critical_list - {critical_list}')
-#           all_list = [len(v) for item in all_discrepancies for k, v in item.items()]
-#           self.stdout.info(f'[ DEBUG ]: all_list - {all_list}')
-
-            # TODO - FIX ME
-
             critical_issues = sum([len(v) for item in all_discrepancies for k, v in item.items() if 'mismatch' not in k])
             total_issues = sum([len(v) for item in all_discrepancies for k, v in item.items()])
 
@@ -284,10 +257,6 @@ class PyroformEngine:
                 self.stdout.ok('No further action required!')
             else:
                 self.stdout.nok('Run action "Configure" to apply Pyro config!')
-
-            # TODO - Remove 2 down
-            with open('discrepancies.dummy', 'w') as fl:
-                fl.write(json.dumps(all_discrepancies, indent=4))
 
             summary = {
                 "total_issues": total_issues,
