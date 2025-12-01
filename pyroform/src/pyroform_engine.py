@@ -18,7 +18,6 @@ from .parser import PyroParser
 from .sketch_generator import SketchGenerator
 from .flow_engine import PyroflowEngine
 from .validator import SystemValidator, ValidationResult
-from .scorch_engine import ScorchEngine, ScorchResult
 from .reporter import ReportGenerator
 from .logging import STDOUTMsg
 
@@ -507,8 +506,8 @@ class PyroformEngine:
         )
         self.stdout.warn("This is a DESTRUCTIVE operation that cannot be undone!")
 
-        print()  # Add spacing for clarity
-        response = input("Are you absolutely sure? [y/N]: ").strip().lower()
+        print()  # Add spacing
+        response = input("Are you sure about this? [Y/N]> ").strip().lower()
         print()
 
         return response in ['y', 'yes']
@@ -521,10 +520,10 @@ class PyroformEngine:
                              critical_issues: int, total_issues: int) -> None:
         """Log individual configuration validation result."""
         if is_valid:
-            self.stdout.ok(f'System state matches Pyro config: {config_label}')
+            self.stdout.ok(f'System state matches Pyro config: ({config_label})')
         else:
             issue_text = f"{critical_issues} critical, {total_issues} total"
-            self.stdout.nok(f'System state mismatch for {config_label} ({issue_text} issues)')
+            self.stdout.nok(f'System state mismatch for ({config_label}) ({issue_text} issues)')
 
     def _log_validation_summary(self, all_valid: bool, critical_issues: int,
                               total_issues: int) -> None:
@@ -571,4 +570,5 @@ class PyroformEngine:
         }
 
 # CODE DUMP
+#from .scorch_engine import ScorchEngine, ScorchResult
 

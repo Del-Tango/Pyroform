@@ -11,9 +11,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from .src.models import ActionType
-from .src.validator import ValidationResult
-from .src.scorch_engine import ScorchResult
+from .src.models import ActionType, ValidationResult # ScorchResult
 from .src.pyroform_engine import PyroformEngine
 
 
@@ -63,7 +61,7 @@ class Pyroform:
         return self._last_result
 
     #@pysnooper.snoop()
-    def scorch(self, input_path: str, **kwargs) -> ScorchResult:
+    def scorch(self, input_path: str, **kwargs) -> dict:
         """
         Remove system resources not specified in Pyro file(s)
 
@@ -72,7 +70,7 @@ class Pyroform:
             **kwargs: Additional arguments (dry_run, verbose, output_dir, etc.)
 
         Returns:
-            ScorchResult object
+            Dictionary object
         """
         # Merge auto_confirm from instance and kwargs
         final_auto_confirm = kwargs.pop("auto_confirm", self.auto_confirm)
@@ -103,7 +101,7 @@ class Pyroform:
         return self._last_result
 
     #@pysnooper.snoop()
-    def validate(self, input_path: str, **kwargs) -> ValidationResult:
+    def validate(self, input_path: str, **kwargs) -> dict:
         """
         Validate system against Pyro file(s)
 
@@ -112,7 +110,7 @@ class Pyroform:
             **kwargs: Additional arguments (verbose, output_dir, etc.)
 
         Returns:
-            ValidationResult object
+            Dictionary object
         """
         self._last_action = ActionType.VALIDATE
         self._last_result = self.engine.validate(input_path, **kwargs)
@@ -335,4 +333,5 @@ class Pyroform:
 
 
 # CODE DUMP
+#from .src.scorch_engine import ScorchResult
 

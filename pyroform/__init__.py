@@ -17,7 +17,6 @@ from .src.parser import PyroParser
 from .src.sketch_generator import SketchGenerator
 from .src.flow_engine import PyroflowEngine
 from .src.validator import SystemValidator, ValidationResult
-from .src.scorch_engine import ScorchEngine, ScorchResult
 from .src.reporter import ReportGenerator
 
 from .pyroform import PyroformEngine
@@ -40,8 +39,6 @@ __all__ = [
     "PyroflowEngine",
     "SystemValidator",
     "ValidationResult",
-    "ScorchEngine",
-    "ScorchResult",
     "ReportGenerator",
     "__version__",
     "__author__",
@@ -49,4 +46,7 @@ __all__ = [
 ]
 
 # CODE DUMP
+# from .src.scorch_engine import ScorchEngine, ScorchResult
+#   "ScorchEngine",
+#   "ScorchResult",
 

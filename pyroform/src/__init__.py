@@ -7,7 +7,6 @@ from .parser import PyroParser
 from .sketch_generator import SketchGenerator
 from .flow_engine import PyroflowEngine
 from .validator import SystemValidator, ValidationResult
-from .scorch_engine import ScorchEngine, ScorchResult
 from .pyroform_engine import PyroformEngine
 from .reporter import ReportGenerator
 from .logging import STDOUTMsg
@@ -28,8 +27,6 @@ __all__ = [
     "PyroflowEngine",
     "SystemValidator",
     "ValidationResult",
-    "ScorchEngine",
-    "ScorchResult",
     "ReportGenerator",
     "PyroformEngine",
     "SystemStateScanner",
@@ -37,4 +34,7 @@ __all__ = [
 ]
 
 # CODE DUMP
+#   "ScorchEngine",
+#   "ScorchResult",
+#from .scorch_engine import ScorchEngine, ScorchResult
 
