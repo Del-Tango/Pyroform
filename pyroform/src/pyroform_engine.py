@@ -39,7 +39,7 @@ class PyroformEngine:
         """
         self.config = config or self._default_config()
         self.stdout = STDOUTMsg(
-            debug_mode=True, #self.config['debug'],
+            debug_mode=False, #self.config['debug'],
             timestamp=self.config['log_timestamp'] or self.config['debug'],
         )
         self.parser = PyroParser(stdout=self.stdout)
@@ -249,7 +249,10 @@ class PyroformEngine:
                 if result.discrepancies:
                     self.stdout.nok(f'Discrepancies %s' % str(json.dumps(result.discrepancies, indent=4)))
 
-                all_discrepancies.extend(result.discrepancies)
+                # TODO - FIX ME
+#               all_discrepancies.extend(result.discrepancies)
+                all_discrepancies.append(result.discrepancies)
+
                 all_valid = all_valid and result.is_valid
                 if result.is_valid:
                     self.stdout.ok(f'Machine state corresponds with Pyro config {config.label}')
@@ -257,8 +260,20 @@ class PyroformEngine:
                     self.stdout.nok(f'Machine state does not correspond with Pyro config {config.label}')
                 system_state = self.validator._last_result.system_state
 
-            critical_issues = sum([len(item) for item in all_discrepancies if 'mismatch' not in item])
-            total_issues = sum([len(item) for item in all_discrepancies])
+
+
+
+
+#           self.stdout.info(f'[ DEBUG ]: all_discrepancies - {all_discrepancies}')
+#           critical_list = [len(v) for item in all_discrepancies for k, v in item.items() if 'mismatch' not in k]
+#           self.stdout.info(f'[ DEBUG ]: critical_list - {critical_list}')
+#           all_list = [len(v) for item in all_discrepancies for k, v in item.items()]
+#           self.stdout.info(f'[ DEBUG ]: all_list - {all_list}')
+
+            # TODO - FIX ME
+
+            critical_issues = sum([len(v) for item in all_discrepancies for k, v in item.items() if 'mismatch' not in k])
+            total_issues = sum([len(v) for item in all_discrepancies for k, v in item.items()])
 
             if critical_issues:
                 self.stdout.nok(f'({critical_issues}) critical issues identified, ({total_issues}) total issues identified!')
@@ -314,12 +329,4 @@ class PyroformEngine:
         }
 
 # CODE DUMP
-
-
-            # TODO
-            # Create combined summary
-#           critical_issues = len(
-#               [d for d in all_discrepancies if d.get("critical", False)]
-#           )
-#           total_issues = len(all_discrepancies)
 

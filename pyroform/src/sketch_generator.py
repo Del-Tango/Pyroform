@@ -141,7 +141,7 @@ class SketchGenerator:
 #       commands = []
 #       return commands
 
-#   #@pysnooper.snoop()
+#   @pysnooper.snoop()
     def has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
         """
         Check if a path has any excluded path as its parent directory.
@@ -526,9 +526,4 @@ class SketchGenerator:
             return False
 
 # CODE DUMP
-
-
-#from .scanner import get_system_state
-#from .difference import compare_system_state_with_pyro_file
-
 

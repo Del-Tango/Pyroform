@@ -518,19 +518,111 @@ Excludes:
 
 ## Test Pyro Config
 ```yaml
-
+Label: "User Management Test"
+Users:
+  - label: "test_user_1"
+    Name: "pyrotest1"
+    Password: "testpass1"
+    Groups: ["pyrotest1", "pyrogroup1"]
+  - label: "test_user_2"
+    Name: "pyrotest2"
+    Password: "testpass2"
+    Groups: ["pyrotest2", "pyrogroup2"]
+Groups:
+  - label: "group_1"
+    Name: "pyrogroup1"
+    Users: ["pyrotest1"]
+  - label: "group_2"
+    Name: "pyrogroup2"
+    Users: ["pyrotest2"]
+  - label: "group_3"
+    Name: "pyrotest1"
+    Users: ["pyrotest1"]
+  - label: "group_4"
+    Name: "pyrotest2"
+    Users: ["pyrotest2"]
+Excludes:
+  Users:
+  - root
+  - daemon
+  - bin
+  - sys
+  - sync
+  - games
+  - man
+  - lp
+  - mail
+  - news
+  - uucp
+  - proxy
+  - www-data
+  - backup
+  - list
+  - irc
+  - _apt
+  - nobody
+  - scorchtest
+  Groups:
+  - root
+  - daemon
+  - bin
+  - sys
+  - adm
+  - tty
+  - disk
+  - lp
+  - mail
+  - news
+  - uucp
+  - man
+  - proxy
+  - kmem
+  - dialout
+  - fax
+  - voice
+  - cdrom
+  - floppy
+  - tape
+  - sudo
+  - audio
+  - dip
+  - www-data
+  - backup
+  - operator
+  - list
+  - irc
+  - src
+  - shadow
+  - utmp
+  - video
+  - sasl
+  - plugdev
+  - staff
+  - games
+  - users
+  - nogroup
+  - _ssh
+  - scorchtest
 ```
 
 ## Test Steps:
 
 1. Configure system with known state
-2. Run command
-```bash
-~$ pyroform validate -i known_state.yaml
 ```
-3. Verify validation passes (no discrepancies)
-4. Make intentional changes to break configuration
-5. Run validation again, verify failures detected
+~$ pyroform configure -i known_state.pyro.yaml
+```
+2. Run validate command. Verify validation passes (no discrepancies)
+```bash
+~$ pyroform validate -i known_state.pyro.yaml
+```
+3. Make intentional changes to break configuration
+```bash
+~$ useradd intruder; echo $?
+```
+4. Run validation again, verify failures detected
+```bash
+~$ pyroform validate -i known_state.pyro.yaml
+```
 
 ## Expected Results:
 

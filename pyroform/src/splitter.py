@@ -44,15 +44,3 @@ class ListSplitter:
 
 # CODE DUMP
 
-#   if __name__ == '__main__':
-#       # Example usage
-#       splitter = ListSplitter(chunk_size=10)
-#       strings = [f"file_{i:03d}.log" for i in range(143)]
-
-#       info = splitter.get_chunk_info(strings)
-#       print("Chunk information:", info)
-
-#       chunks = splitter.split(strings)
-#       print(f"\nCreated {len(chunks)} chunks:")
-#       for i, chunk in enumerate(chunks, 1):
-#           print(f"  Chunk {i}: {len(chunk)} items")

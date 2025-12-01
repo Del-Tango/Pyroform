@@ -14,7 +14,7 @@ from typing import Dict, List, Any, Tuple, Set, Optional
 from dataclasses import dataclass
 from pathlib import Path
 
-from .models import PyroConfig, User, Group, Device
+from .models import PyroConfig, User, Group, Device, Exclude
 from .logging import STDOUTMsg
 
 
@@ -170,6 +170,9 @@ class SystemValidator:
             if pyro_config and not pyro_config.users:
                 return users
             for user in pwd.getpwall():
+                if pyro_config.excludes and user in pyro_config.excludes.users:
+                    self.stdout.warn(f'Excluding user {user}')
+                    continue
                 try:
                     groups = self.get_user_groups(user.pw_name)
                     users.append({
@@ -211,6 +214,9 @@ class SystemValidator:
             if pyro_config and not pyro_config.groups:
                 return groups
             for group in grp.getgrall():
+                if pyro_config.excludes and group in pyro_config.excludes.groups:
+                    self.stdout.warn(f'Excluding group {group}')
+                    continue
                 try:
                     groups.append({
                         'groupname': group.gr_name,
@@ -323,6 +329,11 @@ class SystemValidator:
                     # Skip if we've already processed this mountpoint
                     if mountpoint in processed_mountpoints:
                         continue
+
+                    if pyro_config.excludes and device in pyro_config.excludes.devices:
+                        self.stdout.warn(f'Excluding device {device}')
+                        continue
+
                     processed_mountpoints.add(mountpoint)
 
                     # If specific scan paths are provided, only include those
@@ -355,7 +366,8 @@ class SystemValidator:
                                 device_info,
                                 max_depth,
                                 include_hidden,
-                                current_depth=0
+                                current_depth=0,
+                                pyro_config=pyro_config,
                             )
                             self.stdout.debug(f"  Found {len(device_info['files'])} files, {len(device_info['directories'])} directories, {len(device_info['symlinks'])} symlinks")
                         except Exception as e:
@@ -433,7 +445,8 @@ class SystemValidator:
         device_info: Dict[str, Any],
         max_depth: int,
         include_hidden: bool,
-        current_depth: int = 0
+        current_depth: int = 0,
+        pyro_config: Optional[PyroConfig] = None,
     ) -> None:
         """Recursively scan filesystem and categorize files, directories, and symlinks."""
         if current_depth > max_depth:
@@ -474,8 +487,14 @@ class SystemValidator:
 
                     # Categorize by type
                     if stat.S_ISREG(stat_info.st_mode):
+                        if pyro_config.excludes and full_path in pyro_config.excludes.files:
+                            self.stdout.warn(f'Excluding file {full_path}')
+                            continue
                         device_info['files'].append(file_info)
                     elif stat.S_ISDIR(stat_info.st_mode):
+                        if pyro_config.excludes and full_path in pyro_config.excludes.directories:
+                            self.stdout.warn(f'Excluding directory {full_path}')
+                            continue
                         device_info['directories'].append(file_info)
                         # Recursively scan directories
                         if current_depth < max_depth:
@@ -484,9 +503,13 @@ class SystemValidator:
                                 device_info,
                                 max_depth,
                                 include_hidden,
-                                current_depth + 1
+                                current_depth + 1,
+                                pyro_config=pyro_config,
                             )
                     elif stat.S_ISLNK(stat_info.st_mode):
+                        if pyro_config.excludes and full_path in pyro_config.excludes.links:
+                            self.stdout.warn(f'Excluding link {full_path}')
+                            continue
                         try:
                             target = os.readlink(full_path)
                             file_info['target'] = target
@@ -548,15 +571,15 @@ class SystemValidator:
         # Compare users
         if config.users:
             self.stdout.debug(f'config.users - {config.users}')
-            self.compare_users(config.users, current_users, differences)
+            self.compare_users(config.users, current_users, differences, config.excludes)
         # Compare groups
         if config.groups:
             self.stdout.debug(f'config.groups - {config.groups}')
-            self.compare_groups(config.groups, current_groups, differences)
+            self.compare_groups(config.groups, current_groups, differences, config.excludes)
         # Compare filesystem state
         if config.devices:
             self.stdout.debug(f'config.devices - {config.devices}')
-            self.compare_filesystem(config.devices, current_fs_state, differences)
+            self.compare_filesystem(config.devices, current_fs_state, differences, config.excludes)
         sanitized = {k: v for k, v in differences.items() if v}
         self.stdout.debug("Differences: " + json.dumps(sanitized, indent=4))
         return sanitized
@@ -605,12 +628,14 @@ class SystemValidator:
         return fs_state
 
     ##@pysnooper.snoop()
-    def compare_users(self, config_users: List[User], current_users: Dict, differences: Dict[str, Any]) -> None:
+    def compare_users(self, config_users: List[User], current_users: Dict, differences: Dict[str, Any], excludes: Exclude | None = None) -> None:
         """Compare configured users with current system users."""
         config_user_names = set()
 
         for config_user in config_users:
             username = config_user.name
+            if excludes and username in excludes.users:
+                continue
             config_user_names.add(username)
 
             if username not in current_users:
@@ -652,8 +677,9 @@ class SystemValidator:
         current_user_names = set(current_users.keys())
         extra_users = current_user_names - config_user_names
 
-        # Filter out system users (typically UID < 1000)
         for username in extra_users:
+            if excludes and username in excludes.users:
+                continue
             user = current_users[username]
     #       if user['uid'] >= 1000:  # Typically non-system users
             differences['extra_users'].append({
@@ -663,12 +689,14 @@ class SystemValidator:
             })
 
     ##@pysnooper.snoop()
-    def compare_groups(self, config_groups: List[Group], current_groups: Dict, differences: Dict[str, Any]) -> None:
+    def compare_groups(self, config_groups: List[Group], current_groups: Dict, differences: Dict[str, Any], excludes: Exclude | None = None) -> None:
         """Compare configured groups with current system groups."""
         config_group_names = set()
 
         for config_group in config_groups:
             groupname = config_group.name
+            if excludes and groupname in excludes.groups:
+                continue
             config_group_names.add(groupname)
 
             if groupname not in current_groups:
@@ -709,15 +737,16 @@ class SystemValidator:
         current_group_names = set(current_groups.keys())
         extra_groups = current_group_names - config_group_names
 
-        # Filter out system groups (typically GID < 1000)
         for groupname in extra_groups:
+            if excludes and groupname in excludes.groups:
+                continue
             group = current_groups[groupname]
-            if group['gid'] >= 1000:  # Typically non-system groups
-                differences['extra_groups'].append({
-                    'groupname': groupname,
-                    'gid': group['gid'],
-                    'members': group['members']
-                })
+#           if group['gid'] >= 1000:  # Typically non-system groups
+            differences['extra_groups'].append({
+                'groupname': groupname,
+                'gid': group['gid'],
+                'members': group['members']
+            })
 
     def parse_config_state_entry(self, entry: str) -> Dict[str, Any]:
         """Parse configuration state entries like 'dir,/path,owner,group,permissions'."""
@@ -744,11 +773,13 @@ class SystemValidator:
 
         return result
 
-    def compare_filesystem(self, config_devices: List[Device], current_fs_state: Dict, differences: Dict[str, Any]) -> None:
+    def compare_filesystem(self, config_devices: List[Device], current_fs_state: Dict, differences: Dict[str, Any], excludes: Exclude | None = None) -> None:
         """Compare configured filesystem state with current state."""
         config_paths = set()
 
         for device in config_devices:
+            if excludes and device in excludes.devices:
+                continue
             mountpoint = device.mountpoint
             config_states = device.state
 
@@ -771,6 +802,8 @@ class SystemValidator:
                     continue
 
                 path = config_item['path']
+                if excludes and path in excludes.directories or path in excludes.files or path in excludes.links:
+                    continue
                 config_paths.add(path)
 
                 if path not in current_fs_state:
@@ -850,8 +883,6 @@ class SystemValidator:
         current_paths = set(current_fs_state.keys())
         extra_paths = current_paths - config_paths
 
-        # We might not want to list ALL extra items, so we can filter
-        # For now, we'll include them all
         for path in extra_paths:
             item = current_fs_state[path]
             extra_entry = {
@@ -871,270 +902,4 @@ class SystemValidator:
 
 
 # CODE DUMP
-
-#   from .scanner import get_system_state
-#   from .difference import compare_system_state_with_pyro_file
-
-#   @pysnooper.snoop()
-#   def _get_current_system_state(self) -> Dict[str, Any]:
-#       """
-#       Get current system state
-
-#       Returns:
-#           Dictionary containing current system state
-#       """
-#       return {
-#           "users": self._get_current_users(),
-#           "groups": self._get_current_groups(),
-#           "mounts": self._get_current_mounts(),
-#           "files": self._get_current_file_state(),
-#       }
-
-#   @pysnooper.snoop()
-#   def _get_current_users(self) -> List[str]:
-#       """Get list of current system users"""
-#       try:
-#           result = subprocess.run(
-#               ["getent", "passwd"], capture_output=True, text=True, check=True
-#           )
-#           users = []
-#           for line in result.stdout.splitlines():
-#               if ":" in line:
-#                   users.append(line.split(":")[0])
-#           return users
-#       except (subprocess.CalledProcessError, FileNotFoundError):
-#           return []
-
-#   @pysnooper.snoop()
-#   def _get_current_groups(self) -> List[str]:
-#       """Get list of current system groups"""
-#       try:
-#           result = subprocess.run(
-#               ["getent", "group"], capture_output=True, text=True, check=True
-#           )
-#           groups = []
-#           for line in result.stdout.splitlines():
-#               if ":" in line:
-#                   groups.append(line.split(":")[0])
-#           return groups
-#       except (subprocess.CalledProcessError, FileNotFoundError):
-#           return []
-
-#   @pysnooper.snoop()
-#   def _get_current_mounts(self) -> Dict[str, str]:
-#       """Get current mount points"""
-#       try:
-#           result = subprocess.run(
-#               ["mount"], capture_output=True, text=True, check=True
-#           )
-#           mounts = {}
-#           for line in result.stdout.splitlines():
-#               if " on " in line and " type " in line:
-#                   parts = line.split(" on ")
-#                   if len(parts) >= 2:
-#                       device = parts[0].split()[-1]  # Get the device part
-#                       mountpoint = parts[1].split(" type ")[0]
-#                       mounts[device] = mountpoint
-#           return mounts
-#       except (subprocess.CalledProcessError, FileNotFoundError):
-#           return {}
-
-#   # TODO - Move implementation from scanner
-#   @pysnooper.snoop()
-#   def _get_current_file_state(self) -> Dict[str, Dict[str, str]]:
-#       """
-#       Get current file and directory states
-
-#       Returns:
-#           Dictionary mapping paths to their ownership and permissions
-#       """
-#       # This is a simplified implementation
-#       # In a real system, we'd need to traverse directories and check permissions
-#       file_state = {}
-
-#       # Check some common directories
-#       common_paths = ["/home", "/etc", "/var", "/opt", "/mnt"]
-
-#       for base_path in common_paths:
-#           if Path(base_path).exists():
-#               try:
-#                   stat_result = subprocess.run(
-#                       ["stat", "-c", "%U:%G %a", base_path],
-#                       capture_output=True,
-#                       text=True,
-#                       check=True,
-#                   )
-#                   owner_group, perms = stat_result.stdout.strip().split()
-#                   file_state[base_path] = {
-#                       "owner": owner_group.split(":")[0],
-#                       "group": owner_group.split(":")[1],
-#                       "perms": perms,
-#                   }
-#               except (subprocess.CalledProcessError, IndexError):
-#                   continue
-
-#       return file_state
-
-#   # TODO - REFACTOR - Import differences from .difference
-#   @pysnooper.snoop()
-#   def _compare_states(
-#       self, config: PyroConfig, current_state: Dict[str, Any]
-#   ) -> List[Dict[str, Any]]:
-#       """
-#       Compare desired configuration with current state
-
-#       Args:
-#           config: Desired configuration
-#           current_state: Current system state
-
-#       Returns:
-#           List of discrepancies
-#       """
-#       discrepancies = []
-
-#       # Check users
-#       desired_users = {user.name for user in config.users}
-#       current_users = set(current_state.get("users", []))
-
-#       for user in config.users:
-#           if user.name not in current_users:
-#               discrepancies.append(
-#                   {
-#                       "type": "user",
-#                       "name": user.name,
-#                       "issue": "User does not exist",
-#                       "critical": True,
-#                   }
-#               )
-
-#       # Check groups
-#       desired_groups = {group.name for group in config.groups}
-#       current_groups = set(current_state.get("groups", []))
-
-#       for group in config.groups:
-#           if group.name not in current_groups:
-#               discrepancies.append(
-#                   {
-#                       "type": "group",
-#                       "name": group.name,
-#                       "issue": "Group does not exist",
-#                       "critical": True,
-#                   }
-#               )
-
-#       # Check mounts - only if we have devices to check
-#       current_mounts = current_state.get("mounts", {})
-#       for device in config.devices:
-#           if device.path not in current_mounts:
-#               discrepancies.append(
-#                   {
-#                       "type": "mount",
-#                       "device": device.path,
-#                       "mountpoint": device.mountpoint,
-#                       "issue": "Device not mounted",
-#                       "critical": False,
-#                   }
-#               )
-#           elif current_mounts.get(device.path) != device.mountpoint:
-#               discrepancies.append(
-#                   {
-#                       "type": "mount",
-#                       "device": device.path,
-#                       "expected_mountpoint": device.mountpoint,
-#                       "actual_mountpoint": current_mounts[device.path],
-#                       "issue": "Device mounted at wrong location",
-#                       "critical": False,
-#                   }
-#               )
-
-#       # Check file and directory states from device configurations
-#       current_files = current_state.get("files", {})
-#       for device in config.devices:
-#           for state_entry in device.state:
-#               state_parts = state_entry.split(",")
-#               if len(state_parts) >= 5:
-#                   obj_type, path, expected_owner, expected_group, expected_perms = (
-#                       state_parts[:5]
-#                   )
-
-#                   if path not in current_files:
-#                       discrepancies.append(
-#                           {
-#                               "type": obj_type,
-#                               "path": path,
-#                               "issue": f"{obj_type.capitalize()} does not exist",
-#                               "critical": obj_type
-#                               == "dir",  # Missing dir is critical, missing file is not
-#                           }
-#                       )
-#                   else:
-#                       current_info = current_files[path]
-#                       if current_info["owner"] != expected_owner:
-#                           discrepancies.append(
-#                               {
-#                                   "type": "ownership",
-#                                   "path": path,
-#                                   "expected_owner": expected_owner,
-#                                   "actual_owner": current_info["owner"],
-#                                   "issue": "Incorrect owner",
-#                                   "critical": False,
-#                               }
-#                           )
-
-#                       if current_info["group"] != expected_group:
-#                           discrepancies.append(
-#                               {
-#                                   "type": "group_ownership",
-#                                   "path": path,
-#                                   "expected_group": expected_group,
-#                                   "actual_group": current_info["group"],
-#                                   "issue": "Incorrect group",
-#                                   "critical": False,
-#                               }
-#                           )
-
-#                       if current_info["perms"] != expected_perms:
-#                           discrepancies.append(
-#                               {
-#                                   "type": "permissions",
-#                                   "path": path,
-#                                   "expected_perms": expected_perms,
-#                                   "actual_perms": current_info["perms"],
-#                                   "issue": "Incorrect permissions",
-#                                   "critical": False,
-#                               }
-#                           )
-
-#       return discrepancies
-
-
-
-#       differences = {
-#           'missing_users': [],
-#           'extra_users': [],
-#           'user_mismatches': [],
-#           'missing_groups': [],
-#           'extra_groups': [],
-#           'group_mismatches': [],
-#           'missing_directories': [],
-#           'extra_directories': [],
-#           'directory_mismatches': [],
-#           'missing_files': [],
-#           'extra_files': [],
-#           'file_mismatches': [],
-#           'missing_symlinks': [],
-#           'extra_symlinks': [],
-#           'symlink_mismatches': [],
-#           'missing_mountpoints': [],
-#           'mountpoint_mismatches': []
-#       }
-
-        # TODO - DEPRECATED 2 down
-#       current_state = self._get_current_system_state()
-#       discrepancies = self._compare_states(config, current_state)
-
-
-        # TODO - FIXME
-        # Calculate summary
-#       critical_issues = len([d for d in discrepancies if d.get("critical", False)])
 
