@@ -15,7 +15,7 @@ N/A
 # Archive
 
 ## 1. Create dummy Pyro file (test_simple_config.pyro.yaml)
-```text
+```yaml
 Label: "Test Simple Configuration"
 Users:
   - label: "test_user"

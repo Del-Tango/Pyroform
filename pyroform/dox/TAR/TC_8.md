@@ -13,7 +13,7 @@
 # Archive
 
 ## 1. Create test Pyro file
-```text
+```yaml
 Label: "Filesystem Test Without Block Device Path"
 Devices:
   - label: "test_fs"
