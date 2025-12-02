@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Pyroform** is a Python-based Linux configuration management tool that processes declarative configuration files to manage system resources including users, groups, block storage device mountpoints, files, and directories with specific owners and permissions. It generates FlowCTRL sketch files on-the-fly and executes them using the `flow_ctrl` library for reliable system management.
+**Pyroform** is a Python-based Linux configuration management tool that processes declarative configuration files to manage system resources including users, groups, block storage device mountpoints, files, and directories with specific owners and permissions. It generates FlowCTRL sketch files on-the-fly and executes them using the [`flow_ctrl`](https://github.com/Del-Tango/FlowCTRL-Automation) library for reliable system management.
 
 ### Key Features
 - **Declarative Configuration**: Define system state using JSON/YAML files
