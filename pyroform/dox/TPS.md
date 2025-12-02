@@ -890,11 +890,11 @@ Users:
   - label: "test_user_1"
     Name: "pyrotest1"
     Password: "testpass1"
-    Groups: ["pyrotest1", "pyrogroup1"]
+    Groups: ["pyrogroup1"]
   - label: "test_user_2"
     Name: "pyrotest2"
     Password: "testpass2"
-    Groups: ["pyrotest2", "pyrogroup2"]
+    Groups: ["pyrogroup2"]
 Groups:
   - label: "group_1"
     Name: "pyrogroup1"

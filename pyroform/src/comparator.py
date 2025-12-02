@@ -134,6 +134,7 @@ class SystemStateComparator:
 
         self._find_extra_users(config_user_names, current_users_dict, differences, excludes)
 
+    @pysnooper.snoop()
     def _check_user_compliance(
         self,
         config_user: User,
@@ -153,6 +154,7 @@ class SystemStateComparator:
         else:
             self._check_user_properties(config_user, current_users[username], differences)
 
+    @pysnooper.snoop()
     def _check_user_properties(
         self,
         config_user: User,
@@ -163,9 +165,12 @@ class SystemStateComparator:
         mismatches = []
         expected_groups = set(config_user.groups)
         current_groups = set(current_user.get('groups', []))
-
         missing_groups = expected_groups - current_groups
-        extra_groups = current_groups - expected_groups
+        # Filter out users own default group
+        extra_groups = [
+            item for item in current_groups - expected_groups
+            if item != config_user.name
+        ]
 
         if missing_groups or extra_groups:
             mismatches.append({

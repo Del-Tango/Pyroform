@@ -3865,14 +3865,12 @@ id: 'scorchtest': no such user
 - Validates: [TPS TC_11](./TPS/TC_11.md)
 - Preconditions:
 - Status:
-[,] PASS
+[X] PASS
 [ ] FAIL
-[X] BLOCKED
+[ ] BLOCKED
 
 # Remarks
-
-NOK either on Step2 (configuration) or Step3 (validation).
-When user is created also added to own group - seen as a discrepancy.
+N/A
 
 # Archive
 
@@ -3883,11 +3881,11 @@ Users:
   - label: "test_user_1"
     Name: "pyrotest1"
     Password: "testpass1"
-    Groups: ["pyrotest1", "pyrogroup1"]
+    Groups: ["pyrogroup1"]
   - label: "test_user_2"
     Name: "pyrotest2"
     Password: "testpass2"
-    Groups: ["pyrotest2", "pyrogroup2"]
+    Groups: ["pyrogroup2"]
 Groups:
   - label: "group_1"
     Name: "pyrogroup1"
@@ -4247,7 +4245,7 @@ Group pyrotest2 exists
 [ OK ]: Procedure completed: SUCCESS
 ```
 
-## 3. NOK Run validate command
+## 3. Run validate command
 ```text
 root@1e1b62138bef:/app/Pyroform# pyroform validate -i validate_user.pyro.yaml
 
@@ -4269,7 +4267,6 @@ root@1e1b62138bef:/app/Pyroform# pyroform validate -i validate_user.pyro.yaml
             "Name": "pyrotest1",
             "Password": "testpass1",
             "Groups": [
-                "pyrotest1",
                 "pyrogroup1"
             ]
         },
@@ -4278,7 +4275,203 @@ root@1e1b62138bef:/app/Pyroform# pyroform validate -i validate_user.pyro.yaml
             "Name": "pyrotest2",
             "Password": "testpass2",
             "Groups": [
-                "pyrotest2",
+                "pyrogroup2"
+            ]
+        }
+    ],
+    "Groups": [
+        {
+            "label": "group_1",
+            "Name": "pyrogroup1",
+            "Users": [
+                "pyrotest1"
+            ]
+        },
+        {
+            "label": "group_2",
+            "Name": "pyrogroup2",
+            "Users": [
+                "pyrotest2"
+            ]
+        },
+        {
+            "label": "group_3",
+            "Name": "pyrotest1",
+            "Users": [
+                "pyrotest1"
+            ]
+        },
+        {
+            "label": "group_4",
+            "Name": "pyrotest2",
+            "Users": [
+                "pyrotest2"
+            ]
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ],
+        "Groups": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "adm",
+            "tty",
+            "disk",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "man",
+            "proxy",
+            "kmem",
+            "dialout",
+            "fax",
+            "voice",
+            "cdrom",
+            "floppy",
+            "tape",
+            "sudo",
+            "audio",
+            "dip",
+            "www-data",
+            "backup",
+            "operator",
+            "list",
+            "irc",
+            "src",
+            "shadow",
+            "utmp",
+            "video",
+            "sasl",
+            "plugdev",
+            "staff",
+            "games",
+            "users",
+            "nogroup",
+            "_ssh"
+        ]
+    }
+}
+[ INFO ]: Scanning current machine state (users, groups, filesystem)...
+[ WARNING ]: Excluding user root
+[ WARNING ]: Excluding user daemon
+[ WARNING ]: Excluding user bin
+[ WARNING ]: Excluding user sys
+[ WARNING ]: Excluding user sync
+[ WARNING ]: Excluding user games
+[ WARNING ]: Excluding user man
+[ WARNING ]: Excluding user lp
+[ WARNING ]: Excluding user mail
+[ WARNING ]: Excluding user news
+[ WARNING ]: Excluding user uucp
+[ WARNING ]: Excluding user proxy
+[ WARNING ]: Excluding user www-data
+[ WARNING ]: Excluding user backup
+[ WARNING ]: Excluding user list
+[ WARNING ]: Excluding user irc
+[ WARNING ]: Excluding user _apt
+[ WARNING ]: Excluding user nobody
+[ WARNING ]: Excluding group root
+[ WARNING ]: Excluding group daemon
+[ WARNING ]: Excluding group bin
+[ WARNING ]: Excluding group sys
+[ WARNING ]: Excluding group adm
+[ WARNING ]: Excluding group tty
+[ WARNING ]: Excluding group disk
+[ WARNING ]: Excluding group lp
+[ WARNING ]: Excluding group mail
+[ WARNING ]: Excluding group news
+[ WARNING ]: Excluding group uucp
+[ WARNING ]: Excluding group man
+[ WARNING ]: Excluding group proxy
+[ WARNING ]: Excluding group kmem
+[ WARNING ]: Excluding group dialout
+[ WARNING ]: Excluding group fax
+[ WARNING ]: Excluding group voice
+[ WARNING ]: Excluding group cdrom
+[ WARNING ]: Excluding group floppy
+[ WARNING ]: Excluding group tape
+[ WARNING ]: Excluding group sudo
+[ WARNING ]: Excluding group audio
+[ WARNING ]: Excluding group dip
+[ WARNING ]: Excluding group www-data
+[ WARNING ]: Excluding group backup
+[ WARNING ]: Excluding group operator
+[ WARNING ]: Excluding group list
+[ WARNING ]: Excluding group irc
+[ WARNING ]: Excluding group src
+[ WARNING ]: Excluding group shadow
+[ WARNING ]: Excluding group utmp
+[ WARNING ]: Excluding group video
+[ WARNING ]: Excluding group sasl
+[ WARNING ]: Excluding group plugdev
+[ WARNING ]: Excluding group staff
+[ WARNING ]: Excluding group games
+[ WARNING ]: Excluding group users
+[ WARNING ]: Excluding group nogroup
+[ WARNING ]: Excluding group _ssh
+[ INFO ]: Comparing current system state with Pyro file...
+[ OK ]: System state matches Pyro config: (System User Validation Test)
+[ OK ]: System state validation passed - no action required
+```
+
+## 4. Break system state by creating a user ouside of Pyro configuration file
+```text
+root@1e1b62138bef:/app/Pyroform# useradd intruder; echo $?
+0
+```
+
+## 5. Run validation command again. Check it reports NOK
+```text
+root@1e1b62138bef:/app/Pyroform# pyroform validate -i validate_user.pyro.yaml
+
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/log/pyroflow/pyroflow.log
+[ INFO ]: State monitoring configured for inter-process control
+[ INFO ]: Parsing Pyro state file (validate_user.pyro.yaml)...
+[ INFO ]: State file data: {
+    "Label": "System User Validation Test",
+    "Users": [
+        {
+            "label": "test_user_1",
+            "Name": "pyrotest1",
+            "Password": "testpass1",
+            "Groups": [
+                "pyrogroup1"
+            ]
+        },
+        {
+            "label": "test_user_2",
+            "Name": "pyrotest2",
+            "Password": "testpass2",
+            "Groups": [
                 "pyrogroup2"
             ]
         }
@@ -4438,66 +4631,24 @@ root@1e1b62138bef:/app/Pyroform# pyroform validate -i validate_user.pyro.yaml
 [ INFO ]: Comparing current system state with Pyro file...
 [ NOK ]: Validation discrepancies for Pyro config (System User Validation Test):
 {
-    "user_mismatches": [
+    "extra_users": [
         {
-            "label": "test_user_2",
-            "username": "pyrotest2",
-            "mismatches": [
-                {
-                    "property": "groups",
-                    "expected": [
-                        "pyrotest2",
-                        "pyrogroup2"
-                    ],
-                    "actual": [
-                        "pyrotest2",
-                        "pyrogroup1",
-                        "pyrogroup2"
-                    ],
-                    "missing": [],
-                    "extra": [
-                        "pyrogroup1"
-                    ]
-                }
-            ]
+            "username": "intruder",
+            "uid": 1002,
+            "home_directory": "/home/intruder"
         }
     ],
-    "group_mismatches": [
+    "extra_groups": [
         {
-            "label": "group_1",
-            "groupname": "pyrogroup1",
-            "mismatches": [
-                {
-                    "property": "members",
-                    "expected": [
-                        "pyrotest1"
-                    ],
-                    "actual": [
-                        "pyrotest2",
-                        "pyrotest1"
-                    ],
-                    "missing": [],
-                    "extra": [
-                        "pyrotest2"
-                    ]
-                }
-            ]
+            "groupname": "intruder",
+            "gid": 1004,
+            "members": []
         }
     ]
 }
-[ NOK ]: System state mismatch for (System User Validation Test) (0 critical, 2 total issues)
-[ WARNING ]: Found 2 non-critical issues
+[ NOK ]: System state mismatch for (System User Validation Test) (2 critical, 2 total issues)
+[ NOK ]: Found 2 critical issues, 2 total issues
 [ NOK ]: System state validation failed - run "configure" to apply changes
-```
-
-## 4. Break system state by creating a user ouside of Pyro configuration file
-```text
-
-```
-
-## 5. Run validation command again. Check it reports NOK
-```text
-
 ```
 
 
