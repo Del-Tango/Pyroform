@@ -21,6 +21,7 @@ from .flow_engine import PyroflowEngine
 from .validator import SystemValidator, ValidationResult
 from .reporter import ReportGenerator
 from .logging import STDOUTMsg
+from .scanner import SystemStateScanner
 
 
 class OperationResult(Enum):
@@ -80,8 +81,10 @@ class PyroformEngine:
         )
         self.flow_engine = PyroflowEngine(stdout=self.stdout)
         self.validator = SystemValidator(stdout=self.stdout, config=self.config)
+        self.scanner = SystemStateScanner(stdout=self.stdout)
         self.reporter = ReportGenerator()
 
+    @pysnooper.snoop()
     def snapshot(self, output_path: str, **kwargs) -> Dict[str, Any]:
         """
         Create a snapshot of current system state as Pyro configuration.
@@ -110,8 +113,14 @@ class PyroformEngine:
         include_hidden = kwargs.get('include_hidden', True)
 
         try:
+
             # Capture current system state
-            system_state = self.validator.get_system_state(
+#           system_state = self.validator.get_system_state(
+#               max_depth=max_depth,
+#               include_hidden=include_hidden
+#           )
+
+            system_state = self.scanner.scan_system_state(
                 max_depth=max_depth,
                 include_hidden=include_hidden
             )
@@ -120,7 +129,8 @@ class PyroformEngine:
             # Generate configuration from system state
             pyro_config = self.sketch_generator.generate_sketch(
                 None,
-                ActionType.SNAPSHOT
+                ActionType.SNAPSHOT,
+                system_state=system_state,
             )
             self.stdout.debug(f'Generated pyro config with {len(pyro_config)} elements')
 
@@ -370,6 +380,7 @@ class PyroformEngine:
                 summary={"total_issues": 1, "critical_issues": 1},
             )
 
+    @pysnooper.snoop()
     def _process_configuration(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
         """
         Process a single configuration for the given action.
@@ -573,6 +584,7 @@ class PyroformEngine:
             "auto_confirm": False,
             "dry_run": False,
             "debug": True,
+            "report": True,
         }
 
 # CODE DUMP

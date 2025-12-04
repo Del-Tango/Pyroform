@@ -26,6 +26,7 @@ class PyroParser:
             timestamp=False,
         )
 
+    @pysnooper.snoop()
     def parse(self, input_path: Path) -> List[PyroConfig]:
         """
         Parse Pyro files from file or directory
@@ -54,6 +55,7 @@ class PyroParser:
             self.stdout.err(msg)
             raise ValueError(msg)
 
+    @pysnooper.snoop()
     def _parse_single_file(self, file_path: Path) -> PyroConfig:
         """
         Parse single JSON/YAML file
@@ -81,6 +83,7 @@ class PyroParser:
 
         return self._parse_single_file_data(data)
 
+    @pysnooper.snoop()
     def _parse_single_file_data(self, data: Dict[str, Any]) -> PyroConfig:
         """
         Parse configuration data from a single file
@@ -167,6 +170,7 @@ class PyroParser:
 
         return PyroConfig(label=label, users=users, groups=groups, devices=devices, excludes=excludes)
 
+    @pysnooper.snoop()
     def _parse_directory(self, directory_path: Path) -> List[PyroConfig]:
         """
         Parse all Pyro files in a directory

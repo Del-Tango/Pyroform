@@ -529,7 +529,7 @@ def workflow(workflow_file: str):
         exit(0 if success else 1)
 
     except Exception as e:
-        click.echo(f"Error executing workflow: {e}")
+        click.echo(f"[ ERROR ]: Error executing workflow: {e}")
         exit(1)
 
 # UTILS
@@ -636,12 +636,12 @@ def _execute_action(
             if output_path:
                 if output_path.is_dir():
                     report_file = (
-                        output_path / f"pyroform_report_{action_type.value}.json"
+                        output_path / f"pyroform_{action_type.value}.report.json"
                     )
                 else:
                     report_file = output_path
             else:
-                report_file = Path(f"pyroform_report_{action_type.value}.json")
+                report_file = Path(f"pyroform_{action_type.value}.report.json")
 
             report_success = pf.generate_report(str(report_file))
 
@@ -657,7 +657,7 @@ def _execute_action(
 
             click.echo(traceback.format_exc())
 
-#@pysnooper.snoop()
+@pysnooper.snoop()
 def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
     """
     Execute a complete Pyroform workflow
@@ -671,63 +671,15 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
     try:
         steps = workflow_config.get("steps", [])
         auto_confirm = workflow_config.get("auto_confirm", False)
-        config_file = workflow_config.get("config_file")
 
-        pf = Pyroform(config_file=config_file, auto_confirm=auto_confirm)
+        pf = Pyroform(
+            config_file=workflow_config.get("config_file"),
+            log_file=workflow_config.get('log_config'),
+            debug=workflow_config.get('debug', False),
+            auto_confirm=auto_confirm,
+        )
 
-        workflow_results = []
-
-        for step in steps:
-            action = step.get("action")
-            input_path = step.get("input_path")
-            dry_run = step.get("dry_run", False)
-
-            if not action or not input_path:
-                click.echo(f"Invalid workflow step: {step}")
-                return False
-
-            try:
-                if action == "validate":
-                    result = pf.validate(input_path, dry_run=dry_run)
-                    success = result.is_valid
-                elif action == "configure":
-                    result = pf.configure(input_path, dry_run=dry_run)
-                    success = result
-                elif action == "mount":
-                    result = pf.mount(input_path, dry_run=dry_run)
-                    success = result
-                elif action == "scorch":
-                    result = pf.scorch(input_path, dry_run=dry_run)
-                    success = result.success
-                else:
-                    click.echo(f"Unknown action in workflow: {action}")
-                    return False
-
-                workflow_results.append(
-                    {
-                        "action": action,
-                        "input_path": input_path,
-                        "success": success,
-                        "result": result,
-                    }
-                )
-
-                if not success:
-                    return False
-
-            except Exception as e:
-                click.echo(f"Error in workflow step {action}: {e}")
-                return False
-
-        # Generate workflow report
-        if workflow_config.get("generate_report", True):
-            report_file = workflow_config.get(
-                "report_file", "pyroform_workflow_report.json"
-            )
-            pf._generate_workflow_report(workflow_results, report_file)
-
-        click.echo("Workflow completed successfully")
-        return True
+        result = pf.execute_workflow(steps)
 
     except Exception as e:
         click.echo(f"Workflow execution failed: {e}")
@@ -799,4 +751,68 @@ if __name__ == "__main__":
 
 
 
+
+#       workflow_results = []
+
+#       for step in steps:
+#           action = step.get("action")
+#           input_path = step.get("input_path")
+
+#           if not action or not input_path:
+#               click.echo(f"Invalid workflow step: {step}")
+#               return False
+
+#           try:
+#               if action == "snapshot":
+#                   result = pf.snapshot(**step)
+#                   success = result.is_valid
+#               elif action == "validate":
+#                   result = pf.validate(input_path, **step)
+#                   success = result.is_valid
+#               elif action == "configure":
+#                   result = pf.configure(input_path, **step)
+#                   success = result
+#               elif action == "mount":
+#                   result = pf.mount(input_path, **step)
+#                   success = result
+#               elif action == "scorch":
+#                   result = pf.scorch(input_path, **step)
+#                   success = result.success
+#               else:
+#                   click.echo(f"[ ERROR ]: Unknown action in workflow: {action}")
+#                   return False
+
+#               workflow_results.append(
+#                   {
+#                       "action": action,
+#                       "input_path": input_path,
+#                       "success": success,
+#                       "result": result,
+#                   }
+#               )
+
+#               if not success:
+#                   if auto_confirm:
+#                       continue
+#                   click.echo(f'[ WARNING ]: Previous step execution was not successful!')
+#                   click.echo()
+#                   response = input("Continue with next workflow step? [Y/N]> ").strip().lower()
+#                   click.echo()
+#                   if response.lower() not in ('n', 'no', 'nope', 'fuck no', 'fuck that')
+#                       continue
+#                   return False
+
+#           except Exception as e:
+#               click.echo(f"[ ERROR ]: Workflow step {action} terminated with errors! Details: {e}")
+#               return False
+
+#       # Generate workflow report
+#       if workflow_config.get("generate_report", True):
+#           report_file = workflow_config.get(
+#               "report_file", "pyroform_workflow.report.json"
+#           )
+#           pf._generate_workflow_report(workflow_results, report_file)
+
+#       click.echo("Workflow completed successfully")
+#       return True
 

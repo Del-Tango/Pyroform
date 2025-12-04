@@ -61,7 +61,7 @@ class SketchGenerator:
         self.scanner = self.validator.scanner
         self.comparator = self.validator.comparator
 
-    def generate_sketch(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
+    def generate_sketch(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
         """
         Generate FlowCTRL sketch based on action type.
 
@@ -88,9 +88,10 @@ class SketchGenerator:
         if action not in action_handlers:
             raise ValueError(f"Unsupported action type: {action}")
 
-        return action_handlers[action](config)
+        return action_handlers[action](config, **kwargs)
 
-    def generate_snapshot_pyro_config(self, config: PyroConfig) -> Dict[str, Any]:
+    @pysnooper.snoop()
+    def generate_snapshot_pyro_config(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
         """
         Generate snapshot configuration from current system state.
 
@@ -100,8 +101,10 @@ class SketchGenerator:
         Returns:
             Snapshot configuration dictionary
         """
-        system_state = self.validator.get_system_state(
-            pyro_config=config, max_depth=100, include_hidden=True
+        system_state = kwargs.get(
+            'system_state', self.scanner.scan_system_state(
+                pyro_config=config, max_depth=100, include_hidden=True
+            )
         )
 
         timestamp = datetime.datetime.now()
@@ -114,6 +117,7 @@ class SketchGenerator:
 
         return snapshot
 
+    @pysnooper.snoop()
     def _build_user_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Build user snapshot from system state."""
         users_snapshot = []
@@ -190,7 +194,7 @@ class SketchGenerator:
         return state_entries
 
     @pysnooper.snoop()
-    def generate_scorch_sketch(self, config: PyroConfig) -> Dict[str, Any]:
+    def generate_scorch_sketch(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
         """
         Generate sketch for scorch action (cleanup).
 
@@ -356,7 +360,7 @@ class SketchGenerator:
 
         return commands
 
-    def generate_configure_sketch(self, config: PyroConfig) -> Dict[str, Any]:
+    def generate_configure_sketch(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
         """
         Generate sketch for configure action (users, groups, file permissions).
 
@@ -378,7 +382,7 @@ class SketchGenerator:
         self.stdout.info(f'FlowCTRL Sketch: {json.dumps(sketch, indent=4)}')
         return sketch
 
-    def generate_mount_sketch(self, config: PyroConfig) -> Dict[str, Any]:
+    def generate_mount_sketch(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
         """
         Generate sketch for mount action (device mounting only).
 

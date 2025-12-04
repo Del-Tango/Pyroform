@@ -2,6 +2,8 @@
 Main Pyroform Library Interface Class
 """
 
+# TODO - Configure and use STDOUTMsg() from here down the tree
+
 import yaml
 import json
 
@@ -116,6 +118,7 @@ class Pyroform:
         self._last_result = self.engine.validate(input_path, **kwargs)
         return self._last_result
 
+    @pysnooper.snoop()
     def generate_report(self, output_path: Optional[str] = None) -> bool:
         """
         Generate report for the last action
@@ -151,6 +154,7 @@ class Pyroform:
             print(f"Failed to generate report: {e}")
             return False
 
+    @pysnooper.snoop()
     def execute_workflow(self, workflow_steps: List[Dict[str, Any]]) -> bool:
         """
         Execute a complete workflow with multiple steps
@@ -168,12 +172,13 @@ class Pyroform:
             input_path = step.get("input_path")
             output_path = step.get("output_path")
             dry_run = step.get("dry_run", False)
+            auto_confirm = step.get("auto_confirm") or self.config.get('auto_confirm')
 
             if not action or not input_path:
-                print(f"Invalid workflow step: {step}")
+                print(f"[ ERROR ]: Invalid workflow step: {step}")
                 return False
 
-            print(f"Executing workflow step: {action} with {input_path}")
+            print(f"[ INFO ]: Executing workflow step: {action} with {input_path}")
 
             try:
                 if action == "validate":
@@ -181,18 +186,23 @@ class Pyroform:
                     success = result.is_valid
                 elif action == "configure":
                     result = self.configure(input_path, dry_run=dry_run)
-                    success = result
+#                   success = result
+                    success = result.get('success', False)
                 elif action == "mount":
                     result = self.mount(input_path, dry_run=dry_run)
-                    success = result
+#                   success = result.success
+                    success = result.get('success', False)
                 elif action == "scorch":
                     result = self.scorch(input_path, dry_run=dry_run)
-                    success = result.success
+#                   success = result.success
+                    success = result.get('success', False)
                 elif action == "snapshot":
                     result = self.snapshot(input_path, output_path)
-                    success = result.success
+                    # TODO - FIX ME
+#                   success = result.success
+                    success = result.get('success', False)
                 else:
-                    print(f"Unknown action in workflow: {action}")
+                    print(f"[ ERROR ]: Unknown action in workflow: {action}")
                     return False
 
                 workflow_results.append(
@@ -203,19 +213,37 @@ class Pyroform:
                         "result": result,
                     }
                 )
-
                 if not success:
-                    print(f"Workflow step failed: {action}")
+                    if auto_confirm:
+                        continue
+                    print(f'[ WARNING ]: Previous step execution was not successful!')
+                    print()
+                    response = input("Continue with next workflow step? [Y/N]> ").strip().lower()
+                    print()
+                    if response.lower() not in ('n', 'no', 'nope', 'fuck no', 'fuck that'):
+                        continue
+#                   print(f"Workflow step failed: {action}")
                     return False
 
             except Exception as e:
-                print(f"Error in workflow step {action}: {e}")
+                print(f"[ ERROR ]: Error in workflow step {action}: {e}")
                 return False
 
         # Store workflow results
         self._workflow_results = workflow_results
+
+        # Generate workflow report
+        if self.config.get("report", False):
+            if os.path.isdir(output_path):
+                report_file = output_path + "/pyroform_workflow.report.json"
+            else:
+                report_file = output_path
+            self._generate_workflow_report(workflow_results, report_file)
+
+        print(f"[ OK ]: Workflow completed successfully")
         return True
 
+    @pysnooper.snoop()
     def _generate_workflow_report(
         self, workflow_results: List[Dict[str, Any]], output_path: str
     ) -> bool:
@@ -243,9 +271,10 @@ class Pyroform:
             return self.engine.reporter.save_report(workflow_report, Path(output_path))
 
         except Exception as e:
-            print(f"Failed to generate workflow report: {e}")
+            print(f"[ ERROR ]: Failed to generate workflow report: {e}")
             return False
 
+    @pysnooper.snoop()
     def _generate_workflow_summary(
         self, workflow_results: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
@@ -267,6 +296,7 @@ class Pyroform:
             "overall_success": all(r["success"] for r in workflow_results),
         }
 
+    @pysnooper.snoop()
     def _load_config(self, config_file: Optional[str], **kwargs) -> Dict[str, Any]:
         """
         Load configuration from file or use defaults
@@ -330,7 +360,6 @@ class Pyroform:
         # Update auto_confirm if provided
         if "auto_confirm" in kwargs:
             self.auto_confirm = kwargs["auto_confirm"]
-
 
 # CODE DUMP
 #from .src.scorch_engine import ScorchResult
