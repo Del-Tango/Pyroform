@@ -1008,39 +1008,140 @@ Excludes:
 - Preconditions:
 - Validated by: [TAR TC_12](./TAR/TC_12.md)
 
-## Test Data (workflow_test.yaml):
+## Test Data
+
+### workflow_step.pyro.yaml:
 ```yaml
-name: "Test Workflow"
+Label: "System User Validation Test"
+Users:
+  - label: "test_user_1"
+    Name: "pyrotest1"
+    Password: "testpass1"
+    Groups: ["pyrogroup1"]
+  - label: "test_user_2"
+    Name: "pyrotest2"
+    Password: "testpass2"
+    Groups: ["pyrogroup2"]
+Groups:
+  - label: "group_1"
+    Name: "pyrogroup1"
+    Users: ["pyrotest1"]
+  - label: "group_2"
+    Name: "pyrogroup2"
+    Users: ["pyrotest2"]
+  - label: "group_3"
+    Name: "pyrotest1"
+    Users: ["pyrotest1"]
+  - label: "group_4"
+    Name: "pyrotest2"
+    Users: ["pyrotest2"]
+Excludes:
+  Users:
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
+  Groups:
+    - root
+    - daemon
+    - bin
+    - sys
+    - adm
+    - tty
+    - disk
+    - lp
+    - mail
+    - news
+    - uucp
+    - man
+    - proxy
+    - kmem
+    - dialout
+    - fax
+    - voice
+    - cdrom
+    - floppy
+    - tape
+    - sudo
+    - audio
+    - dip
+    - www-data
+    - backup
+    - operator
+    - list
+    - irc
+    - src
+    - shadow
+    - utmp
+    - video
+    - sasl
+    - plugdev
+    - staff
+    - games
+    - users
+    - nogroup
+    - _ssh
+```
+
+### workflow_test.pyro.yaml:
+```yaml
+name: "Test Multi-Step Workflow"
 description: "Complete test workflow"
 auto_confirm: true
 
 steps:
   - name: "Initial Validation"
     action: "validate"
-    input_path: "workflow_config.yaml"
+    input_path: "workflow_step.pyro.yaml"
+    dry_run: false
+
+  - name: "Machine State Snapshot"
+    action: "snapshot"
+    input_path: "workflow_step.pyro.yaml"
+    output_path: "workflow_snapshot.pyro.yaml"
+    dry_run: false
+
+  - name: "Mock Pyroform Machine"
+    action: "configure"
+    input_path: "workflow_step.pyro.yaml"
     dry_run: true
 
-  - name: "Create Structure"
+  - name: "Pyroform Machine"
     action: "configure"
-    input_path: "workflow_config.yaml"
+    input_path: "workflow_step.pyro.yaml"
     dry_run: false
 
   - name: "Final Validation"
     action: "validate"
-    input_path: "workflow_config.yaml"
+    input_path: "workflow_step.pyro.yaml"
     dry_run: false
 ```
 
 ## Test Steps:
 
-1. Create workflow configuration file
+1. Create Pyro files with content from test data:
+- workflow_test.pyro.yaml
+- workflow_step.pyro.yaml
 2. Run command
 ```bash
-~$ pyroform workflow -w workflow_test.yaml
+~$ pyroform workflow -w workflow_test.pyro.yaml
 ```
-3. Observe step-by-step execution
-4. Verify all steps complete successfully
-5. Check generated report
+3. Observe step-by-step execution and verify all steps complete successfully
+5. Check generated report..?
 
 ## Expected Results:
 
