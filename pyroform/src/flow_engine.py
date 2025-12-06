@@ -1,7 +1,6 @@
 """
 FlowCTRL Engine Integration for Pyroform
 """
-
 import json
 import pysnooper
 
@@ -21,22 +20,24 @@ class PyroflowEngine:
     Wrapper around FlowEngine for Pyroform operations
     """
 
-    stdout: STDOUTMsg
-
-    #@pysnooper.snoop()
-    def __init__(self, *args, stdout=None, config_path: Optional[str] = None, **kwargs):
+    # @pysnooper.snoop()
+    def __init__(self, pyro_config: dict | None = None, stdout: STDOUTMsg | None = None, config_path: Optional[str] = None, **kwargs):
         """
         Initialize PyroflowEngine
 
         Args:
             config_path: Optional path to FlowCTRL config file
         """
+        self.pyro_config = pyro_config or {}
         self.config = self._load_config(config_path)
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=True,
-            timestamp=True,
+            debug_mode=kwargs.get('debug', self.pyro_config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.pyro_config.get('log_timestamp', False)),
         )
-        # Try to create a real FlowEngine with proper config object
+
+        self.stdout.debug(f'PyroflowEngine Pyroform conf: {self.pyro_config}')
+        self.stdout.debug(f'PyroflowEngine FlowCTRL conf: {self.config}')
+
         flow_config = self._create_flow_config()
         self.stdout.debug(f'flow_config - {flow_config}')
         self.stdout.debug(f'flow_config.__dict__ - {flow_config.__dict__}')
@@ -46,7 +47,7 @@ class PyroflowEngine:
 
         self._current_sketch: Optional[Dict[str, Any]] = None
 
-    #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def _create_flow_config(self):
         """
         Create a FlowEngine compatible config object
@@ -58,10 +59,10 @@ class PyroflowEngine:
         return FlowConfig(**self.config)
 
 
-    #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """
-        Load configuration from file or use defaults
+        Load FlowCTRL configuration from file or use defaults
 
         Args:
             config_path: Optional path to config file
@@ -84,8 +85,8 @@ class PyroflowEngine:
 
         return self._default_config()
 
-    #@pysnooper.snoop()
-    def execute_sketch(self, sketch: Dict[str, Any], action: ActionType) -> bool:
+    # @pysnooper.snoop()
+    def execute_sketch(self, sketch: Dict[str, Any], action: ActionType, errors: list | None = None, **kwargs) -> bool:
         """
         Execute generated sketch through FlowCTRL
 
@@ -97,14 +98,11 @@ class PyroflowEngine:
             True if execution was successful, False otherwise
         """
         try:
-
-            # TODO - Remove,duplication
-#           self.stdout.info('FlowCTRL Sketch - %s' % str(json.dumps(sketch, indent=4)))
-
-            # TODO - Set --output path from config / cli args
             # Save sketch to temporary file
-            temp_sketch_path = Path("pyroflow.sketch.json")
-
+            temp_sketch_path = Path(
+                kwargs.get('output_path', self.pyro_config.get('output_path'))
+                or 'pyroflow.sketch.json'
+            )
             self.stdout.debug(f'temp_sketch_path - {temp_sketch_path}')
 
             with open(temp_sketch_path, "w") as f:
@@ -115,7 +113,10 @@ class PyroflowEngine:
 
             # Load procedure into FlowEngine
             if not self.flow_engine.load_procedure(str(temp_sketch_path)):
-                self.stdout.err(f"Failed to load procedure from {temp_sketch_path}")
+                msg = f"Failed to load procedure from {temp_sketch_path}"
+                self.stdout.err(msg)
+                if errors and isinstance(errors, list):
+                    errors.append(msg)
                 return False
 
             self._current_sketch = sketch
@@ -123,17 +124,24 @@ class PyroflowEngine:
             # Start procedure execution
             result = self.flow_engine.start_procedure()
 
-            # TODO - Make configurable from CLI args
-#           # Clean up temporary file
-#           try:
-#               temp_sketch_path.unlink()
-#           except OSError:
-#               pass  # Ignore cleanup errors
+            # Clean up temporary file
+            if self.config.get('cleanup'):
+                try:
+                    temp_sketch_path.unlink()
+                except OSError as e:
+                    msg = f'OSError: {e}'
+                    self.stdout.debug(msg)
+                    if errors and isinstance(errors, list):
+                        errors.append(msg)
+                    # Ignore cleanup errors
 
             return result.success if hasattr(result, "success") else False
 
         except Exception as e:
-            print(f"Error executing sketch for {action.value}: {e}")
+            msg = f"Error executing sketch for {action.value}: {e}"
+            self.stdout.err(msg)
+            if errors and isinstance(errors, list):
+                errors.append(msg)
             return False
 
     def pause_execution(self) -> bool:
@@ -218,14 +226,14 @@ class PyroflowEngine:
         """
         flow_ctrl_config = {
             "project_dir": str(Path(__file__).parent.parent.parent),
-            "log_dir": "log/pyroflow",
-            "conf_dir": "conf/pyroflow",
+            "log_dir": ".",
+            "conf_dir": ".",
             "state_file": ".pyroflow.state",
             "report_file": "pyroflow.report",
             "log_file": "pyroflow.log",
             "log_name": "PyroFlowCTRL",
             "silence": False,
-            "debug": True,
+            "debug": False,
             "log_format": "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
             "timestamp_format": "%Y-%m-%d %H:%M:%S"
         }

@@ -4,7 +4,6 @@ FlowCTRL Sketch Generator for Pyroform
 Generates executable FlowCTRL sketch files from Pyro configuration objects.
 Supports multiple action types including configuration, mounting, cleanup, and snapshot generation.
 """
-
 import json
 import datetime
 
@@ -23,6 +22,7 @@ from .fs_state_entry_parser import StateEntryParser
 from .scanner import SystemStateScanner
 from .comparator import SystemStateComparator
 
+
 class SketchGenerator:
     """
     Generates FlowCTRL sketch files from PyroConfig objects.
@@ -31,12 +31,13 @@ class SketchGenerator:
     operations including configuration, mounting, cleanup, and snapshots.
     """
 
+    # @pysnooper.snoop()
     def __init__(
         self,
         stdout: Optional[STDOUTMsg] = None,
-        dry_run: bool = False,
         config: Optional[dict] = None,
-        chunk_size: int = 500
+        chunk_size: int = 500,
+        **kwargs
     ):
         """
         Initialize SketchGenerator.
@@ -47,19 +48,26 @@ class SketchGenerator:
             config: Configuration dictionary
             chunk_size: Size for splitting large command lists
         """
-        self.dry_run = dry_run
+        self.config = config or {}
         self.chunk_size = chunk_size
-        self.stdout = stdout or STDOUTMsg(debug_mode=False, timestamp=False)
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('debug', False)),
+        )
+        self.stdout.debug(f'SketchGenerator conf: {self.config}')
 
         # Initialize components
-        self.command_generator = CommandGenerator(dry_run=dry_run, stdout=stdout)
-        self.exclusion_checker = ExclusionChecker(stdout=stdout)
-        self.state_parser = StateEntryParser()
+        self.command_generator = CommandGenerator(config=self.config, stdout=self.stdout)
+        self.exclusion_checker = ExclusionChecker(config=self.config, stdout=self.stdout)
+        self.state_parser = StateEntryParser(config=self.config, stdout=self.stdout)
         self.list_splitter = ListSplitter(chunk_size=chunk_size)
-        self.validator = SystemValidator(stdout=stdout, config=config)
+        self.validator = SystemValidator(config=self.config, stdout=self.stdout)
 
         self.scanner = self.validator.scanner
         self.comparator = self.validator.comparator
+
+        self._last_system_state = None
+        self._last_comparison = None
 
     def generate_sketch(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
         """
@@ -90,7 +98,7 @@ class SketchGenerator:
 
         return action_handlers[action](config, **kwargs)
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def generate_snapshot_pyro_config(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
         """
         Generate snapshot configuration from current system state.
@@ -117,7 +125,7 @@ class SketchGenerator:
 
         return snapshot
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _build_user_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Build user snapshot from system state."""
         users_snapshot = []
@@ -193,7 +201,7 @@ class SketchGenerator:
 
         return state_entries
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def generate_scorch_sketch(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
         """
         Generate sketch for scorch action (cleanup).
@@ -206,19 +214,15 @@ class SketchGenerator:
         Returns:
             FlowCTRL sketch dictionary for cleanup operations
         """
-        # TODO - FIX ME
-        system_state = self.scanner.scan_system_state(
+        self._last_system_state = self.scanner.scan_system_state(
             pyro_config=config, max_depth=100, include_hidden=True
         )
-        compared = self.comparator.compare_states(system_state, config)
-#       system_state = self.validator.get_system_state(
-#           pyro_config=config, max_depth=100, include_hidden=True
-#       )
-#       compared = self.validator.compare_system_state_with_pyro_file(system_state, config)
-
+        self._last_comparison = self.comparator.compare_states(
+            self._last_system_state, config
+        )
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Cleanup": self._generate_cleanup_commands(config, compared),
+            "Cleanup": self._generate_cleanup_commands(config, self._last_comparison),
         }
 
         # Remove empty sections

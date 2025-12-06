@@ -29,10 +29,14 @@ class SystemStateComparator:
     configuration defined in Pyro files.
     """
 
-    def __init__(self, stdout: STDOUTMsg):
-        self.stdout = stdout
+    def __init__(self, config: dict | None = None, stdout: STDOUTMsg | None = None, **kwargs):
+        self.config = config or {}
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('debug', False)),
+        )
 
-#   @pysnooper.snoop()
+    # @pysnooper.snoop()
     def compare_states(
         self,
         system_state: Dict[str, Any],
@@ -79,7 +83,7 @@ class SystemStateComparator:
             'missing_mountpoints': [], 'mountpoint_mismatches': []
         }
 
-#   @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _build_filesystem_state(self, system_state: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         """Build unified filesystem state from system state."""
         fs_state = {}
@@ -92,7 +96,7 @@ class SystemStateComparator:
 
         return fs_state
 
-#   @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _add_filesystem_entries(
         self,
         entries: List[Dict],
@@ -102,16 +106,14 @@ class SystemStateComparator:
     ) -> None:
         """Add filesystem entries to the unified state."""
         for entry in entries:
-#           fs_state[entry['path']] = {
             fs_state[entry.path] = {
                 'type': entry_type,
-                'owner': entry.owner, #entry['owner'],
-                'group': entry.group, #entry['group'],
-                'permissions': entry.permissions, #entry['permissions'],
+                'owner': entry.owner,
+                'group': entry.group,
+                'permissions': entry.permissions,
                 'mountpoint': mountpoint
             }
             if entry_type == 'symlink':
-#               fs_state[entry['path']]['target'] = entry.get('target', 'broken')
                 fs_state[entry.path]['target'] = entry.target or entry.broken
 
     def _compare_users(
@@ -134,7 +136,7 @@ class SystemStateComparator:
 
         self._find_extra_users(config_user_names, current_users_dict, differences, excludes)
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _check_user_compliance(
         self,
         config_user: User,
@@ -154,7 +156,7 @@ class SystemStateComparator:
         else:
             self._check_user_properties(config_user, current_users[username], differences)
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _check_user_properties(
         self,
         config_user: User,
@@ -300,7 +302,7 @@ class SystemStateComparator:
                 'members': group['members']
             })
 
-#   @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _compare_filesystem(
         self,
         config_devices: List[Device],
@@ -320,7 +322,7 @@ class SystemStateComparator:
 
         self._find_extra_filesystem_items(config_paths, current_fs_state, differences)
 
-#   @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _check_mountpoint(
         self,
         device: Device,
@@ -342,7 +344,7 @@ class SystemStateComparator:
                 'mountpoint': device.mountpoint
             })
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _check_device_contents(
         self,
         device: Device,
@@ -364,7 +366,7 @@ class SystemStateComparator:
             config_paths.add(path)
             self._check_filesystem_item_compliance(config_item, current_fs_state, differences)
 
-#   @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _check_filesystem_item_compliance(
         self,
         config_item: Dict[str, Any],

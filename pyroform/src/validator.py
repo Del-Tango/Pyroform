@@ -35,7 +35,7 @@ class SystemValidator:
     current system state against desired Pyro configuration.
     """
 
-    def __init__(self, stdout: STDOUTMsg | None = None, config: dict | None = None) -> None:
+    def __init__(self, stdout: STDOUTMsg | None = None, config: dict | None = None, **kwargs) -> None:
         """
         Initialize SystemValidator.
 
@@ -43,18 +43,17 @@ class SystemValidator:
             stdout: STDOUTMsg instance for logging
             config: Configuration dictionary
         """
-        self._last_result: Optional[ValidationResult] = None
-        self.config = config or {}
-        self.stdout = stdout or STDOUTMsg(
-            debug_mode=self.config.get('debug', False),
-            timestamp=self.config.get('log_timestamp') or self.config.get('debug', False),
+        self.config: dict = config or {}
+        self.stdout: STDOUTMsg = stdout or STDOUTMsg(
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
         )
-#       self.exclusion_checker = ExclusionChecker()
-        self.scanner = SystemStateScanner(self.stdout) #, exclusion_checker
-        self.comparator = SystemStateComparator(self.stdout)
+        self.scanner: SystemStateScanner = SystemStateScanner(config=self.config, stdout=self.stdout)
+        self.comparator: SystemStateComparator = SystemStateComparator(config=self.config, stdout=self.stdout)
+        self._last_result: Optional[ValidationResult] = None
 
-#   @pysnooper.snoop()
-    def validate_configuration(self, config: PyroConfig) -> ValidationResult:
+    # @pysnooper.snoop()
+    def validate_configuration(self, config: PyroConfig, **kwargs) -> ValidationResult:
         """
         Compare current system state with desired configuration.
 
@@ -70,8 +69,8 @@ class SystemValidator:
 
         differences = self.comparator.compare_states(current_state, config)
 
-#       critical_issues = sum(len(item) for item in differences.values() if 'mismatch' not in item)
-#       total_issues = sum(len(item) for item in differences.values())
+        critical_issues = sum(len(item) for item in differences.values() if 'mismatch' not in item)
+        total_issues = sum(len(item) for item in differences.values())
 
         critical_issues = sum([len(v) for k, v in differences.items() if 'mismatch' not in str(k).lower()])
         total_issues = sum([len(v) for k, v in differences.items() ])

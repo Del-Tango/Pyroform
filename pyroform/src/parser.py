@@ -1,7 +1,6 @@
 """
 Pyro Configuration Parser
 """
-
 import json
 import yaml
 import glob
@@ -20,13 +19,14 @@ class PyroParser:
     Parser for Pyro configuration files (JSON and YAML)
     """
 
-    def __init__(self, *args, stdout=None, **kwargs):
+    def __init__(self, config: dict | None = None, *args, stdout: STDOUTMsg | None = None, **kwargs):
+        self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=False,
-            timestamp=False,
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
         )
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def parse(self, input_path: Path) -> List[PyroConfig]:
         """
         Parse Pyro files from file or directory
@@ -55,7 +55,7 @@ class PyroParser:
             self.stdout.err(msg)
             raise ValueError(msg)
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _parse_single_file(self, file_path: Path) -> PyroConfig:
         """
         Parse single JSON/YAML file
@@ -83,7 +83,7 @@ class PyroParser:
 
         return self._parse_single_file_data(data)
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _parse_single_file_data(self, data: Dict[str, Any]) -> PyroConfig:
         """
         Parse configuration data from a single file
@@ -157,9 +157,6 @@ class PyroParser:
                     files=exclude_data.get('Files', []),
                     links=exclude_data.get('Links', []),
                 )
-
-                print(f'[ DEBUG ]: excludes - {excludes}')
-                print(f'[ DEBUG ]: excludes.__dict__ - {excludes.__dict__}')
             except (KeyError, TypeError) as e:
                 msg = f"Invalid exclude data: {exclude_data}"
                 self.stdout.err(msg)
@@ -170,7 +167,7 @@ class PyroParser:
 
         return PyroConfig(label=label, users=users, groups=groups, devices=devices, excludes=excludes)
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def _parse_directory(self, directory_path: Path) -> List[PyroConfig]:
         """
         Parse all Pyro files in a directory

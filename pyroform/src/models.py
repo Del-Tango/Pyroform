@@ -1,18 +1,17 @@
 """
 Pyroform Data Models
 """
-
 from dataclasses import dataclass
 from typing import List, Dict, Any, Set, Union, Optional
 from enum import Enum
 
 
 class ActionType(Enum):
-    CONFIGURE = "configure"
-    SCORCH = "scorch"
-    MOUNT = "mount"
-    VALIDATE = "validate"
-    SNAPSHOT = "snapshot"
+    CONFIGURE: str = "configure"
+    SCORCH: str = "scorch"
+    MOUNT: str = "mount"
+    VALIDATE: str = "validate"
+    SNAPSHOT: str = "snapshot"
 
 
 @dataclass
@@ -79,26 +78,6 @@ class FileInfo:
 
 
 @dataclass
-class ScorchResult:
-    """Result of scorch operation"""
-
-    resources_removed: List[str]
-    resources_failed: List[Dict[str, Any]]
-    dry_run: bool
-    success: bool
-
-
-@dataclass
-class ValidationResult:
-    """Result of system validation"""
-
-    is_valid: bool
-    system_state: Dict[str, list]
-    discrepancies: Dict[str, list]
-    summary: Dict[str, Any]
-
-
-@dataclass
 class FileSystemEntry:
     """Represents a filesystem entry (file, directory, or symlink)."""
     path: str
@@ -145,6 +124,58 @@ class MountedDevice:
 
 
 @dataclass
+class ScorchResult:
+    """Result of scorch operation"""
+
+    dry_run: bool
+    errors: List[Any]
+    success: bool
+    details: Dict[str, Any]
+
+
+@dataclass
+class ConfigureResult:
+    """ """
+
+    resources_added: List[Dict[str, Any]]
+    dry_run: bool
+    errors: List[Any]
+    success: bool
+    details: Dict[str, Any]
+
+@dataclass
+class SnapshotResult:
+    """ """
+
+    snapshot: Dict[str, Any]
+    errors: List[Any]
+    success: bool
+    details: Dict[str, Any]
+
+
+@dataclass
+class MountResult:
+    """ """
+
+    resources_mounted: List[Dict[str, Any]]
+    errors: List[Any]
+    success: bool
+    details: Dict[str, Any]
+
+
+@dataclass
+class ValidationResult:
+    """Result of system validation"""
+
+    is_valid: bool
+    system_state: Dict[str, list]
+    discrepancies: Dict[str, list]
+    summary: Dict[str, Any]
+    errors: List[Any]
+    details: Dict[str, Any]
+
+
+@dataclass
 class ValidationSummary:
     """Summary of validation results."""
     total_checks: int
@@ -154,6 +185,7 @@ class ValidationSummary:
     total_issues: int
     critical_issues: int
     is_valid: bool
+
 
 
 # CODE DUMP

@@ -1,5 +1,11 @@
+"""
+
+"""
 import json
 import datetime
+
+import pysnooper
+
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 
@@ -16,10 +22,15 @@ class CommandGenerator:
     Separates command generation logic from sketch assembly for better testability.
     """
 
-    def __init__(self, dry_run: bool = False, stdout: Optional[STDOUTMsg] = None):
-        self.dry_run = dry_run
-        self.cmd_prefix = '' if not dry_run else '# '
-        self.stdout = stdout or STDOUTMsg(debug_mode=False, timestamp=False)
+    # @pysnooper.snoop()
+    def __init__(self, config: dict | None = None, stdout: Optional[STDOUTMsg] = None, **kwargs):
+        self.config = config or {}
+        self.cmd_prefix = '' if not kwargs.get('dry_run', self.config.get('dry_run', False)) else '# '
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
+        )
+        self.stdout.debug(f'CommandGenerator conf: {self.config}')
 
     def generate_user_command(self, user: User) -> Dict[str, Any]:
         """Generate user creation command."""

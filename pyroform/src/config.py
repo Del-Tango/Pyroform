@@ -1,7 +1,6 @@
 """
 Configuration management for Pyroform
 """
-
 import json
 import yaml
 
@@ -25,7 +24,7 @@ class PyroformConfig:
         """
         self.settings = self._load_config(config_file)
 
-    ##@pysnooper.snoop()
+    # @pysnooper.snoop()
     def _load_config(self, config_file: Optional[Path]) -> Dict[str, Any]:
         """
         Load configuration from file with defaults
@@ -38,29 +37,12 @@ class PyroformConfig:
         """
         # Default configuration
         default_config = {
-            "safety_checks": True,
-            "default_output_dir": "/tmp/pyroform",
+            "safety_checks": False,
             "log_level": "INFO",
             "log_timestamp": False,
             "auto_confirm": False,
             "dry_run": False,
             "debug": False,
-            "flowctrl": {
-                "state_file": "/tmp/pyroform_state.json",
-                "logging": {
-                    "level": "INFO",
-                    "file": "/var/log/pyroform_flowctrl.log"
-                },
-                "execution": {
-                    "max_retries": 3,
-                    "timeout": 300,
-                    "continue_on_failure": False
-                },
-                "reporting": {
-                    "generate_reports": True,
-                    "report_dir": "/var/log/pyroform/reports"
-                }
-            },
         }
 
         # If no config file provided, return defaults

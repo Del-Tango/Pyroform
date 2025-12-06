@@ -4,24 +4,25 @@ Pyroform Engine - Main Library Class
 A configuration management engine that coordinates system state operations
 including snapshotting, configuration, validation, and destructive operations.
 """
-
 import json
 import yaml
-
 import pysnooper
 
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Type
 from enum import Enum
 
-from .models import ActionType, PyroConfig
+from .models import (
+    ActionType, PyroConfig, ConfigureResult, ScorchResult, MountResult,
+    SnapshotResult, ValidationResult, ValidationSummary
+)
 from .parser import PyroParser
 from .sketch_generator import SketchGenerator
 from .flow_engine import PyroflowEngine
-from .validator import SystemValidator, ValidationResult
-from .reporter import ReportGenerator
+from .validator import SystemValidator
 from .logging import STDOUTMsg
 from .scanner import SystemStateScanner
+from .reporter import ReportGenerator
 
 
 class OperationResult(Enum):
@@ -53,7 +54,8 @@ class PyroformEngine:
         reporter: Report generation utility
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    # @pysnooper.snoop()
+    def __init__(self, config: Optional[Dict[str, Any]] = None, stdout: STDOUTMsg | None = None, **kwargs) -> None:
         """
         Initialize the Pyroform engine with configuration.
 
@@ -65,26 +67,26 @@ class PyroformEngine:
             ValueError: If required configuration values are invalid
         """
         self.config = config or self._get_default_config()
-        self._validate_config()
-
-        self.stdout = STDOUTMsg(
-            debug_mode=self.config.get('debug', False),
-            timestamp=self.config.get('log_timestamp', False),
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False)),
         )
+
+        self.stdout.debug(f'PyroformEngine conf: {self.config}')
 
         # Initialize core components
-        self.parser = PyroParser(stdout=self.stdout)
+        self.parser = PyroParser(config=self.config, stdout=self.stdout)
         self.sketch_generator = SketchGenerator(
             stdout=self.stdout,
-            config=config,
-            dry_run=self.config.get('dry_run', False)
+            config=self.config,
         )
-        self.flow_engine = PyroflowEngine(stdout=self.stdout)
+        self.flow_engine = PyroflowEngine(stdout=self.stdout, pyro_config=self.config)
         self.validator = SystemValidator(stdout=self.stdout, config=self.config)
-        self.scanner = SystemStateScanner(stdout=self.stdout)
-        self.reporter = ReportGenerator()
+        self.scanner = SystemStateScanner(stdout=self.stdout, config=self.config)
+        self.reporter = ReportGenerator(stdout=self.stdout, config=self.config)
 
-    @pysnooper.snoop()
+    # TODO - REPORT
+    # @pysnooper.snoop()
     def snapshot(self, output_path: str, **kwargs) -> Dict[str, Any]:
         """
         Create a snapshot of current system state as Pyro configuration.
@@ -111,26 +113,21 @@ class PyroformEngine:
         """
         max_depth = kwargs.get('max_depth', 100)
         include_hidden = kwargs.get('include_hidden', True)
-
+        result, details, errors = self._objectify_result(ActionType.SNAPSHOT), {}, []
         try:
 
-            # Capture current system state
-#           system_state = self.validator.get_system_state(
-#               max_depth=max_depth,
-#               include_hidden=include_hidden
-#           )
-
-            system_state = self.scanner.scan_system_state(
+            details['system_state'] = self.scanner.scan_system_state(
                 max_depth=max_depth,
                 include_hidden=include_hidden
             )
-            self.stdout.debug(f'Captured system state: {len(system_state)} items')
+            self.stdout.debug(f'Captured system state: {len(details['system_state'])} items')
 
             # Generate configuration from system state
-            pyro_config = self.sketch_generator.generate_sketch(
+            result.snapshot = self.sketch_generator.generate_sketch(
                 None,
                 ActionType.SNAPSHOT,
-                system_state=system_state,
+                system_state=details['system_state'],
+                **kwargs,
             )
             self.stdout.debug(f'Generated pyro config with {len(pyro_config)} elements')
 
@@ -141,23 +138,33 @@ class PyroformEngine:
             with output_path_obj.open('w') as file:
                 yaml.dump(pyro_config, file, default_flow_style=False)
 
+            details['output_path'] = output_path
+            result.success = True
+            result.details = details
+
             self.stdout.ok(f'System snapshot written to: {output_path}')
 
-            return {
-                'success': True,
-                'output_path': output_path,
-                'system_state': system_state
-            }
+            return result
+#           return {
+#               'success': True,
+#               'output_path': output_path,
+#               'system_state': details['system_state']
+#           }
 
         except Exception as error:
             self.stdout.err(f'Snapshot operation failed: {error}')
-            return {
-                'success': False,
-                'error': str(error),
-                'output_path': output_path
-            }
+            result.success = False
+            errors.append(str(error))
+            result.errors = errors
+            return result
+#           return {
+#               'success': False,
+#               'error': str(error),
+#               'output_path': output_path
+#           }
 
-    @pysnooper.snoop()
+    # TODO - Objectify
+    # @pysnooper.snoop()
     def configure(self, input_path: str, **kwargs) -> Dict[str, Any]:
         """
         Apply configuration from Pyro files to the system.
@@ -179,6 +186,7 @@ class PyroformEngine:
             >>> engine.configure("/path/to/configs/")
             {'success': True, 'processed_configs': ['web_server', 'database']}
         """
+        dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
         try:
             configs = self.parser.parse(Path(input_path))
             if not configs:
@@ -186,12 +194,14 @@ class PyroformEngine:
                 return {'success': False, 'processed_configs': []}
 
             self.stdout.debug(f'Found {len(configs)} configuration(s) to process')
+            if dry_run:
+                self.stdout.info('DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.')
 
             results = []
             processed_configs = []
 
             for config in configs:
-                config_result = self._process_configuration(config, ActionType.CONFIGURE)
+                config_result = self._process_configuration(config, ActionType.CONFIGURE, **kwargs)
                 results.append(config_result)
                 if config_result['success']:
                     processed_configs.append(config.label)
@@ -208,6 +218,7 @@ class PyroformEngine:
             self.stdout.err(f'Configure operation failed: {error}')
             return {'success': False, 'error': str(error)}
 
+    @pysnooper.snoop()
     def scorch(self, input_path: str, **kwargs) -> Dict[str, Any]:
         """
         Remove system resources not specified in Pyro configurations.
@@ -215,66 +226,51 @@ class PyroformEngine:
         This is a destructive operation that removes resources not defined
         in the provided configuration files. User confirmation is required
         unless auto_confirm is True.
-
-        Args:
-            input_path: Path to Pyro file or directory containing Pyro files
-            **kwargs: Additional arguments:
-                - auto_confirm: Skip confirmation prompt (default: False)
-                - dry_run: Preview changes without executing (default: False)
-
-        Returns:
-            Dictionary containing:
-                - success: Overall operation success
-                - dry_run: Whether operation was a dry run
-                - resources_removed: List of removed resources
-                - resources_failed: List of resources that failed to remove
-                - confirmed: Whether user confirmed the operation
-
-        Example:
-            >>> engine.scorch("/path/to/config.yaml", auto_confirm=True)
-            {'success': True, 'resources_removed': ['/tmp/junk', '/old_logs']}
         """
+        details, errors, all_comparisons, failures = {'input_path': input_path}, [], [], 0
+        dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
+        auto_confirm = kwargs.get('auto_confirm', self.config.get('auto_confirm', False))
         try:
             configs = self.parser.parse(Path(input_path))
             if not configs:
-                return {
+                errors.append('No valid configurations found')
+                return self._objectify_result(ActionType.SCORCH, **{
                     'success': False,
-                    'resources_removed': [],
-                    'resources_failed': [],
-                    'error': 'No valid configurations found'
-                }
-
-            auto_confirm = kwargs.get('auto_confirm', False)
-            dry_run = kwargs.get('dry_run', False)
-
+                    'dry_run': dry_run,
+                    'details': details,
+                    'errors': errors,
+                })
             if dry_run:
-                self.stdout.info('DRY RUN: No changes will be made')
-
-            all_removed = []
-            all_failed = []
-
+                self.stdout.info('DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.')
             for config in configs:
-                result = self._execute_scorch_config(config, auto_confirm, dry_run)
-                if result['success']:
-                    all_removed.extend(result.get('resources_removed', []))
-                all_failed.extend(result.get('resources_failed', []))
+                scorch = self._execute_scorch_config(config, errors=errors, **kwargs)
+                if scorch['success']:
+                    all_comparisons.extend(scorch.get('comparison', {}))
+                else:
+                    failures += 1
 
-            return {
-                'success': len(all_failed) == 0,
+            details['system_state'] = scorch.get('system_state', {})
+            details['state_comparisons'] = all_comparisons
+
+            return self._objectify_result(ActionType.SCORCH, **{
+                'success': failures == 0,
                 'dry_run': dry_run,
-                'resources_removed': all_removed,
-                'resources_failed': all_failed
-            }
+                'details': details,
+                'errors': errors,
+            })
 
-        except Exception as error:
-            self.stdout.err(f'Scorch operation failed: {error}')
-            return {
+        except Exception as e:
+            msg = f'Scorch operation failed due to encountered exception! Details: {e}'
+            self.stdout.err(msg)
+            errors.append(msg)
+            return self._objectify_result(ActionType.SCORCH, **{
                 'success': False,
-                'resources_removed': [],
-                'resources_failed': [],
-                'error': str(error)
-            }
+                'dry_run': dry_run,
+                'details': details,
+                'errors': errors,
+            })
 
+    # TODO - Objectify
     def mount(self, input_path: str, **kwargs) -> Dict[str, Any]:
         """
         Mount resources defined in Pyro configurations.
@@ -295,7 +291,8 @@ class PyroformEngine:
         """
         return self._execute_config_action(input_path, ActionType.MOUNT, **kwargs)
 
-    @pysnooper.snoop()
+    # TODO - Objectify
+    # @pysnooper.snoop()
     def validate(self, input_path: str, **kwargs) -> ValidationResult:
         """
         Validate system state against Pyro configurations.
@@ -335,20 +332,14 @@ class PyroformEngine:
             critical_issues = 0
 
             for config in configs:
-                result = self.validator.validate_configuration(config)
+                result = self.validator.validate_configuration(config, **kwargs)
                 if result.discrepancies:
                     self._log_validation_discrepancies(config.label, result.discrepancies)
 
-#               all_discrepancies.extend(result.discrepancies)
                 all_discrepancies.append(result.discrepancies)
                 all_valid = all_valid and result.is_valid
 
                 # Update issue counts
-#               config_critical = sum(
-#                   1 for discrepancy in result.discrepancies
-#                   if 'mismatch' not in str(discrepancy).lower()
-#               )
-#               config_total = len(result.discrepancies)
                 config_critical = sum([len(v) for k, v in result.discrepancies.items() if 'mismatch' not in str(k).lower()])
                 config_total = sum([len(v) for k, v in result.discrepancies.items()])
 
@@ -380,8 +371,8 @@ class PyroformEngine:
                 summary={"total_issues": 1, "critical_issues": 1},
             )
 
-    @pysnooper.snoop()
-    def _process_configuration(self, config: PyroConfig, action: ActionType) -> Dict[str, Any]:
+    # @pysnooper.snoop()
+    def _process_configuration(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
         """
         Process a single configuration for the given action.
 
@@ -403,7 +394,7 @@ class PyroformEngine:
                     'config_label': config.label
                 }
 
-            success = self.flow_engine.execute_sketch(sketch, action)
+            success = self.flow_engine.execute_sketch(sketch, action, **kwargs)
 
             return {
                 'success': success,
@@ -420,52 +411,55 @@ class PyroformEngine:
                 'config_label': config.label
             }
 
+    # TODO
     @pysnooper.snoop()
-    def _execute_scorch_config(self, config: PyroConfig, auto_confirm: bool,
-                             dry_run: bool) -> Dict[str, Any]:
+    def _execute_scorch_config(self, config: PyroConfig, errors: list | None = None, **kwargs) -> Dict[str, Any]:
         """
         Execute scorch operation for a single configuration.
-
-        Args:
-            config: Configuration to scorch against
-            auto_confirm: Whether to skip confirmation
-            dry_run: Whether to only simulate the operation
-
-        Returns:
-            Dictionary with scorch results
         """
         try:
-            sketch = self.sketch_generator.generate_scorch_sketch(config)
+            sketch = self.sketch_generator.generate_scorch_sketch(config,  **kwargs)
+            system_state = self.sketch_generator._last_system_state
+            comparison = self.sketch_generator._last_comparison
 
             if len(sketch) <= 1:
                 self.stdout.info(f'Nothing to scorch for {config.label}, skipping')
                 return {
                     'success': True,
                     'skipped': True,
-                    'config_label': config.label
+                    'config_label': config.label,
+                    'system_state': system_state,
                 }
 
-            if not auto_confirm and not self._confirm_scorch(config):
-                self.stdout.warn(f'Scorch cancelled for {config.label}')
+            if not kwargs.get('auto_confirm', self.config.get('auto_confirm')) and not self._confirm_scorch(config):
+                msg = f'Scorch cancelled for {config.label}'
+                self.stdout.warn(msg)
+                if errors and isinstance(errors, list):
+                    errors.append(msg)
                 return {
                     'success': False,
                     'cancelled': True,
-                    'config_label': config.label
+                    'config_label': config.label,
+                    'system_state': system_state,
+                    'comparison': comparison,
                 }
-
-            success = self.flow_engine.execute_sketch(sketch, ActionType.SCORCH)
-
+            success = self.flow_engine.execute_sketch(
+                sketch, ActionType.SCORCH, errors=errors, **kwargs
+            )
             return {
                 'success': success,
                 'config_label': config.label,
-                'actions_executed': len(sketch)
+#               'actions_executed': len(sketch)
+                'system_state': system_state,
+                'comparison': comparison,
+                'sketch': sketch,
             }
 
-        except Exception as error:
-            self.stdout.err(f"Scorch failed for {config.label}: {error}")
+        except Exception as e:
+            self.stdout.err(f"Scorch failed for {config.label}! Details: {e}")
             return {
                 'success': False,
-                'error': str(error),
+                'error': str(e),
                 'config_label': config.label
             }
 
@@ -491,7 +485,7 @@ class PyroformEngine:
             processed_configs = []
 
             for config in configs:
-                result = self._process_configuration(config, action)
+                result = self._process_configuration(config, action,  **kwargs)
                 results.append(result)
                 if result.get('success'):
                     processed_configs.append(config.label)
@@ -555,20 +549,6 @@ class PyroformEngine:
         else:
             self.stdout.nok('System state validation failed - run "configure" to apply changes')
 
-    def _validate_config(self) -> None:
-        """
-        Validate engine configuration.
-
-        Raises:
-            ValueError: If configuration contains invalid values
-        """
-        required_paths = ['default_output_dir']
-        for path_key in required_paths:
-            if path_key in self.config:
-                path = Path(self.config[path_key])
-                if not path.parent.exists():
-                    raise ValueError(f"Configuration path {path_key} parent does not exist: {path.parent}")
-
     def _get_default_config(self) -> Dict[str, Any]:
         """
         Get the default engine configuration.
@@ -577,16 +557,104 @@ class PyroformEngine:
             Dictionary with default configuration values
         """
         return {
-            "safety_checks": True,
-            "default_output_dir": "/tmp/pyroform",
+            "input_path": "",
+            "output_path": "",
             "log_level": "INFO",
             "log_timestamp": False,
             "auto_confirm": False,
             "dry_run": False,
-            "debug": True,
-            "report": True,
+            "debug": False,
+            "report": False,
+            "cleanup": False,
         }
 
+    def _objectify_result(self, action_type: str, *args, **kwargs) -> Type:
+        result = None
+        match action_type:
+            case ActionType.CONFIGURE:
+                result = ConfigureResult(*args, **kwargs)
+            case ActionType.SCORCH:
+                result = ScorchResult(*args, **kwargs)
+            case ActionType.MOUNT:
+                result = MountResult(*args, **kwargs)
+            case ActionType.VALIDATE:
+                result = ValidationResult(*args, **kwargs)
+            case ActionType.SNAPSHOT:
+                result = SnapshotResult(*args, **kwargs)
+            case _:
+                self.stdout.err(f'Invalid action type! Details: {action_type}')
+                return result
+        return result
+
+
 # CODE DUMP
-#from .scorch_engine import ScorchEngine, ScorchResult
+
+
+#   @dataclass
+#   class ScorchResult:
+#       """Result of scorch operation"""
+
+#       resources_removed: List[str]
+#       resources_failed: List[Dict[str, Any]]
+#       dry_run: bool
+#       errors: List[Any]
+#       success: bool
+#       details: Dict[str, Any]
+
+
+#   @dataclass
+#   class ConfigureResult:
+#       """ """
+
+#       resources_added: List[Dict[str, Any]]
+#       dry_run: bool
+#       errors: List[Any]
+#       success: bool
+#       details: Dict[str, Any]
+
+#   @dataclass
+#   class SnapshotResult:
+#       """ """
+
+#       resources_snapshoted: List[Dict[str, Any]]
+#       snapshot: Dict[str, Any]
+#       errors: List[Any]
+#       success: bool
+#       details: Dict[str, Any]
+
+
+#   @dataclass
+#   class MountResult:
+#       """ """
+
+#       resources_mounted: List[Dict[str, Any]]
+#       errors: List[Any]
+#       success: bool
+#       details: Dict[str, Any]
+
+
+#   @dataclass
+#   class ValidationResult:
+#       """Result of system validation"""
+
+#       is_valid: bool
+#       system_state: Dict[str, list]
+#       discrepancies: Dict[str, list]
+#       summary: Dict[str, Any]
+#       errors: List[Any]
+#       details: Dict[str, Any]
+
+
+#   @dataclass
+#   class ValidationSummary:
+#       """Summary of validation results."""
+#       total_checks: int
+#       passed: int
+#       failed: int
+#       warnings: int
+#       total_issues: int
+#       critical_issues: int
+#       is_valid: bool
+
+
 

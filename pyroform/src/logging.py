@@ -1,16 +1,18 @@
 """
 Logging configuration for Pyroform
 """
-
 import logging
 import sys
+
+import pysnooper
 
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Any
 
 
-def setup_logging(log_file: Path = None, debug: bool = False) -> None:
+# @pysnooper.snoop()
+def setup_logging(log_file: Path = None, debug: bool = False, config: dict | None = None) -> None:
     """
     Configure comprehensive logging for Pyroform
 
@@ -18,8 +20,10 @@ def setup_logging(log_file: Path = None, debug: bool = False) -> None:
         log_file: Optional path to log file
         debug: Whether to enable debug logging
     """
+    log_file_path = log_file or Path('./pyroform.log')
+
     # Determine log level
-    log_level = logging.DEBUG if debug else logging.INFO
+    log_level = logging.DEBUG if debug else getattr(logging, config.get('log_level'), logging.INFO)
 
     # Configure root logger
     logger = logging.getLogger()
@@ -35,30 +39,19 @@ def setup_logging(log_file: Path = None, debug: bool = False) -> None:
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(log_level)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    # File handler
+    try:
+        # Ensure log directory exists
+        log_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # File handler (if log file specified)
-    if log_file:
-        try:
-            # Ensure log directory exists
-            log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(log_level)
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-
-            logger.info(f"Logging to file: {log_file}")
-        except (IOError, PermissionError) as e:
-            logger.warning(f"Could not create log file {log_file}: {e}")
-
-    # Set specific log levels for noisy libraries
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('requests').setLevel(logging.WARNING)
+        logger.info(f"Logging to file: {log_file}")
+    except (IOError, PermissionError) as e:
+        logger.warning(f"Could not create log file {log_file}: {e}")
 
     logger.debug("Logging configured successfully")
 
@@ -86,6 +79,7 @@ class STDOUTMsg:
             debug_mode: If True, debug messages will be printed
             timestamp: If True, messages will include timestamps
         """
+        self.log = logging.getLogger(__name__)
         self.debug_mode = debug_mode
         self.timestamp = timestamp
 
@@ -116,6 +110,7 @@ class STDOUTMsg:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.info(message)
         formatted = self._format_message("OK", message, "green")
         self._print(formatted, **kwargs)
 
@@ -127,6 +122,7 @@ class STDOUTMsg:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.info(message)
         formatted = self._format_message("NOK", message, "red")
         self._print(formatted, **kwargs)
 
@@ -138,6 +134,7 @@ class STDOUTMsg:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.info(message)
         formatted = self._format_message("INFO", message)
         self._print(formatted, **kwargs)
 
@@ -149,6 +146,7 @@ class STDOUTMsg:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.warning(message)
         formatted = self._format_message("WARNING", message, "orange")
         self._print(formatted, **kwargs)
 
@@ -160,6 +158,7 @@ class STDOUTMsg:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.error(message)
         formatted = self._format_message("ERROR", message, "red")
         self._print(formatted, **kwargs)
 
@@ -171,6 +170,7 @@ class STDOUTMsg:
             message: The message to print
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.debug(message)
         if self.debug_mode:
             formatted = self._format_message("DEBUG", message)
             self._print(formatted, **kwargs)
@@ -185,6 +185,7 @@ class STDOUTMsg:
             color: Optional color name ('green', 'red', 'orange', 'yellow')
             **kwargs: Additional arguments to pass to print()
         """
+        self.log.info(message)
         formatted = self._format_message(tag.upper(), message, color)
         self._print(formatted, **kwargs)
 

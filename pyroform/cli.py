@@ -1,12 +1,10 @@
 """
 Pyroform CLI Interface
 """
-
 import click
 import json
 import yaml
 import sys
-
 import pysnooper
 
 from pathlib import Path
@@ -19,7 +17,7 @@ from .pyroform import Pyroform
 
 # GLOBAL
 
-stdout = STDOUTMsg(debug_mode=True)
+stdout: STDOUTMsg
 
 # GRAFFITTY
 
@@ -35,7 +33,7 @@ def format_banner():
     return banner_text
 
 
-# #@pysnooper.snoop()
+# @pysnooper.snoop()
 def display_banner():
     """Display the Pyroform banner"""
     banner_text = format_banner()
@@ -43,17 +41,17 @@ def display_banner():
 
 # CLICK
 
-##@pysnooper.snoop()
+# @pysnooper.snoop()
 class BannerCommand(click.Command):
 
-#   #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def invoke(self, ctx):
         # Display banner for all commands unless help is being shown
         if not ctx.args or not any(arg in ctx.args for arg in ['--help', '-h']):
             self._display_banner()
         return super().invoke(ctx)
 
-#   #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def get_help(self, ctx):
         '''Executed on subcommands'''
         # Display banner before help text
@@ -61,7 +59,7 @@ class BannerCommand(click.Command):
         original_help = super().get_help(ctx)
         return f"{banner}{original_help}"
 
-#   #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
         if return_text:
@@ -69,17 +67,17 @@ class BannerCommand(click.Command):
         click.echo(banner_text)
 
 
-# #@pysnooper.snoop()
+# @pysnooper.snoop()
 class BannerGroup(click.Group):
 
-#   #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
         if return_text:
             return banner_text
         click.echo(banner_text)
 
-#   #@pysnooper.snoop()
+    # @pysnooper.snoop()
     def format_usage(self, ctx, formatter):
         # Ensure banner is included in main cli usage formatting
         banner_text = self._display_banner(return_text=True)
@@ -174,7 +172,6 @@ def cli():
     is_flag=True,
     help="Perform a trial run without making any changes",
 )
-#   @cli.command(cls=BannerCommand)
 #   @common_options
 def configure(input_path: str, output_path: Optional[str], config_file: Optional[str],
             log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
@@ -249,7 +246,6 @@ def configure(input_path: str, output_path: Optional[str], config_file: Optional
     is_flag=True,
     help="Perform a trial run without making any changes",
 )
-#   @cli.command(cls=BannerCommand)
 #   @common_options
 def scorch(input_path: str, output_path: Optional[str], config_file: Optional[str],
         log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
@@ -324,7 +320,6 @@ def scorch(input_path: str, output_path: Optional[str], config_file: Optional[st
     is_flag=True,
     help="Perform a trial run without making any changes",
 )
-#   @cli.command(cls=BannerCommand)
 #   @common_options
 def mount(input_path: str, output_path: Optional[str], config_file: Optional[str],
         log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
@@ -399,7 +394,6 @@ def mount(input_path: str, output_path: Optional[str], config_file: Optional[str
     is_flag=True,
     help="Perform a trial run without making any changes",
 )
-#   @cli.command(cls=BannerCommand)
 #   @common_options
 def validate(input_path: str, output_path: Optional[str], config_file: Optional[str],
             log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
@@ -473,7 +467,6 @@ def validate(input_path: str, output_path: Optional[str], config_file: Optional[
     is_flag=True,
     help="Perform a trial run without making any changes",
 )
-#   @cli.command(cls=BannerCommand)
 #   @common_options
 def snapshot(input_path: Optional[str], output_path: Optional[str], config_file: Optional[str],
             log_file: Optional[str], dump_report: bool, silent: bool, debug: bool,
@@ -506,8 +499,7 @@ def workflow(workflow_file: str):
     """
     Execute a complete Pyroform workflow from configuration file
     """
-    # Banner is automatically displayed by BannerCommand before this function runs
-
+    # NOTE: Banner is automatically displayed by BannerCommand before this function runs
     workflow_path = Path(workflow_file)
 
     if not workflow_path.exists():
@@ -534,9 +526,9 @@ def workflow(workflow_file: str):
 
 # UTILS
 
-#@pysnooper.snoop()
+# @pysnooper.snoop()
 def _get_action_type(
-    scorch: bool, mount: bool, configure: bool, validate: bool
+    scorch: bool, mount: bool, configure: bool, validate: bool, snapshot: bool
 ) -> ActionType:
     """Determine action type from CLI flags"""
     if scorch:
@@ -547,21 +539,23 @@ def _get_action_type(
         return ActionType.CONFIGURE
     elif validate:
         return ActionType.VALIDATE
+    elif snapshot:
+        return ActionType.SNAPSHOT
     else:
         raise ValueError("No action specified")
 
-@pysnooper.snoop()
+# @pysnooper.snoop()
 def _execute_action(
     action_type: ActionType,
     input_path: Optional[Path] = None,
     output_path: Optional[Path] = None,
     config_file: Optional[Path] = None,
     log_file: Optional[Path] = None,
-    dump_report: bool = False,
-    silent: bool = False,
-    debug: bool = False,
-    auto_confirm: bool = False,
-    dry_run: bool = False,
+    dump_report: bool = None,
+    silent: bool = None,
+    debug: bool = None,
+    auto_confirm: bool = None,
+    dry_run: bool = None,
 ):
     """
     Execute the specified action with given parameters
@@ -577,50 +571,44 @@ def _execute_action(
         debug: Whether to enable debug mode
         auto_confirm: Whether to auto-confirm prompts
     """
+    stdout = STDOUTMsg(debug_mode=debug)
     start_time = datetime.now().isoformat()
+    stdout.debug(f'Exec start timestamp: {start_time}')
 
     try:
         # Initialize Pyroform with configuration
         pyroform_kwargs = {
+            "input_path": input_path,
+            "output_path": output_path,
+            "log_file": log_file,
             "auto_confirm": auto_confirm,
             'dry_run': dry_run,
             'debug': debug,
             'silent': silent,
-            'dump_report': dump_report,
+            'report': dump_report,
         }
-        if config_file and config_file.exists():
-            pyroform_kwargs["config_file"] = str(config_file)
-
 
         stdout.debug(f'Pyroform kwargs - {pyroform_kwargs}')
 
-        pf = Pyroform(**pyroform_kwargs)
-
-        # Prepare kwargs for the action
-        action_kwargs = {}
-        if output_path:
-            action_kwargs["output_dir"] = str(output_path)
-        if debug:
-            action_kwargs["verbose"] = True
-        if dry_run:
-            action_kwargs['dry_run'] = True
+        pf = Pyroform(
+            config_file, **{k: v for k, v in pyroform_kwargs.items() if v != None}
+        )
 
         # Execute the action
         if action_type == ActionType.CONFIGURE:
-            result = pf.configure(str(input_path), **action_kwargs)
+            result = pf.configure(str(input_path))
             success = result
         elif action_type == ActionType.SCORCH:
-            result = pf.scorch(str(input_path), **action_kwargs)
+            result = pf.scorch(str(input_path))
             success = result
         elif action_type == ActionType.MOUNT:
-            # TODO - take into account dry run
-            result = pf.mount(str(input_path), **action_kwargs)
+            result = pf.mount(str(input_path))
             success = result
         elif action_type == ActionType.VALIDATE:
-            result = pf.validate(str(input_path), **action_kwargs)
+            result = pf.validate(str(input_path))
             success = result.is_valid
         elif action_type == ActionType.SNAPSHOT:
-            result = pf.snapshot(str(output_path), **action_kwargs)
+            result = pf.snapshot(str(output_path))
             success = result.is_valid
         else:
             raise ValueError(f"Unsupported action type: {action_type}")
@@ -632,6 +620,7 @@ def _execute_action(
         # Generate report if requested
         if dump_report:
             end_time = datetime.now().isoformat()
+            stdout.debug(f'Exec end timestamp: {end_time}')
 
             if output_path:
                 if output_path.is_dir():
@@ -643,21 +632,21 @@ def _execute_action(
             else:
                 report_file = Path(f"pyroform_{action_type.value}.report.json")
 
+            stdout.debug(f'Report file path: {report_file}')
+
             report_success = pf.generate_report(str(report_file))
 
             if not silent:
                 if report_success:
-                    click.echo(f"Report saved to: {report_file}")
+                    stdout.ok(f"Report saved to ({report_file}) file!")
                 else:
-                    click.echo(f"Failed to save report to: {report_file}")
+                    stdout.nok(f"Failed to save report to ({report_file}) file!")
 
     except Exception as e:
-        if debug:
-            import traceback
+        import traceback
+        stdout.debug(traceback.format_exc())
 
-            click.echo(traceback.format_exc())
-
-@pysnooper.snoop()
+# @pysnooper.snoop()
 def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
     """
     Execute a complete Pyroform workflow
@@ -668,8 +657,11 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
     Returns:
         True if workflow completed successfully, False otherwise
     """
+    stdout = STDOUTMsg(debug_mode=workflow_config.get('debug', False))
     try:
         steps = workflow_config.get("steps", [])
+        stdout.debug(f'Workflow steps: {steps}')
+
         auto_confirm = workflow_config.get("auto_confirm", False)
 
         pf = Pyroform(
@@ -682,7 +674,9 @@ def execute_workflow(workflow_config: Dict[str, Any]) -> bool:
         result = pf.execute_workflow(steps)
 
     except Exception as e:
-        click.echo(f"Workflow execution failed: {e}")
+        stdout.err(f"Workflow execution failed: {e}")
+        import traceback
+        stdout.debug(traceback.format_exc())
         return False
 
 
@@ -692,8 +686,7 @@ if __name__ == "__main__":
 
 # CODE DUMP
 
-
-# TODO - Common option decorators for command consistency
+# TODO - Currently broken. Pick up when cleaning CLI interface code
 #   def common_options(func):
 #       """Decorator for common command options."""
 #       options = [
@@ -749,70 +742,4 @@ if __name__ == "__main__":
 #           func = option(func)
 #       return func
 
-
-
-
-#       workflow_results = []
-
-#       for step in steps:
-#           action = step.get("action")
-#           input_path = step.get("input_path")
-
-#           if not action or not input_path:
-#               click.echo(f"Invalid workflow step: {step}")
-#               return False
-
-#           try:
-#               if action == "snapshot":
-#                   result = pf.snapshot(**step)
-#                   success = result.is_valid
-#               elif action == "validate":
-#                   result = pf.validate(input_path, **step)
-#                   success = result.is_valid
-#               elif action == "configure":
-#                   result = pf.configure(input_path, **step)
-#                   success = result
-#               elif action == "mount":
-#                   result = pf.mount(input_path, **step)
-#                   success = result
-#               elif action == "scorch":
-#                   result = pf.scorch(input_path, **step)
-#                   success = result.success
-#               else:
-#                   click.echo(f"[ ERROR ]: Unknown action in workflow: {action}")
-#                   return False
-
-#               workflow_results.append(
-#                   {
-#                       "action": action,
-#                       "input_path": input_path,
-#                       "success": success,
-#                       "result": result,
-#                   }
-#               )
-
-#               if not success:
-#                   if auto_confirm:
-#                       continue
-#                   click.echo(f'[ WARNING ]: Previous step execution was not successful!')
-#                   click.echo()
-#                   response = input("Continue with next workflow step? [Y/N]> ").strip().lower()
-#                   click.echo()
-#                   if response.lower() not in ('n', 'no', 'nope', 'fuck no', 'fuck that')
-#                       continue
-#                   return False
-
-#           except Exception as e:
-#               click.echo(f"[ ERROR ]: Workflow step {action} terminated with errors! Details: {e}")
-#               return False
-
-#       # Generate workflow report
-#       if workflow_config.get("generate_report", True):
-#           report_file = workflow_config.get(
-#               "report_file", "pyroform_workflow.report.json"
-#           )
-#           pf._generate_workflow_report(workflow_results, report_file)
-
-#       click.echo("Workflow completed successfully")
-#       return True
 

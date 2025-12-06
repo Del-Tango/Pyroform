@@ -3,6 +3,7 @@
 """
 import json
 import datetime
+
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 
@@ -14,6 +15,13 @@ from .validator import SystemValidator
 
 class StateEntryParser:
     """Parses and validates state entries from device configuration."""
+
+    def __init__(self, config: dict | None = None, stdout: STDOUTMsg | None = None, **kwargs) -> None:
+        self.config = config or {}
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
+            timestamp=kwargs.get('log_timestamp', self.config.get('debug', False)),
+        )
 
     @staticmethod
     def parse_state_entry(state_entry: str) -> Optional[Dict[str, str]]:
