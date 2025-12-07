@@ -401,16 +401,16 @@ Excludes:
 ## FAQ
 
 - Q: Is Pyroform idempotent?
-- A: Yes! Running the same configuration multiple times produces the same result.
+    - A: Yes! Running the same configuration multiple times produces the same result.
 
 - Q: Can I use Pyroform on non-Linux systems?
-- A: Pyroform is specifically designed for Linux systems and uses Linux-specific APIs.
+    - A: Pyroform is specifically designed for Linux systems and uses Linux-specific APIs.
 
 - Q: Can I rollback changes?
-- A: While Pyroform doesn't have built-in rollback, you can take snapshots before operations and use them to restore state.
+    - A: While Pyroform doesn't have built-in rollback, you can take snapshots before operations and use them to restore state.
 
 - Q: How does Pyroform compare to Ansible/Puppet/Chef?
-- A: Pyroform focuses on declarative system state management with a simpler, file-based approach and native FlowCTRL integration.
+    - A: Pyroform focuses on declarative system state management with a simpler, file-based approach and native FlowCTRL integration.
 
 ## Known Issues
 
