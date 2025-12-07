@@ -1,87 +1,111 @@
-@startuml Pyroform_Class_Dependencies
-title Pyroform Main Class Dependencies
+@startuml
+title Pyroform Class Dependencies
 
 class Pyroform {
-  +configure()
-  +scorch()
-  +mount()
-  +validate()
-  +snapshot()
-  -engine: PyroformEngine
-  -config: dict
+  - config: Dict
+  - stdout: STDOUTMsg
+  - engine: PyroformEngine
+  + snapshot()
+  + configure()
+  + scorch()
+  + mount()
+  + validate()
+  + execute_workflow()
 }
 
 class PyroformEngine {
-  +snapshot()
-  +configure()
-  +scorch()
-  +mount()
-  +validate()
-  -parser: PyroParser
-  -sketch_generator: SketchGenerator
-  -flow_engine: PyroflowEngine
-  -validator: SystemValidator
-  -reporter: ReportGenerator
+  - parser: PyroParser
+  - sketch_generator: SketchGenerator
+  - flow_engine: PyroflowEngine
+  - validator: SystemValidator
+  - scanner: SystemStateScanner
+  - reporter: ReportGenerator
+  + snapshot()
+  + configure()
+  + scorch()
+  + mount()
+  + validate()
 }
 
 class PyroParser {
-  +parse()
-  -_parse_single_file()
-  -_parse_directory()
+  + parse()
+  - _parse_single_file()
+  - _parse_directory()
 }
 
 class SketchGenerator {
-  +generate_sketch()
-  -_generate_user_commands()
-  -_generate_group_commands()
-  -_generate_device_commands()
-  -command_generator: CommandGenerator
+  - command_generator: CommandGenerator
+  - exclusion_checker: ExclusionChecker
+  - state_parser: StateEntryParser
+  + generate_sketch()
+  + generate_snapshot_pyro_config()
+  + generate_scorch_sketch()
 }
 
 class PyroflowEngine {
-  +execute_sketch()
-  -_load_config()
-  -flow_engine: FlowEngine
+  - flow_engine: FlowEngine
+  + execute_sketch()
+  + pause_execution()
+  + resume_execution()
 }
 
 class SystemValidator {
-  +validate_configuration()
-  -scanner: SystemStateScanner
-  -comparator: SystemStateComparator
+  - scanner: SystemStateScanner
+  - comparator: SystemStateComparator
+  + validate_configuration()
+}
+
+class SystemStateScanner {
+  - exclusion_checker: ExclusionChecker
+  + scan_system_state()
+  - _scan_users()
+  - _scan_groups()
+  - _scan_mounted_devices()
+}
+
+class SystemStateComparator {
+  + compare_states()
+  - _compare_users()
+  - _compare_groups()
+  - _compare_filesystem()
+}
+
+class CommandGenerator {
+  + generate_user_command()
+  + generate_group_command()
+  + generate_mount_command()
+  + generate_cleanup_commands()
 }
 
 class ReportGenerator {
-  +generate_action_report()
-  +generate_validation_report()
-  +save_report()
+  + generate_action_report()
+  + save_report()
 }
 
-class PyroConfig {
-  +label: str
-  +users: List[User]
-  +groups: List[Group]
-  +devices: List[Device]
-  +excludes: Exclude
+class STDOUTMsg {
+  + ok()
+  + nok()
+  + info()
+  + warn()
+  + err()
+  + debug()
 }
 
-class User {
-  +label: str
-  +name: str
-  +password: str
-  +groups: List[str]
-}
+Pyroform --> PyroformEngine
+PyroformEngine --> PyroParser
+PyroformEngine --> SketchGenerator
+PyroformEngine --> PyroflowEngine
+PyroformEngine --> SystemValidator
+PyroformEngine --> SystemStateScanner
+PyroformEngine --> ReportGenerator
 
-Pyroform --> PyroformEngine : contains
-PyroformEngine --> PyroParser : uses
-PyroformEngine --> SketchGenerator : uses
-PyroformEngine --> PyroflowEngine : uses
-PyroformEngine --> SystemValidator : uses
-PyroformEngine --> ReportGenerator : uses
-PyroformEngine --> PyroConfig : processes
+SketchGenerator --> CommandGenerator
+SketchGenerator --> ExclusionChecker
+SketchGenerator --> StateEntryParser
 
-SketchGenerator ..> User : generates commands for
-SketchGenerator ..> PyroConfig : reads from
+SystemValidator --> SystemStateScanner
+SystemValidator --> SystemStateComparator
 
-SystemValidator ..> PyroConfig : validates against
+SystemStateScanner --> ExclusionChecker
 
 @enduml

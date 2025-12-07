@@ -1,58 +1,28 @@
-@startuml Pyroform_Snapshot_Sequence
-title Pyroform Snapshot Action Sequence
+@startuml
+title Snapshot Action Sequence
 
 actor User
 participant CLI
 participant Pyroform
 participant PyroformEngine
-participant SketchGenerator
-participant SystemValidator
 participant SystemStateScanner
-participant Reporter
+participant SketchGenerator
 
-User -> CLI: pyroform snapshot -o snapshot.yaml
-CLI -> Pyroform: __init__(config)
-Pyroform -> PyroformEngine: __init__(config)
-
-CLI -> Pyroform: snapshot(output_path)
+User -> CLI: snapshot -i input -o output
+CLI -> Pyroform: snapshot(input_path, output_path)
 Pyroform -> PyroformEngine: snapshot(output_path)
-
-group Scan System State
-    PyroformEngine -> SystemValidator: get_system_state(max_depth=100)
-    SystemValidator -> SystemStateScanner: scan_system_state(pyro_config=None)
-    SystemStateScanner -> SystemStateScanner: _scan_users()
-    SystemStateScanner -> SystemStateScanner: _scan_groups()
-    SystemStateScanner -> SystemStateScanner: _scan_mounted_devices()
-    SystemStateScanner --> SystemValidator: complete system_state
-    SystemValidator --> PyroformEngine: system_state dict
-end
-
-group Generate Pyro Configuration
-    PyroformEngine -> SketchGenerator: generate_sketch(None, ActionType.SNAPSHOT)
-    SketchGenerator -> SketchGenerator: generate_snapshot_pyro_config()
-    SketchGenerator -> SketchGenerator: _build_user_snapshot()
-    SketchGenerator -> SketchGenerator: _build_group_snapshot()
-    SketchGenerator -> SketchGenerator: _build_device_snapshot()
-    SketchGenerator -> SketchGenerator: _build_device_state_snapshot()
-    SketchGenerator --> PyroformEngine: snapshot_config dict
-end
-
-group Write Snapshot File
-    PyroformEngine -> PyroformEngine: format as YAML
-    PyroformEngine -> PyroformEngine: write to output_path
-    PyroformEngine -> PyroformEngine: verify file creation
-end
-
-group Generate Snapshot Report
-    PyroformEngine -> Reporter: generate_action_report()
-    Reporter -> Reporter: _generate_summary()
-    Reporter --> PyroformEngine: snapshot report
-end
-
-PyroformEngine --> Pyroform: {success: bool, output_path: str, system_state: dict}
-Pyroform --> CLI: return result
-CLI -> CLI: display snapshot location
-CLI -> CLI: show snapshot summary
-CLI --> User: snapshot created successfully
-
+PyroformEngine -> SystemStateScanner: scan_system_state()
+SystemStateScanner -> SystemStateScanner: _scan_users()
+SystemStateScanner -> SystemStateScanner: _scan_groups()
+SystemStateScanner -> SystemStateScanner: _scan_mounted_devices()
+SystemStateScanner --> PyroformEngine: system_state
+PyroformEngine -> SketchGenerator: generate_snapshot_pyro_config()
+SketchGenerator -> SketchGenerator: _build_user_snapshot()
+SketchGenerator -> SketchGenerator: _build_group_snapshot()
+SketchGenerator -> SketchGenerator: _build_device_snapshot()
+SketchGenerator --> PyroformEngine: pyro_config
+PyroformEngine -> PyroformEngine: save to YAML file
+PyroformEngine --> Pyroform: SnapshotResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
 @enduml

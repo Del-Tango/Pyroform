@@ -1,5 +1,5 @@
-@startuml Pyroform_Validate_Sequence
-title Pyroform Validate Action Sequence
+@startuml
+title Validate Action Sequence
 
 actor User
 participant CLI
@@ -9,56 +9,24 @@ participant PyroParser
 participant SystemValidator
 participant SystemStateScanner
 participant SystemStateComparator
-participant Reporter
 
-User -> CLI: pyroform validate -i config.yaml
-CLI -> Pyroform: __init__(config)
-Pyroform -> PyroformEngine: __init__(config)
-
+User -> CLI: validate -i config.yaml
 CLI -> Pyroform: validate(input_path)
 Pyroform -> PyroformEngine: validate(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser --> PyroformEngine: List[PyroConfig]
 
-group Parse Configuration Files
-    PyroformEngine -> PyroParser: parse(input_path)
-    PyroParser --> PyroformEngine: [PyroConfig, ...]
+loop for each config
+  PyroformEngine -> SystemValidator: validate_configuration(config)
+  SystemValidator -> SystemStateScanner: scan_system_state(config)
+  SystemStateScanner --> SystemValidator: current_state
+  SystemValidator -> SystemStateComparator: compare_states(current_state, config)
+  SystemStateComparator --> SystemValidator: differences
+  SystemValidator --> PyroformEngine: ValidationResult
 end
 
-loop For each PyroConfig
-    group Scan Current System State
-        PyroformEngine -> SystemValidator: validate_configuration(config)
-        SystemValidator -> SystemStateScanner: scan_system_state(config)
-        SystemStateScanner -> SystemStateScanner: _scan_users()
-        SystemStateScanner -> SystemStateScanner: _scan_groups()
-        SystemStateScanner -> SystemStateScanner: _scan_mounted_devices()
-        SystemStateScanner --> SystemValidator: system_state dict
-    end
-
-    group Compare States
-        SystemValidator -> SystemStateComparator: compare_states(system_state, config)
-        SystemStateComparator -> SystemStateComparator: _compare_users()
-        SystemStateComparator -> SystemStateComparator: _compare_groups()
-        SystemStateComparator -> SystemStateComparator: _compare_filesystem()
-        SystemStateComparator --> SystemValidator: differences dict
-    end
-
-    group Analyze Results
-        SystemValidator -> SystemValidator: create ValidationResult
-        SystemValidator -> SystemValidator: _log_validation_discrepancies()
-        SystemValidator -> SystemValidator: _log_validation_result()
-        SystemValidator --> PyroformEngine: ValidationResult
-    end
-end
-
-group Generate Validation Summary
-    PyroformEngine -> PyroformEngine: _log_validation_summary()
-    PyroformEngine -> Reporter: generate_validation_report()
-    Reporter --> PyroformEngine: report dict
-end
-
+PyroformEngine -> PyroformEngine: aggregate validation results
 PyroformEngine --> Pyroform: ValidationResult
-Pyroform --> CLI: return result
-CLI -> CLI: display discrepancies
-CLI -> CLI: show validation status
-CLI --> User: validation report with issues count
-
+Pyroform --> CLI: Result
+CLI --> User: Validation Report
 @enduml

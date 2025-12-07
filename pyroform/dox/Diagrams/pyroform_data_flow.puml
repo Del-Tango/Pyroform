@@ -1,36 +1,57 @@
-@startuml Pyroform_Data_Flow
-title Pyroform Data Flow and Transformations
+@startuml
+title Pyroform Data Flow
 
-storage "YAML/JSON Config Files" as ConfigFiles
-storage "System State (Live)" as SystemState
-database "FlowCTRL Sketch" as FlowSketch
-database "Reports (JSON/YAML)" as Reports
-rectangle "Pyroform Processing Pipeline" {
-  [PyroParser] as Parser
-  [Data Models] as Models
-  [SketchGenerator] as SketchGen
-  [SystemValidator] as Validator
-  [PyroflowEngine] as FlowEngine
-  [ReportGenerator] as Reporter
+package "Input Sources" {
+  [Pyro Config Files\n(JSON/YAML)]
+  [CLI Parameters]
+  [Config File]
+  [Workflow File]
 }
 
-ConfigFiles --> Parser : reads
-Parser --> Models : creates\nPyroConfig objects
-Models --> SketchGen : input for\nsketch generation
-Models --> Validator : desired state\nfor comparison
+package "Processing" {
+  [PyroParser]
+  [PyroformEngine]
+  [SketchGenerator]
+  [CommandGenerator]
+  [SystemStateScanner]
+  [SystemStateComparator]
+}
 
-SystemState --> Validator : current state\nfor validation
-Validator --> Models : creates\nValidationResult
+package "Output" {
+  [FlowCTRL Sketch]
+  [Reports\n(JSON/YAML)]
+  [System Changes]
+  [Validation Results]
+}
 
-SketchGen --> FlowSketch : writes
-FlowSketch --> FlowEngine : executes
-FlowEngine --> SystemState : modifies system
+package "External Systems" {
+  [Linux System\n(Users/Groups/Files)]
+  [FlowCTRL Engine]
+}
 
-Validator --> Reporter : validation results
-FlowEngine --> Reporter : execution results
-Reporter --> Reports : writes
+[Pyro Config Files] --> [PyroParser] : parse
+[CLI Parameters] --> [PyroformEngine] : configuration
+[Config File] --> [PyroformEngine] : settings
+[Workflow File] --> [Pyroform] : workflow steps
 
-Models --> Reporter : structured data
-SystemState --> Reporter : system state data
+[PyroParser] --> [PyroformEngine] : PyroConfig objects
+[PyroformEngine] --> [SketchGenerator] : config + action
+[SketchGenerator] --> [CommandGenerator] : entity details
+[CommandGenerator] --> [SketchGenerator] : command objects
 
+[PyroformEngine] --> [SystemStateScanner] : scan request
+[Linux System] --> [SystemStateScanner] : system state
+[SystemStateScanner] --> [PyroformEngine] : current state
+
+[PyroformEngine] --> [SystemStateComparator] : compare states
+[SystemStateComparator] --> [PyroformEngine] : differences
+
+[SketchGenerator] --> [PyroflowEngine] : FlowCTRL sketch
+[PyroflowEngine] --> [FlowCTRL Engine] : execute sketch
+[FlowCTRL Engine] --> [Linux System] : apply changes
+
+[PyroformEngine] --> [ReportGenerator] : results + metadata
+[ReportGenerator] --> [Reports] : save reports
+
+[PyroformEngine] --> [Validation Results] : display/output
 @enduml

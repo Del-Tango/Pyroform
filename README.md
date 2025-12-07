@@ -108,11 +108,8 @@ flowctrl:
 
 ## Architecture High Level Overview
 
-### Component Architecture
-![Component Architecture Diagram](./pyroform/dox/Diagrams/pyroform_high_level_component_architecture_diagram.png)
-
 ### Action Flow Comparison
-![Action Flow Comparison](./pyroform/dox/Diagrams/pyroform_action_high_level_flow_diagram.png)
+![Action Flow Comparison](./pyroform/dox/Diagrams/pyroform_action_flow_comparison.png)
 
 ### Action Snapshot Sequence
 ![Action Snapshot Sequence](./pyroform/dox/Diagrams/pyroform_action_snapshot_sequence.png)
@@ -137,9 +134,6 @@ flowctrl:
 
 ### Data Flow
 ![Data Flow Diagram](./pyroform/dox/Diagrams/pyroform_data_flow_diagram.png)
-
-### Project Structure
-![Project Structure Diagram](./pyroform/dox/Diagrams/pyroform_project_structure_diagram.png)
 
 ## Configuration File Formats
 ### Pyro Configuration (JSON/YAML) - config.pyro.yaml

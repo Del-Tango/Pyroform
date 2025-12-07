@@ -1,5 +1,5 @@
-@startuml Pyroform_Configure_Sequence
-title Pyroform Configure Action Sequence
+@startuml
+title Configure Action Sequence
 
 actor User
 participant CLI
@@ -7,63 +7,28 @@ participant Pyroform
 participant PyroformEngine
 participant PyroParser
 participant SketchGenerator
-participant CommandGenerator
 participant PyroflowEngine
-participant FlowCTRL
-participant SystemValidator
-participant Reporter
+participant FlowEngine
 
-User -> CLI: pyroform configure -i config.yaml
-CLI -> Pyroform: __init__(config)
-Pyroform -> PyroformEngine: __init__(config)
-
-CLI -> Pyroform: configure(input_path, dry_run=False, auto_confirm=False)
-Pyroform -> PyroformEngine: configure(input_path, dry_run, auto_confirm)
-
-group Parse Configuration Files
-    PyroformEngine -> PyroParser: parse(input_path)
-    PyroParser -> PyroParser: _parse_directory() or _parse_single_file()
-    PyroParser -> PyroParser: _parse_single_file_data()
-    PyroParser --> PyroformEngine: [PyroConfig, ...]
+User -> CLI: configure -i config.yaml
+CLI -> Pyroform: configure(input_path)
+Pyroform -> PyroformEngine: configure(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser -> PyroParser: _parse_single_file()/_parse_directory()
+PyroParser --> PyroformEngine: List[PyroConfig]
+loop for each config
+  PyroformEngine -> SketchGenerator: generate_configure_sketch(config)
+  SketchGenerator -> CommandGenerator: generate_user_command()
+  SketchGenerator -> CommandGenerator: generate_group_command()
+  SketchGenerator -> CommandGenerator: generate_device_commands()
+  SketchGenerator --> PyroformEngine: FlowCTRL sketch
+  PyroformEngine -> PyroflowEngine: execute_sketch(sketch)
+  PyroflowEngine -> FlowEngine: load_procedure()
+  PyroflowEngine -> FlowEngine: start_procedure()
+  FlowEngine --> PyroflowEngine: execution_result
+  PyroflowEngine --> PyroformEngine: success/failure
 end
-
-loop For each PyroConfig
-    group Generate FlowCTRL Sketch
-        PyroformEngine -> SketchGenerator: generate_sketch(config, ActionType.CONFIGURE)
-        SketchGenerator -> CommandGenerator: generate_user_command()
-        SketchGenerator -> CommandGenerator: generate_group_command()
-        SketchGenerator -> CommandGenerator: generate_directory_command()
-        SketchGenerator -> CommandGenerator: generate_permission_command()
-        SketchGenerator --> PyroformEngine: sketch dict
-    end
-
-    group Execute Sketch
-        PyroformEngine -> PyroflowEngine: execute_sketch(sketch, ActionType.CONFIGURE)
-        PyroflowEngine -> PyroflowEngine: save sketch to temp file
-        PyroflowEngine -> FlowCTRL: load_procedure(temp_file)
-        PyroflowEngine -> FlowCTRL: purge_data()
-        PyroflowEngine -> FlowCTRL: start_procedure()
-        FlowCTRL --> PyroflowEngine: result
-        PyroflowEngine --> PyroformEngine: success
-    end
-
-    group Validate Changes
-        PyroformEngine -> SystemValidator: validate_configuration(config)
-        SystemValidator -> SystemValidator: scan system state
-        SystemValidator -> SystemValidator: compare with config
-        SystemValidator --> PyroformEngine: ValidationResult
-    end
-end
-
-group Generate Report
-    PyroformEngine -> Reporter: generate_action_report()
-    Reporter -> Reporter: _generate_summary()
-    Reporter -> Reporter: _generate_details()
-    Reporter --> PyroformEngine: report dict
-end
-
-PyroformEngine --> Pyroform: {success: bool, processed_configs: list, results: list}
-Pyroform --> CLI: return result
-CLI --> User: display success/failure with details
-
+PyroformEngine --> Pyroform: ConfigureResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
 @enduml

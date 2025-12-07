@@ -1,5 +1,5 @@
-@startuml Pyroform_Mount_Sequence
-title Pyroform Mount Action Sequence
+@startuml
+title Mount Action Sequence
 
 actor User
 participant CLI
@@ -7,59 +7,24 @@ participant Pyroform
 participant PyroformEngine
 participant PyroParser
 participant SketchGenerator
-participant CommandGenerator
 participant PyroflowEngine
-participant FlowCTRL
-participant SystemValidator
 
-User -> CLI: pyroform mount -i mounts.yaml
-CLI -> Pyroform: __init__(config)
-Pyroform -> PyroformEngine: __init__(config)
+User -> CLI: mount -i config.yaml
+CLI -> Pyroform: mount(input_path)
+Pyroform -> PyroformEngine: mount(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser --> PyroformEngine: List[PyroConfig]
 
-CLI -> Pyroform: mount(input_path, dry_run=False)
-Pyroform -> PyroformEngine: mount(input_path, dry_run)
-
-group Parse Mount Configuration
-    PyroformEngine -> PyroParser: parse(input_path)
-    PyroParser --> PyroformEngine: [PyroConfig, ...]
+loop for each config
+  PyroformEngine -> SketchGenerator: generate_mount_sketch(config)
+  SketchGenerator -> CommandGenerator: generate_mountpoint_command()
+  SketchGenerator -> CommandGenerator: generate_mount_command()
+  SketchGenerator --> PyroformEngine: mount_sketch
+  PyroformEngine -> PyroflowEngine: execute_sketch(mount_sketch)
+  PyroflowEngine --> PyroformEngine: mount_result
 end
 
-loop For each PyroConfig
-    group Generate Mount-Only Sketch
-        PyroformEngine -> SketchGenerator: generate_sketch(config, ActionType.MOUNT)
-        SketchGenerator -> SketchGenerator: _generate_mount_commands()
-        SketchGenerator -> CommandGenerator: generate_mountpoint_command()
-        SketchGenerator -> CommandGenerator: generate_mount_command()
-        SketchGenerator --> PyroformEngine: mount-only sketch
-    end
-
-    group Execute Mount Operations
-        PyroformEngine -> PyroflowEngine: execute_sketch(sketch, ActionType.MOUNT)
-        PyroflowEngine -> PyroflowEngine: save sketch to temp file
-        PyroflowEngine -> FlowCTRL: load_procedure(temp_file)
-        alt dry_run mode
-            PyroflowEngine -> FlowCTRL: dry-run execution
-        else live mode
-            PyroflowEngine -> FlowCTRL: start_procedure()
-        end
-        FlowCTRL --> PyroflowEngine: execution result
-        PyroflowEngine --> PyroformEngine: success
-    end
-
-    group Verify Mounts
-        PyroformEngine -> SystemValidator: quick validation
-        SystemValidator -> SystemValidator: check mount points exist
-        SystemValidator --> PyroformEngine: mount status
-    end
-end
-
-group Generate Mount Report
-    PyroformEngine -> PyroformEngine: collect mount results
-    PyroformEngine --> Pyroform: {success: bool, mounts_created: list, results: list}
-end
-
-Pyroform --> CLI: return result
-CLI -> CLI: display mounted devices
-CLI --> User: mount operation summary
-
+PyroformEngine --> Pyroform: MountResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
 @enduml

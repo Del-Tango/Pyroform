@@ -1,89 +1,45 @@
-@startuml Pyroform_Scorch_Sequence
-title Pyroform Scorch (Destructive Cleanup) Sequence
+@startuml
+title Scorch Action Sequence
 
 actor User
 participant CLI
 participant Pyroform
 participant PyroformEngine
 participant PyroParser
-participant SketchGenerator
-participant SystemValidator
 participant SystemStateScanner
 participant SystemStateComparator
-participant CommandGenerator
+participant SketchGenerator
 participant PyroflowEngine
-participant FlowCTRL
-participant Reporter
 
-User -> CLI: pyroform scorch -i config.yaml
-CLI -> Pyroform: __init__(config, auto_confirm=False)
-Pyroform -> PyroformEngine: __init__(config)
+User -> CLI: scorch -i config.yaml
+CLI -> Pyroform: scorch(input_path)
+Pyroform -> PyroformEngine: scorch(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser --> PyroformEngine: List[PyroConfig]
 
-CLI -> Pyroform: scorch(input_path, dry_run=True, auto_confirm=False)
-Pyroform -> PyroformEngine: scorch(input_path, dry_run, auto_confirm)
+loop for each config
+  PyroformEngine -> SystemStateScanner: scan_system_state(config)
+  SystemStateScanner --> PyroformEngine: current_state
+  PyroformEngine -> SystemStateComparator: compare_states(current_state, config)
+  SystemStateComparator --> PyroformEngine: differences
 
-group Parse Configuration Files
-    PyroformEngine -> PyroParser: parse(input_path)
-    PyroParser --> PyroformEngine: [PyroConfig, ...]
+  alt has differences
+    PyroformEngine -> SketchGenerator: generate_scorch_sketch(config)
+    SketchGenerator -> SketchGenerator: _generate_cleanup_commands()
+    SketchGenerator --> PyroformEngine: cleanup_sketch
+
+    alt auto_confirm or user confirms
+      PyroformEngine -> PyroflowEngine: execute_sketch(cleanup_sketch)
+      PyroflowEngine --> PyroformEngine: cleanup_result
+    else user cancels
+      PyroformEngine --> PyroformEngine: operation cancelled
+    end
+  else no differences
+    PyroformEngine --> PyroformEngine: nothing to scorch
+  end
 end
 
-loop For each PyroConfig
-    group Identify Extra Resources
-        PyroformEngine -> SystemValidator: get_system_state(config)
-        SystemValidator -> SystemStateScanner: scan_system_state(config)
-        SystemStateScanner --> SystemValidator: current_state
-        SystemValidator -> SystemStateComparator: compare_states(current_state, config)
-        SystemStateComparator --> SystemValidator: differences (extra resources)
-        SystemValidator --> PyroformEngine: comparison results
-    end
-
-    group User Confirmation
-        alt auto_confirm is True
-            note right of PyroformEngine: Skip confirmation
-        else auto_confirm is False
-            PyroformEngine -> PyroformEngine: _confirm_scorch(config)
-            PyroformEngine -> CLI: display warning message
-            CLI -> User: "Are you sure? [Y/N]> "
-            User -> CLI: "Y" or "N"
-            CLI --> PyroformEngine: confirmation result
-        end
-    end
-
-    alt User confirmed or auto_confirm
-        group Generate Scorch Sketch
-            PyroformEngine -> SketchGenerator: generate_scorch_sketch(config)
-            SketchGenerator -> SketchGenerator: _generate_cleanup_commands()
-            SketchGenerator -> CommandGenerator: generate_cleanup_user_command()
-            SketchGenerator -> CommandGenerator: generate_cleanup_group_command()
-            SketchGenerator -> CommandGenerator: generate_cleanup_directories_command()
-            SketchGenerator -> CommandGenerator: generate_cleanup_files_command()
-            SketchGenerator --> PyroformEngine: scorch sketch
-        end
-
-        group Execute Scorch Operations
-            alt dry_run mode
-                note over SketchGenerator,FlowCTRL: Commands prefixed with '# '
-            end
-            PyroformEngine -> PyroflowEngine: execute_sketch(sketch, ActionType.SCORCH)
-            PyroflowEngine -> FlowCTRL: load_procedure()
-            PyroflowEngine -> FlowCTRL: start_procedure()
-            FlowCTRL --> PyroflowEngine: execution result
-            PyroflowEngine --> PyroformEngine: scorch result
-        end
-    else User cancelled
-        PyroformEngine --> PyroformEngine: mark as cancelled
-    end
-end
-
-group Generate Scorch Report
-    PyroformEngine -> Reporter: generate_action_report()
-    Reporter -> Reporter: _generate_details() with removed/failed resources
-    Reporter --> PyroformEngine: scorch report
-end
-
-Pyroform --> CLI: return result
-CLI -> CLI: display scorch summary
-CLI -> CLI: show removed resources
-CLI --> User: scorch operation completed
-
+PyroformEngine --> Pyroform: ScorchResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
 @enduml
