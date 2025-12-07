@@ -83,19 +83,6 @@
 ```
 
 ### 5. Multi-Step Workflows
-```yaml
-# workflow.pyro.yaml
-steps:
-  - action: validate
-    input_path: config.pyro.json
-  - action: configure
-    input_path: config.pyro.json
-  - action: mount
-    input_path: storage.pyro.yaml
-  - action: validate
-    input_path: final_check.pyro.yaml
-```
-
 ```bash
 ~$ pyroform workflow -w workflow.pyro.yaml
 ```
@@ -117,28 +104,22 @@ steps:
 ~$ cd Pyroform
 
 # Install in development mode with Python virtual environment
-~$ ./build.sh --setup --development && ./build.sh BUILD INSTALL
+~$ ./build.sh --setup --bootstrap --development && ./build.sh BUILD INSTALL
 
 # Or install globally
-~$ ./build.sh --setup && ./build.sh BUILD INSTALL
+~$ ./build.sh --setup --bootstrap && ./build.sh BUILD INSTALL
 ```
 
 ## Configuration File Setup
 
 Create a configuration file (pyroform_config.yaml):
 ```yaml
-# Global settings
-safety_checks: true
-default_output_dir: "/tmp/pyroform"
 log_level: "INFO"
+log_file: "./pyroform.log"
 auto_confirm: false
 dry_run: false
-
-# FlowCTRL integration
-flowctrl:
-  log_dir: "log/pyroflow"
-  debug: true
-  continue_on_failure: false
+report: false
+debug: false
 ```
 
 ## Architecture High Level Overview
@@ -415,6 +396,7 @@ if success:
 
 Are you sure about this? [Y/N]>
 ```
+
 ### Dry-run Mode
 ```bash
 # Preview changes without execution
@@ -450,7 +432,7 @@ Excludes:
 ## Known Issues
 
 ### Usability
-- YAML snapshots cannot be directly used for actions configure/validate/scorch without manual intervention
+- YAML snapshots usually cannot be directly used for actions configure/validate/mount/scorch without manual intervention
 - No bootstrap / plug(&)play setup script
 
 ### Observability
