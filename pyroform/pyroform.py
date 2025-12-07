@@ -1,5 +1,5 @@
 """
-: strMain Pyroform Library Interface Class
+Pyroform Library Interface Class
 """
 import yaml
 import json
@@ -43,29 +43,39 @@ class Pyroform:
         self._last_action = None
         self._last_result = None
 
-    # @pysnooper.snoop()
-    def reinit_logger(self, **kwargs) -> STDOUTMsg:
-        setup_logging(
-            log_file=Path(self.config.get('log_file') or  './pyroform.log'),
-            debug=self.config.get('debug', False),
-            config=self.config
-        )
-        self.stdout = STDOUTMsg(
-            debug_mode=kwargs.get('debug', False),
-            timestamp=kwargs.get('log_timestamp', False),
-        )
-        return self.stdout
+    @property
+    def version(self) -> str:
+        """Get Pyroform version"""
+        from . import __version__
+        self.stdout.debug('Pyroform version: {__version__}')
+        return __version__
+
+    def get_config(self) -> Dict[str, Any]:
+        """Get current configuration"""
+        return self.config.copy()
+
+    def set_config(self, **kwargs) -> None:
+        """Update configuration"""
+        self.config.update(kwargs)
+
+    # ACTIONS
 
     # @pysnooper.snoop()
     def snapshot(self, input_path: str | None = None, output_path: str | None = None, **kwargs) -> bool:
         start_time = datetime.now().isoformat()
         self._pyro_files.append(input_path)
         self._last_action = ActionType.SNAPSHOT
-        self._last_result = self.engine.snapshot(output_path, **kwargs)
+        self._last_result = self.engine.snapshot(
+            output_path or self.config.get('output_path'), **kwargs
+        )
+        self.stdout.debug(f'Last result: {self._last_result}')
         end_time = datetime.now().isoformat()
         if self.config.get('report'):
             self.generate_report(
-                'report_' + str(self.config.get('output_path', str(ActionType.SNAPSHOT) + '.json')),
+                kwargs.get(
+                    'output_path',
+                    'report_' + str(self.config.get('output_path', str(ActionType.SNAPSHOT) + '.json'))
+                ),
                 start_time=start_time,
                 end_time=end_time,
             )
@@ -87,10 +97,14 @@ class Pyroform:
         self._pyro_files.append(input_path)
         self._last_action = ActionType.CONFIGURE
         self._last_result = self.engine.configure(input_path, **kwargs)
+        self.stdout.debug(f'Last result: {self._last_result}')
         end_time = datetime.now().isoformat()
         if self.config.get('report'):
             self.generate_report(
-                'report_' + str(self.config.get('output_path', str(ActionType.CONFIGURE) + '.json')),
+                kwargs.get(
+                    'output_path',
+                    'report_' + str(self.config.get('output_path', str(ActionType.CONFIGURE) + '.json'))
+                ),
                 start_time=start_time,
                 end_time=end_time,
             )
@@ -112,15 +126,14 @@ class Pyroform:
         self._pyro_files.append(input_path)
         self._last_action = ActionType.SCORCH
         self._last_result = self.engine.scorch(input_path, **kwargs)
-
-        self.stdout.debug(
-            f'Last result: {self._last_result}'
-        )
-
+        self.stdout.debug(f'Last result: {self._last_result}')
         end_time = datetime.now().isoformat()
         if self.config.get('report'):
             self.generate_report(
-                'report_' + str(self.config.get('output_path', str(ActionType.SCORCH) + '.json')),
+                kwargs.get(
+                    'output_path',
+                    'report_' + str(self.config.get('output_path', str(ActionType.SCORCH) + '.json'))
+                ),
                 start_time=start_time,
                 end_time=end_time,
             )
@@ -142,10 +155,14 @@ class Pyroform:
         self._pyro_files.append(input_path)
         self._last_action = ActionType.MOUNT
         self._last_result = self.engine.mount(input_path, **kwargs)
+        self.stdout.debug(f'Last result: {self._last_result}')
         end_time = datetime.now().isoformat()
         if self.config.get('report'):
             self.generate_report(
-                'report_' + str(self.config.get('output_path', str(ActionType.MOUNT) + '.json')),
+                kwargs.get(
+                    'output_path',
+                    'report_' + str(self.config.get('output_path', str(ActionType.MOUNT) + '.json'))
+                ),
                 start_time=start_time,
                 end_time=end_time,
             )
@@ -167,16 +184,21 @@ class Pyroform:
         self._pyro_files.append(input_path)
         self._last_action = ActionType.VALIDATE
         self._last_result = self.engine.validate(input_path, **kwargs)
+        self.stdout.debug(f'Last result: {self._last_result}')
         end_time = datetime.now().isoformat()
         if self.config.get('report'):
             self.generate_report(
-                'report_' + str(self.config.get('output_path', str(ActionType.VALIDATE) + '.json')),
+                kwargs.get(
+                    'output_path',
+                    'report_' + str(self.config.get('output_path', str(ActionType.VALIDATE) + '.json'))
+                ),
                 start_time=start_time,
                 end_time=end_time,
             )
         return self._last_result
 
-    # TODO
+    # UTILS
+
     # @pysnooper.snoop()
     def generate_report(self, output_path: Optional[str] = None, **kwargs) -> bool:
         """
@@ -196,13 +218,14 @@ class Pyroform:
             report = self.engine.reporter.generate_action_report(
                 action=self._last_action.value,
                 result=self._last_result,
+                config=self.config,
                 config_files=[self._config_file] + self._pyro_files,  # Would need to track this
                 start_time=kwargs.get('start_time', datetime.now().isoformat()),
                 end_time=kwargs.get('end_time', datetime.now().isoformat()),
-                auto_confirm=self.config.get('auto_confirm', False),
+
             )
 
-            self.stdout.custom('REPORT', json.dumps(report, indent=2))
+            self.stdout.custom('REPORT', json.dumps(report, indent=4))
 
             if output_path:
                 return self.engine.reporter.save_report(report, Path(output_path))
@@ -212,6 +235,59 @@ class Pyroform:
         except Exception as e:
             self.stdout.err(f"Failed to generate report! Details: {e}")
             return False
+
+    # @pysnooper.snoop()
+    def generate_workflow_report(
+        self, workflow_results: List[Dict[str, Any]], output_path: str
+    ) -> bool:
+        """
+        Generate a comprehensive workflow report
+
+        Args:
+            workflow_results: Results from workflow execution
+            output_path: Path to save the report
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            workflow_report = {
+                'type': 'workflow',
+                'timestamp': datetime.now().isoformat(),
+                'total_steps': len(workflow_results),
+                'successful_steps': len([r for r in workflow_results if r['success']]),
+                'failed_steps': len([r for r in workflow_results if not r['success']]),
+                'steps': workflow_results,
+                'summary': self._generate_workflow_summary(workflow_results),
+            }
+
+            return self.engine.reporter.save_report(workflow_report, Path(output_path))
+
+        except Exception as e:
+            self.stdout.err(f'Failed to generate workflow report: {e}')
+            return False
+
+    # @pysnooper.snoop()
+    def _generate_workflow_summary(
+        self, workflow_results: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Generate summary for workflow report
+
+        Args:
+            workflow_results: Results from workflow execution
+
+        Returns:
+            Summary dictionary
+        """
+        total_duration = 0  # Would need to track actual durations
+        actions_performed = [r["action"] for r in workflow_results]
+
+        return {
+            "total_duration_seconds": total_duration,
+            "actions_performed": actions_performed,
+            "overall_success": all(r["success"] for r in workflow_results),
+        }
 
     # @pysnooper.snoop()
     def execute_workflow(self, workflow_steps: List[Dict[str, Any]]) -> bool:
@@ -288,66 +364,13 @@ class Pyroform:
         # Generate workflow report
         if self.config.get("report", False):
             if os.path.isdir(output_path):
-                report_file = output_path + "/pyroform_workflow.report.json"
+                report_file = output_path + "/report_pyroform_workflow.json"
             else:
                 report_file = output_path
-            self._generate_workflow_report(workflow_results, report_file)
+            self.generate_workflow_report(workflow_results, report_file)
 
         print(f"[ OK ]: Workflow completed successfully")
         return True
-
-    # @pysnooper.snoop()
-    def _generate_workflow_report(
-        self, workflow_results: List[Dict[str, Any]], output_path: str
-    ) -> bool:
-        """
-        Generate a comprehensive workflow report
-
-        Args:
-            workflow_results: Results from workflow execution
-            output_path: Path to save the report
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            workflow_report = {
-                'type': 'workflow',
-                'timestamp': datetime.now().isoformat(),
-                'total_steps': len(workflow_results),
-                'successful_steps': len([r for r in workflow_results if r['success']]),
-                'failed_steps': len([r for r in workflow_results if not r['success']]),
-                'steps': workflow_results,
-                'summary': self._generate_workflow_summary(workflow_results),
-            }
-
-            return self.engine.reporter.save_report(workflow_report, Path(output_path))
-
-        except Exception as e:
-            self.stdout.err(f'Failed to generate workflow report: {e}')
-            return False
-
-    # @pysnooper.snoop()
-    def _generate_workflow_summary(
-        self, workflow_results: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """
-        Generate summary for workflow report
-
-        Args:
-            workflow_results: Results from workflow execution
-
-        Returns:
-            Summary dictionary
-        """
-        total_duration = 0  # Would need to track actual durations
-        actions_performed = [r["action"] for r in workflow_results]
-
-        return {
-            "total_duration_seconds": total_duration,
-            "actions_performed": actions_performed,
-            "overall_success": all(r["success"] for r in workflow_results),
-        }
 
     # @pysnooper.snoop()
     def _load_config(self, config_file: Optional[str], **kwargs) -> Dict[str, Any]:
@@ -363,7 +386,7 @@ class Pyroform:
         default_config = {
             'input_path': kwargs.get('input_path'),
             'output_path': kwargs.get('output_path'),
-            'log_level': kwargs.get('log_level', 'INFO'),
+            'log_level': 'DEBUG' if kwargs.get('debug') else kwargs.get('log_level', 'INFO'),
             'log_timestamp': kwargs.get('log_timestamp', False),
             'log_file': kwargs.get('log_file', './pyroform.log'),
             'auto_confirm': kwargs.get('auto_confirm', False),
@@ -394,31 +417,31 @@ class Pyroform:
                 self.stdout.warn(f"Unsupported config file format! Details: {config_path.suffix}")
                 return default_config
 
+            self.stdout.debug(f'Config loaded from file: {file_config}')
             # Merge with defaults
-
-            merged_config = {**default_config, **file_config}
-            self.stdout.debug(f'Config merged with defaults: {merged_config}')
-            return merged_config
+            file_config.update(kwargs)
+            if kwargs.get('debug'):
+                file_config['log_level'] = 'DEBUG'
+            self.stdout.debug(f'Config merged with CLI args: {file_config}')
+            return file_config
 
         except Exception as e:
             self.stdout.err(f"Error loading config file {config_file}! Details: {e}")
             self.stdout.warn('Using defaults.')
             return default_config
 
-    @property
-    def version(self) -> str:
-        """Get Pyroform version"""
-        from . import __version__
-        self.stdout.debug('Pyroform version: {__version__}')
-        return __version__
-
-    def get_config(self) -> Dict[str, Any]:
-        """Get current configuration"""
-        return self.config.copy()
-
-    def set_config(self, **kwargs) -> None:
-        """Update configuration"""
-        self.config.update(kwargs)
+    # @pysnooper.snoop()
+    def reinit_logger(self, **kwargs) -> STDOUTMsg:
+        setup_logging(
+            log_file=Path(self.config.get('log_file') or  './pyroform.log'),
+            debug=self.config.get('debug', False),
+            config=self.config
+        )
+        self.stdout = STDOUTMsg(
+            debug_mode=kwargs.get('debug', False),
+            timestamp=kwargs.get('log_timestamp', False),
+        )
+        return self.stdout
 
 
 # CODE DUMP

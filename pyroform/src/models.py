@@ -137,17 +137,16 @@ class ScorchResult:
 class ConfigureResult:
     """ """
 
-    resources_added: List[Dict[str, Any]]
     dry_run: bool
     errors: List[Any]
     success: bool
     details: Dict[str, Any]
 
+
 @dataclass
 class SnapshotResult:
     """ """
 
-    snapshot: Dict[str, Any]
     errors: List[Any]
     success: bool
     details: Dict[str, Any]
@@ -157,17 +156,17 @@ class SnapshotResult:
 class MountResult:
     """ """
 
-    resources_mounted: List[Dict[str, Any]]
+    dry_run: bool
     errors: List[Any]
     success: bool
     details: Dict[str, Any]
-
 
 @dataclass
 class ValidationResult:
     """Result of system validation"""
 
     is_valid: bool
+    success: bool
     system_state: Dict[str, list]
     discrepancies: Dict[str, list]
     summary: Dict[str, Any]

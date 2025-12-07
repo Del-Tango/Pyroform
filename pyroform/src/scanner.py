@@ -434,23 +434,35 @@ class SystemStateScanner:
 
     # Exclusion check - prettifying wrappers
     def _should_exclude_user(self, username: str, pyro_config: Optional[PyroConfig]) -> bool:
+        if not pyro_config:
+            return False
         return self.exclusion_checker.should_exclude_user(username, pyro_config.excludes.users)
 
     def _should_exclude_group(self, groupname: str, pyro_config: Optional[PyroConfig]) -> bool:
+        if not pyro_config:
+            return False
         return self.exclusion_checker.should_exclude_group(groupname, pyro_config.excludes.groups)
 
     def _should_exclude_device(self, device: str, pyro_config: Optional[PyroConfig]) -> bool:
+        if not pyro_config:
+            return False
         return self.exclusion_checker.should_exclude_device(device, pyro_config.excludes.devices)
 
     def _should_exclude_file(self, filepath: str, pyro_config: Optional[PyroConfig]) -> bool:
+        if not pyro_config:
+            return False
         return self.exclusion_checker.should_exclude_path(filepath, pyro_config.excludes.files) \
             or self.exclusion_checker.has_excluded_parent(filepath, pyro_config.excludes.directories)
 
     def _should_exclude_directory(self, dirpath: str, pyro_config: Optional[PyroConfig]) -> bool:
+        if not pyro_config:
+            return False
         return self.exclusion_checker.should_exclude_path(dirpath, pyro_config.excludes.directories) \
             or self.exclusion_checker.has_excluded_parent(dirpath, pyro_config.excludes.directories)
 
     def _should_exclude_link(self, linkpath: str, pyro_config: Optional[PyroConfig]) -> bool:
+        if not pyro_config:
+            return False
         return self.exclusion_checker.should_exclude_path(linkpath, pyro_config.excludes.links) \
             or self.exclusion_checker.has_excluded_parent(linkpath, pyro_config.excludes.directories)
 

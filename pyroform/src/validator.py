@@ -57,20 +57,14 @@ class SystemValidator:
         """
         Compare current system state with desired configuration.
 
-        Args:
-            config: Desired Pyro configuration
-
-        Returns:
-            ValidationResult with discrepancies and summary
         """
+        details = {'input_path': config, 'metadata': kwargs}
         current_state = self.scanner.scan_system_state(
             pyro_config=config, max_depth=100, include_hidden=True
         )
 
         differences = self.comparator.compare_states(current_state, config)
-
-        critical_issues = sum(len(item) for item in differences.values() if 'mismatch' not in item)
-        total_issues = sum(len(item) for item in differences.values())
+        self.stdout.debug(f'Differences: {differences}')
 
         critical_issues = sum([len(v) for k, v in differences.items() if 'mismatch' not in str(k).lower()])
         total_issues = sum([len(v) for k, v in differences.items() ])
@@ -78,16 +72,18 @@ class SystemValidator:
         summary = {
             "total_issues": total_issues,
             "critical_issues": critical_issues,
-            "is_valid": total_issues == 0,
         }
 
         self.stdout.debug(f'Summary: {json.dumps(summary, indent=4)}')
 
         self._last_result = ValidationResult(
-            is_valid=summary["is_valid"],
+            is_valid=total_issues == 0,
+            success=True,
             discrepancies=differences,
             system_state=current_state,
-            summary=summary
+            summary=summary,
+            details=details,
+            errors=[],
         )
 
         return self._last_result

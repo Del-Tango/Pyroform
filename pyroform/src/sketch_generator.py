@@ -141,6 +141,7 @@ class SketchGenerator:
 
         return users_snapshot
 
+    # @pysnooper.snoop()
     def _build_group_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Build group snapshot from system state."""
         groups_snapshot = []
@@ -155,6 +156,7 @@ class SketchGenerator:
 
         return groups_snapshot
 
+    # @pysnooper.snoop()
     def _build_device_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Build device snapshot from system state."""
         devices_snapshot = []
@@ -171,6 +173,7 @@ class SketchGenerator:
 
         return devices_snapshot
 
+    # @pysnooper.snoop()
     def _build_device_state_snapshot(self, device: Dict[str, Any]) -> List[str]:
         """Build device state snapshot entries."""
         state_entries = []
@@ -178,24 +181,24 @@ class SketchGenerator:
         # Add directories
         for directory in device.get('directories', []):
             dir_record = ','.join([
-                'dir', directory['path'], directory['owner'],
-                directory['group'], directory['permissions']
+                'dir', directory.path, directory.owner,
+                directory.group, directory.permissions
             ])
             state_entries.append(dir_record)
 
         # Add files
         for file in device.get('files', []):
             file_record = ','.join([
-                'fl', file['path'], file['owner'],
-                file['group'], file['permissions']
+                'fl', file.path, file.owner,
+                file.group, file.permissions
             ])
             state_entries.append(file_record)
 
         # Add symlinks
         for link in device.get('symlinks', []):
             link_record = ','.join([
-                'ln', link['path'], link['owner'], link['group'],
-                link['permissions'], link.get('target', '')
+                'ln', link.path, link.owner, link.group,
+                link.permissions, link.target
             ])
             state_entries.append(link_record)
 

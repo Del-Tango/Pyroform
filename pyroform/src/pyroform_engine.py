@@ -85,140 +85,120 @@ class PyroformEngine:
         self.scanner = SystemStateScanner(stdout=self.stdout, config=self.config)
         self.reporter = ReportGenerator(stdout=self.stdout, config=self.config)
 
-    # TODO - REPORT
     # @pysnooper.snoop()
-    def snapshot(self, output_path: str, **kwargs) -> Dict[str, Any]:
+    def snapshot(self, output_path: Path, **kwargs) -> SnapshotResult:
         """
         Create a snapshot of current system state as Pyro configuration.
 
         Captures the current system state and generates a YAML configuration
         file that can be used to reproduce this state.
-
-        Args:
-            output_path: File path where the snapshot will be saved
-            **kwargs: Additional arguments:
-                - max_depth: Maximum directory depth to scan (default: 100)
-                - include_hidden: Whether to include hidden files (default: True)
-
-        Returns:
-            Dictionary containing:
-                - success: Boolean indicating operation success
-                - output_path: Path where snapshot was saved
-                - system_state: Captured system state (on success)
-                - error: Error message (on failure)
-
-        Example:
-            >>> engine.snapshot("/path/to/snapshot.yaml")
-            {'success': True, 'output_path': '/path/to/snapshot.yaml'}
         """
         max_depth = kwargs.get('max_depth', 100)
         include_hidden = kwargs.get('include_hidden', True)
-        result, details, errors = self._objectify_result(ActionType.SNAPSHOT), {}, []
+        details, errors = {'output_path': str(output_path), 'metadata': kwargs}, []
         try:
 
             details['system_state'] = self.scanner.scan_system_state(
                 max_depth=max_depth,
                 include_hidden=include_hidden
             )
-            self.stdout.debug(f'Captured system state: {len(details['system_state'])} items')
+            self.stdout.debug(f'Captured system state: {len(details["system_state"])} items')
 
             # Generate configuration from system state
-            result.snapshot = self.sketch_generator.generate_sketch(
+            snapshot = self.sketch_generator.generate_sketch(
                 None,
                 ActionType.SNAPSHOT,
                 system_state=details['system_state'],
                 **kwargs,
             )
-            self.stdout.debug(f'Generated pyro config with {len(pyro_config)} elements')
+            self.stdout.debug(f'Generated pyro config with {len(snapshot)} elements')
 
             # Write configuration to file
             output_path_obj = Path(output_path)
             output_path_obj.parent.mkdir(parents=True, exist_ok=True)
 
             with output_path_obj.open('w') as file:
-                yaml.dump(pyro_config, file, default_flow_style=False)
+                yaml.dump(snapshot, file, default_flow_style=False)
 
-            details['output_path'] = output_path
-            result.success = True
-            result.details = details
-
+            details.update({'snapshot': snapshot})
             self.stdout.ok(f'System snapshot written to: {output_path}')
+            return self._objectify_result(ActionType.SNAPSHOT, **{
+                'success': True,
+                'errors': errors,
+                'details': details,
+            })
 
-            return result
-#           return {
-#               'success': True,
-#               'output_path': output_path,
-#               'system_state': details['system_state']
-#           }
+        except Exception as e:
+            msg = f'Snapshot operation failed due to encountered exception! Details: {e}'
+            self.stdout.err(msg)
+            errors.append(msg)
+            return self._objectify_result(ActionType.SNAPSHOT, **{
+                'success': False,
+                'errors': str(errors),
+                'details': details,
+            })
 
-        except Exception as error:
-            self.stdout.err(f'Snapshot operation failed: {error}')
-            result.success = False
-            errors.append(str(error))
-            result.errors = errors
-            return result
-#           return {
-#               'success': False,
-#               'error': str(error),
-#               'output_path': output_path
-#           }
-
-    # TODO - Objectify
     # @pysnooper.snoop()
-    def configure(self, input_path: str, **kwargs) -> Dict[str, Any]:
+    def configure(self, input_path: Path, **kwargs) -> ConfigureResult:
         """
         Apply configuration from Pyro files to the system.
 
         Parses configuration files and executes the necessary actions
         to bring the system to the desired state.
-
-        Args:
-            input_path: Path to Pyro file or directory containing Pyro files
-            **kwargs: Additional arguments for configuration
-
-        Returns:
-            Dictionary containing:
-                - success: Overall operation success
-                - processed_configs: List of processed configuration labels
-                - results: Individual configuration results
-
-        Example:
-            >>> engine.configure("/path/to/configs/")
-            {'success': True, 'processed_configs': ['web_server', 'database']}
         """
+        details, errors = {'input_path': str(input_path), 'metadata': kwargs}, []
         dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
+        results, processed_configs = [], []
         try:
             configs = self.parser.parse(Path(input_path))
             if not configs:
-                self.stdout.err(f'No valid Pyro files found at: {input_path}')
-                return {'success': False, 'processed_configs': []}
+                msg = f'No valid Pyro files found at: {input_path}'
+                self.stdout.err(msg)
+                errors.append(msg)
+                return self._objectify_result(ActionType.CONFIGURE, **{
+                    'success': False,
+                    'dry_run': dry_run,
+                    'details': details,
+                    'errors': errors,
+                })
 
             self.stdout.debug(f'Found {len(configs)} configuration(s) to process')
             if dry_run:
                 self.stdout.info('DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.')
-
-            results = []
-            processed_configs = []
 
             for config in configs:
                 config_result = self._process_configuration(config, ActionType.CONFIGURE, **kwargs)
                 results.append(config_result)
                 if config_result['success']:
                     processed_configs.append(config.label)
+                else:
+                    errors.append(f'Failed to process Pyro file config! Details: {config}')
 
             overall_success = all(result['success'] for result in results)
-
-            return {
-                'success': overall_success,
+            details.update({
                 'processed_configs': processed_configs,
-                'results': results
-            }
+                'results': results,
+            })
+
+            return self._objectify_result(ActionType.CONFIGURE, **{
+                'success': overall_success,
+                'dry_run': dry_run,
+                'details': details,
+                'errors': errors,
+            })
 
         except Exception as error:
-            self.stdout.err(f'Configure operation failed: {error}')
-            return {'success': False, 'error': str(error)}
+            msg = f'Configure operation failed: {error}'
+            self.stdout.err(msg)
+            errors.append(msg)
+            return self._objectify_result(ActionType.CONFIGURE, **{
+                'success': False,
+                'dry_run': dry_run,
+                'details': details,
+                'errors': errors,
+            })
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def scorch(self, input_path: str, **kwargs) -> Dict[str, Any]:
         """
         Remove system resources not specified in Pyro configurations.
@@ -227,7 +207,8 @@ class PyroformEngine:
         in the provided configuration files. User confirmation is required
         unless auto_confirm is True.
         """
-        details, errors, all_comparisons, failures = {'input_path': input_path}, [], [], 0
+        details = {'input_path': input_path, 'metadata': kwargs}
+        processed_configs, all_comparisons, errors, results = [], [], [], []
         dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
         auto_confirm = kwargs.get('auto_confirm', self.config.get('auto_confirm', False))
         try:
@@ -242,18 +223,25 @@ class PyroformEngine:
                 })
             if dry_run:
                 self.stdout.info('DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.')
+
             for config in configs:
                 scorch = self._execute_scorch_config(config, errors=errors, **kwargs)
+                results.append(scorch)
                 if scorch['success']:
-                    all_comparisons.extend(scorch.get('comparison', {}))
+                    all_comparisons.append(scorch.get('comparison', {}))
+                    processed_configs.append(config.label)
                 else:
-                    failures += 1
+                    errors.append(f'Failed to process Pyro config! Details: {config}')
 
-            details['system_state'] = scorch.get('system_state', {})
-            details['state_comparisons'] = all_comparisons
+            overall_success = all(result['success'] for result in results)
+            details.update({
+                'processed_configs': processed_configs,
+                'system_state': scorch.get('system_state', {}),
+                'results': results,
+            })
 
             return self._objectify_result(ActionType.SCORCH, **{
-                'success': failures == 0,
+                'success': len(errors) == 0,
                 'dry_run': dry_run,
                 'details': details,
                 'errors': errors,
@@ -270,149 +258,8 @@ class PyroformEngine:
                 'errors': errors,
             })
 
-    # TODO - Objectify
-    def mount(self, input_path: str, **kwargs) -> Dict[str, Any]:
-        """
-        Mount resources defined in Pyro configurations.
-
-        Sets up mounts, volumes, and other mountable resources as defined
-        in the configuration files.
-
-        Args:
-            input_path: Path to Pyro file or directory containing Pyro files
-            **kwargs: Additional arguments for mount operations
-
-        Returns:
-            Dictionary containing operation results
-
-        Example:
-            >>> engine.mount("/path/to/mounts.yaml")
-            {'success': True, 'mounts_created': ['/data', '/logs']}
-        """
-        return self._execute_config_action(input_path, ActionType.MOUNT, **kwargs)
-
-    # TODO - Objectify
-    # @pysnooper.snoop()
-    def validate(self, input_path: str, **kwargs) -> ValidationResult:
-        """
-        Validate system state against Pyro configurations.
-
-        Compares current system state with desired state defined in
-        configuration files and reports discrepancies.
-
-        Args:
-            input_path: Path to Pyro file or directory containing Pyro files
-            **kwargs: Additional arguments for validation
-
-        Returns:
-            ValidationResult object containing validation details
-
-        Example:
-            >>> result = engine.validate("/path/to/configs/")
-            >>> result.is_valid
-            False
-            >>> result.discrepancies
-            [{'resource': '/etc/nginx', 'issue': 'permissions mismatch'}]
-        """
-        try:
-            configs = self.parser.parse(Path(input_path))
-            if not configs:
-                self.stdout.err(f'No valid Pyro files found at: {input_path}')
-                return ValidationResult(
-                    is_valid=False,
-                    discrepancies=[{"error": f"No valid Pyro files found at {input_path}"}],
-                    summary={"total_issues": 1, "critical_issues": 1},
-                )
-
-            self.stdout.debug(f'Validating {len(configs)} configuration(s)')
-
-            all_discrepancies = []
-            all_valid = True
-            total_issues = 0
-            critical_issues = 0
-
-            for config in configs:
-                result = self.validator.validate_configuration(config, **kwargs)
-                if result.discrepancies:
-                    self._log_validation_discrepancies(config.label, result.discrepancies)
-
-                all_discrepancies.append(result.discrepancies)
-                all_valid = all_valid and result.is_valid
-
-                # Update issue counts
-                config_critical = sum([len(v) for k, v in result.discrepancies.items() if 'mismatch' not in str(k).lower()])
-                config_total = sum([len(v) for k, v in result.discrepancies.items()])
-
-                critical_issues += config_critical
-                total_issues += config_total
-
-                self._log_validation_result(config.label, result.is_valid, config_critical, config_total)
-
-            self._log_validation_summary(all_valid, critical_issues, total_issues)
-
-            summary = {
-                "total_issues": total_issues,
-                "critical_issues": critical_issues,
-                "is_valid": all_valid,
-            }
-
-            return ValidationResult(
-                is_valid=all_valid,
-                discrepancies=all_discrepancies,
-                summary=summary,
-                system_state=self.validator._last_result.system_state
-            )
-
-        except Exception as error:
-            self.stdout.err(f"Validation failed: {error}")
-            return ValidationResult(
-                is_valid=False,
-                discrepancies=[{"error": str(error)}],
-                summary={"total_issues": 1, "critical_issues": 1},
-            )
 
     # @pysnooper.snoop()
-    def _process_configuration(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
-        """
-        Process a single configuration for the given action.
-
-        Args:
-            config: Configuration to process
-            action: Type of action to perform
-
-        Returns:
-            Dictionary with processing results
-        """
-        try:
-            sketch = self.sketch_generator.generate_sketch(config, action)
-
-            if len(sketch) <= 1:
-                self.stdout.info(f'No actions required for {config.label}, skipping')
-                return {
-                    'success': True,
-                    'skipped': True,
-                    'config_label': config.label
-                }
-
-            success = self.flow_engine.execute_sketch(sketch, action, **kwargs)
-
-            return {
-                'success': success,
-                'skipped': False,
-                'config_label': config.label,
-                'actions_executed': len(sketch)
-            }
-
-        except Exception as error:
-            self.stdout.err(f"Failed to process {config.label}: {error}")
-            return {
-                'success': False,
-                'error': str(error),
-                'config_label': config.label
-            }
-
-    # TODO
-    @pysnooper.snoop()
     def _execute_scorch_config(self, config: PyroConfig, errors: list | None = None, **kwargs) -> Dict[str, Any]:
         """
         Execute scorch operation for a single configuration.
@@ -449,7 +296,6 @@ class PyroformEngine:
             return {
                 'success': success,
                 'config_label': config.label,
-#               'actions_executed': len(sketch)
                 'system_state': system_state,
                 'comparison': comparison,
                 'sketch': sketch,
@@ -463,44 +309,184 @@ class PyroformEngine:
                 'config_label': config.label
             }
 
-    def _execute_config_action(self, input_path: str, action: ActionType,
-                             **kwargs) -> Dict[str, Any]:
+    # @pysnooper.snoop()
+    def mount(self, input_path: str, **kwargs) -> MountResult:
         """
-        Execute a configuration action (mount, configure, etc.).
+        Mount resources defined in Pyro configurations.
 
-        Args:
-            input_path: Path to configuration files
-            action: Action type to execute
-            **kwargs: Additional arguments
-
-        Returns:
-            Dictionary with operation results
+        Sets up mounts, volumes, and other mountable resources as defined
+        in the configuration files.
         """
+        details, errors = {'input_path': str(input_path), 'metadata': kwargs}, []
+        dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
+        results, processed_configs = [], []
         try:
             configs = self.parser.parse(Path(input_path))
             if not configs:
-                return {'success': False, 'error': 'No configurations found'}
+                msg = f'No valid Pyro files found at: {input_path}'
+                self.stdout.err(msg)
+                errors.append(msg)
+                return self._objectify_result(ActionType.CONFIGURE, **{
+                    'success': False,
+                    'dry_run': dry_run,
+                    'details': details,
+                    'errors': errors,
+                })
 
-            results = []
-            processed_configs = []
+            self.stdout.debug(f'Found {len(configs)} configuration(s) to process')
+            if dry_run:
+                self.stdout.info('DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.')
 
             for config in configs:
-                result = self._process_configuration(config, action,  **kwargs)
-                results.append(result)
-                if result.get('success'):
+                config_result = self._process_configuration(config, ActionType.MOUNT, **kwargs)
+                results.append(config_result)
+                if config_result['success']:
                     processed_configs.append(config.label)
+                else:
+                    errors.append(f'Failed to process Pyro file config! Details: {config}')
 
-            overall_success = all(result.get('success', False) for result in results)
+            overall_success = all(result['success'] for result in results)
+            details.update({
+                'processed_configs': processed_configs,
+                'results': results,
+            })
+
+            return self._objectify_result(ActionType.MOUNT, **{
+                'success': overall_success,
+                'dry_run': dry_run,
+                'details': details,
+                'errors': errors,
+            })
+
+        except Exception as error:
+            msg = f'Configure operation failed: {error}'
+            self.stdout.err(msg)
+            errors.append(msg)
+            return self._objectify_result(ActionType.MOUNT, **{
+                'success': False,
+                'dry_run': dry_run,
+                'details': details,
+                'errors': errors,
+            })
+
+    # @pysnooper.snoop()
+    def validate(self, input_path: str, **kwargs) -> ValidationResult:
+        """
+        Validate system state against Pyro configurations.
+
+        Compares current system state with desired state defined in
+        configuration files and reports discrepancies.
+        """
+        details = {'input_path': input_path, 'metadata': kwargs}
+        processed_configs, all_comparisons, errors, results = [], [], [], []
+        is_valid, success, all_discrepancies, system_state = False, True, [], {}
+        summary = {'total_issues': 0, 'critical_issues': 0}
+        try:
+            configs = self.parser.parse(Path(input_path))
+            if not configs:
+                msg = f'No valid Pyro files found at: {input_path}'
+                self.stdout.err(msg)
+                errors.append(msg)
+                summary.update({"total_issues": 1, "critical_issues": 1})
+                return self._objectify_result(ActionType.VALIDATE, **{
+                    'is_valid': is_valid,
+                    'success': success,
+                    'system_state': system_state,
+                    'discrepancies': all_discrepancies,
+                    'summary': summary,
+                    'errors': errors,
+                    'details': details,
+                })
+
+            self.stdout.debug(f'Validating {len(configs)} configuration(s)')
+
+            for config in configs:
+                result = self.validator.validate_configuration(config, **kwargs)
+                results.append(result)
+                if result.discrepancies:
+                    all_discrepancies.append({config.label: result.discrepancies})
+                    self._log_validation_discrepancies(config.label, result.discrepancies)
+                is_valid = is_valid and result.is_valid
+
+                # Update issue counts
+                config_critical = sum([len(v) for k, v in result.discrepancies.items() if 'mismatch' not in str(k).lower()])
+                config_total = sum([len(v) for k, v in result.discrepancies.items()])
+                summary['critical_issues'] += config_critical
+                summary['total_issues'] += config_total
+
+                self._log_validation_result(config.label, result.is_valid, config_critical, config_total)
+
+            system_state = self.validator._last_result.system_state
+            success = len(errors) == 0
+
+            self._log_validation_summary(is_valid, summary['critical_issues'], summary['total_issues'])
+
+            return self._objectify_result(ActionType.VALIDATE, **{
+                'is_valid': is_valid,
+                'success': success,
+                'system_state': system_state,
+                'discrepancies': all_discrepancies,
+                'summary': summary,
+                'errors': errors,
+                'details': details,
+            })
+
+        except Exception as e:
+            msg = f"Validation failed due to encountered exception! Details: {e}"
+            self.stdout.err(msg)
+            errors.append(msg)
+            summary['critical_issues'] += 1
+            summary['total_issues'] += 1
+            return self._objectify_result(ActionType.VALIDATE, **{
+                'is_valid': False,
+                'success': False,
+                'system_state': system_state,
+                'discrepancies': all_discrepancies,
+                'summary': summary,
+                'errors': errors,
+                'details': details,
+            })
+
+    # @pysnooper.snoop()
+    def _process_configuration(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
+        """
+        Process a single configuration for the given action.
+
+        Args:
+            config: Configuration to process
+            action: Type of action to perform
+
+        Returns:
+            Dictionary with processing results
+        """
+        try:
+            sketch = self.sketch_generator.generate_sketch(config, action)
+
+            if len(sketch) <= 1:
+                self.stdout.info(f'No actions required for {config.label}, skipping')
+                return {
+                    'success': True,
+                    'skipped': True,
+                    'config_label': config.label
+                }
+
+            success = self.flow_engine.execute_sketch(sketch, action, **kwargs)
 
             return {
-                'success': overall_success,
-                'processed_configs': processed_configs,
-                'results': results
+                'success': success,
+                'skipped': False,
+                'config_label': config.label,
+                'actions_executed': len(sketch),
+                'sketch': sketch,
             }
 
         except Exception as error:
-            self.stdout.err(f'{action.value} operation failed: {error}')
-            return {'success': False, 'error': str(error)}
+            self.stdout.err(f"Failed to process {config.label}: {error}")
+            return {
+                'success': False,
+                'error': str(error),
+                'config_label': config.label
+            }
 
     def _confirm_scorch(self, config: PyroConfig) -> bool:
         """
@@ -588,73 +574,4 @@ class PyroformEngine:
 
 
 # CODE DUMP
-
-
-#   @dataclass
-#   class ScorchResult:
-#       """Result of scorch operation"""
-
-#       resources_removed: List[str]
-#       resources_failed: List[Dict[str, Any]]
-#       dry_run: bool
-#       errors: List[Any]
-#       success: bool
-#       details: Dict[str, Any]
-
-
-#   @dataclass
-#   class ConfigureResult:
-#       """ """
-
-#       resources_added: List[Dict[str, Any]]
-#       dry_run: bool
-#       errors: List[Any]
-#       success: bool
-#       details: Dict[str, Any]
-
-#   @dataclass
-#   class SnapshotResult:
-#       """ """
-
-#       resources_snapshoted: List[Dict[str, Any]]
-#       snapshot: Dict[str, Any]
-#       errors: List[Any]
-#       success: bool
-#       details: Dict[str, Any]
-
-
-#   @dataclass
-#   class MountResult:
-#       """ """
-
-#       resources_mounted: List[Dict[str, Any]]
-#       errors: List[Any]
-#       success: bool
-#       details: Dict[str, Any]
-
-
-#   @dataclass
-#   class ValidationResult:
-#       """Result of system validation"""
-
-#       is_valid: bool
-#       system_state: Dict[str, list]
-#       discrepancies: Dict[str, list]
-#       summary: Dict[str, Any]
-#       errors: List[Any]
-#       details: Dict[str, Any]
-
-
-#   @dataclass
-#   class ValidationSummary:
-#       """Summary of validation results."""
-#       total_checks: int
-#       passed: int
-#       failed: int
-#       warnings: int
-#       total_issues: int
-#       critical_issues: int
-#       is_valid: bool
-
-
 
