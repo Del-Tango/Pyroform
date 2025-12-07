@@ -139,35 +139,35 @@ flowctrl:
 ### Pyro Configuration (JSON/YAML) - config.pyro.yaml
 ```yaml
 Label: "Web Server Configuration"
+Users:
+  - label: "Web Application User"
+    Name: "webapp"
+    Password: "$6$securehash"
+    Groups: ["www-data", "appusers"]
+
+Groups:
+  - label: "Application Users Group"
+    Name: "appusers"
+    Users: ["webapp", "deployer"]
+
+Devices:
+  - label: "Data Volume"
+    Path: "/dev/sdb"
+    Partition: 1
+    Mountpoint: "/data"
+    State:
+      - "dir,/data/logs,root,root,0755"
+      - "dir,/data/uploads,webapp,www-data,0770"
+      - "fl,/data/config.json,webapp,www-data,0640"
+      - "ln,/mnt/data/app/logs,webapp,www-data,0770,/mnt/data/logs/app"
+
 Excludes:
   Users: ["root", "daemon"]
   Groups: ["root", "daemon"]
   Devices: ["/dev/sda1"]
-  Directories: ["/etc", "/var/log"]
-  Files: ["/etc/passwd", "/etc/group"]
+  Directories: ["/tmp", "/var/tmp"]
+  Files: ["*.tmp", "*.log"]
   Links: []
-
-Users:
-  - label: "app_user"
-    Name: "appuser"
-    Password: "securepass123"
-    Groups: ["appgroup", "users"]
-
-Groups:
-  - label: "app_group"
-    Name: "appgroup"
-    Users: ["appuser"]
-
-Devices:
-  - label: "data_disk"
-    Path: "/dev/sdb1"
-    Partition: 1
-    Mountpoint: "/mnt/data"
-    State:
-      - "dir,/mnt/data/app,appuser,appgroup,755"
-      - "dir,/mnt/data/logs,appuser,appgroup,775"
-      - "fl,/mnt/data/app/config.yaml,appuser,appgroup,600"
-      - "ln,/mnt/data/app/logs,/mnt/data/logs/app"
 ```
 
 ### Workflow Configuration - workflow.pyro.yaml
@@ -199,6 +199,56 @@ steps:
     input_path: "baseline.yaml"
     dry_run: false
     description: "Cleanup unmanaged resources"
+```
+
+### Basic Pyro File Structure
+```yaml
+Label: "Configuration Name"
+Users: []
+Groups: []
+Devices: []
+Excludes: {}
+```
+
+### Example Pyro User Configuration
+```yaml
+Users:
+  - label: "User Description"
+    Name: "username"
+    Password: "password"
+    Groups: ["group1", "group2"]
+```
+
+### Example Pyro Group Configuration
+```yaml
+Groups:
+  - label: "Group Description"
+    Name: "groupname"
+    Users: ["user1", "user2"]
+```
+
+### Example Pyro Device & FileSystem Configuration
+```yaml
+Devices:
+  - label: "Device Description"
+    Path: "/dev/sdX"            # Block device
+    Partition: 1                # Partition number (0 for whole device)
+    Mountpoint: "/mount/path"
+    State:                      # Filesystem structure
+      - "dir,/path/to/dir,owner,group,permissions"
+      - "fl,/path/to/file,owner,group,permissions"
+      - "ln,/path/to/link,owner,group,permissions,target"
+```
+
+### Example Pyro Exclusion Rules
+```yaml
+Excludes:
+  Users: ["root", "nobody"]
+  Groups: ["root", "nogroup"]
+  Devices: ["/dev/loop*", "/dev/sr0"]
+  Directories: ["/tmp", "/proc", "/sys"]
+  Files: ["*.log", "*.tmp"]
+  Links: ["broken_link"]
 ```
 
 ## Command Line Interface
@@ -348,17 +398,27 @@ Excludes:
   Files: ["/etc/passwd", "/etc/group", "/etc/shadow"]
 ```
 
+## FAQ
+
+Q: Is Pyroform idempotent?
+A: Yes! Running the same configuration multiple times produces the same result.
+
+Q: Can I use Pyroform on non-Linux systems?
+A: Pyroform is specifically designed for Linux systems and uses Linux-specific APIs.
+
+Q: Can I rollback changes?
+A: While Pyroform doesn't have built-in rollback, you can take snapshots before operations and use them to restore state.
+
+Q: How does Pyroform compare to Ansible/Puppet/Chef?
+A: Pyroform focuses on declarative system state management with a simpler, file-based approach and native FlowCTRL integration.
+
 ## Known Issues
 
 ### Usability
 - YAML snapshots cannot be directly used for actions configure/validate/scorch without manual intervention
-- Action workflows partially functional
-- Action reports partially functional
-- Tooling file based configuration partially functional
 - No bootstrap / plug(&)play setup script
 
 ### Observability
-- Inner workings not properly logged
 - STDOUT messages not yet standardized / in flux
 
 ### Reliability
