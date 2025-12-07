@@ -18,7 +18,7 @@
 ```text
         ___________________________________________________________________________
 
-        *                          *   Pyroform   *                           *
+          *                          *   Pyroform   *                           *
         ___________________________________________________________________________
                         Regards, the Alveare Solutions #!/Society -x
 
@@ -463,4 +463,11 @@ Excludes:
 - Autotester suit incomplete
 - TPS not fully executed
 
+## Roadmap of future releases
 
+- Standardized STDOUT and log messages
+- Improved error handling
+- Full autotest coverage
+- Automatic linting & formating pipeline
+- Automatic TPS execution and TAR creation
+- Support for network operations along side local system changes
