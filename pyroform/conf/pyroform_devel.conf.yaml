@@ -1,9 +1,7 @@
 # Development and Testing Configuration
-# For development environments - less restrictive
-flow_ctrl_config: "flow_ctrl.conf.json"
-safety_checks: false
-default_output_dir: "/tmp/pyroform_dev"
 log_level: "DEBUG"
+log_file: './pyroform.log'
 auto_confirm: true
-dry_run: true  # Always dry-run in dev
-
+dry_run: true
+report: true
+debug: true

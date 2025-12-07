@@ -1,12 +1,7 @@
 # Pyroform Configuration File
-# This file configures the Pyroform Linux configuration management tool
-
-# Global settings
-#safety_checks: false
-default_output_dir: '/tmp/pyroform'
 log_level: 'INFO'
-log_file: 'pyroform.log'
-log_timestamp: False
+log_file: '/tmp/pyroform.log'
 auto_confirm: false
 dry_run: false
-report: true
+debug: false
+report: false
