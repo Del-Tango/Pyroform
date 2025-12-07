@@ -109,17 +109,19 @@ def display_version(ctx, param, value):
     callback=display_version,
     expose_value=False,
     is_eager=True,
-    help="Display PyrDisplay Pyroform  version",
+    help="Display Pyroform version",
 )
 def cli():
-    """Pyroform Linux Configurator
+    """Pyroform: The Configurator That Actually Listens
 
-    A tool that receives input file(s) containing list of users, user groups,
-    block storage device mountpoints, files and directories with owners and permissions,
-    generates on the fly FlowCTRL sketch files based on input pyro file(s),
-    and runs them using the flow_ctrl library.
+    Ever tried describing your perfect Linux system setup only to have configuration
+    tools nod politely and do their own thing? Pyroform actually pays attention
+    and translates your vision through intelligent FlowCTRL sketch generation.
+
+    Think of it as the diplomatic envoy between your declarative intentions and
+    your system's current state. No more shouting commands into the void — Pyroform
+    ensures your specifications are heard, interpreted and executed.
     """
-
 
 # ACTION CONFIGURE
 
@@ -525,7 +527,7 @@ def snapshot(
     yes: bool,
     dry_run: bool,
 ):
-    """Validate system against Pyro file(s)"""
+    """Generate Pyro file based on current system state"""
     _execute_action(
         action_type=ActionType.SNAPSHOT,
         input_path=Path(input_path) if input_path else None,

@@ -14,6 +14,41 @@
 - **Reporting**: Generate detailed action reports
 - **Dry-run Mode**: Preview changes without execution
 
+### CLI Toolin
+```text
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+Usage: pyroform [OPTIONS] COMMAND [ARGS]...
+
+  Pyroform: The Configurator That Actually Listens
+
+  Ever tried describing your perfect Linux system setup only to have
+  configuration tools nod politely and do their own thing? Pyroform actually
+  pays attention and translates your vision through intelligent FlowCTRL
+  sketch generation.
+
+  Think of it as the diplomatic envoy between your declarative intentions and
+  your system's current state. No more shouting commands into the void —
+  Pyroform ensures your specifications are heard, interpreted and executed.
+
+Options:
+  --version  Display Pyroform version
+  --help     Show this message and exit.
+
+Commands:
+  configure  Configure system according to Pyro file(s)
+  mount      Mount devices according to Pyro file(s)
+  scorch     Remove system resources not specified in Pyro file(s)
+  snapshot   Generate Pyro file based on current system state
+  validate   Validate system against Pyro file(s)
+  workflow   Execute a complete Pyroform workflow from configuration file
+
+```
+
 ## Use Cases
 
 ### 1. **System Provisioning & Deployment**
