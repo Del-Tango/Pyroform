@@ -5662,21 +5662,1204 @@ Group pyrotest2 exists
 
 --------------------------------------------------------------------------------
 
-# [ TC 13 ]: System Validation
+# [ TC 13 ]: Tooling Configuration Via YAML Files
 
 - Test Environment: Docker container with Debian GNU/Linux 13 (trixie) 6.6.15-amd64
 - Tester: D:Ta
-- Date: 03/12/2025
+- Date: 07/12/2025, 05/12/2025, 04/12/2025
 - Pyroform Version: 1.0.0
 - Validates: [TPS TC_13](./TPS/TC_13.md)
 - Preconditions:
 - Status:
-[ ] PASS
+[X] PASS
 [ ] FAIL
 [ ] BLOCKED
 
 # Archive
 
+## 1. Create YAML standard config file (pyroform.conf.yaml)
+```yaml
+log_level: 'INFO'
+log_file: '/tmp/pyroform.log'
+auto_confirm: false
+dry_run: false
+report: false
+```
+
+## 2. Create YAML development config file (pyroform_devel.conf.yaml)
+```yaml
+log_level: 'DEBUG'
+log_file: 'pyroform.log'
+auto_confirm: true
+dry_run: true
+report: true
+```
+
+## 3. Create YAML Pyro file (dummy.pyro.yaml)
+```yaml
+Label: "Dummy User Validation Test"
+Users:
+  - label: "Big Guy"
+    Name: "root"
+    Password: "toor"
+    Groups: []
+Excludes:
+  Users:
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
+```
+
+## 4. Run Pyro validation command with default config file
+```text
+root@1e1b62138bef:/app/Pyroform# pyroform validate -i dummy.pyro.yaml --config-file pyroform.conf.yaml
+
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/pyroflow.log
+[ INFO ]: State monitoring configured for inter-process control
+[ INFO ]: Parsing Pyro state file (dummy.pyro.yaml)...
+[ INFO ]: State file data: {
+    "Label": "Dummy User Validation Test",
+    "Users": [
+        {
+            "label": "Big Guy",
+            "Name": "root",
+            "Password": "toor",
+            "Groups": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ]
+    }
+}
+[ INFO ]: Scanning current machine state (users, groups, filesystem)...
+[ WARNING ]: Excluding system user: root
+[ WARNING ]: Excluding system user: daemon
+[ WARNING ]: Excluding system user: bin
+[ WARNING ]: Excluding system user: sys
+[ WARNING ]: Excluding system user: sync
+[ WARNING ]: Excluding system user: games
+[ WARNING ]: Excluding system user: man
+[ WARNING ]: Excluding system user: lp
+[ WARNING ]: Excluding system user: mail
+[ WARNING ]: Excluding system user: news
+[ WARNING ]: Excluding system user: uucp
+[ WARNING ]: Excluding system user: proxy
+[ WARNING ]: Excluding system user: www-data
+[ WARNING ]: Excluding system user: backup
+[ WARNING ]: Excluding system user: list
+[ WARNING ]: Excluding system user: irc
+[ WARNING ]: Excluding system user: _apt
+[ WARNING ]: Excluding system user: nobody
+[ INFO ]: Comparing current system state with Pyro file...
+[ NOK ]: Validation discrepancies for Pyro config (Dummy User Validation Test):
+{
+    "extra_users": [
+        {
+            "username": "pyrotest1",
+            "uid": 1000,
+            "home_directory": "/home/pyrotest1"
+        },
+        {
+            "username": "pyrotest2",
+            "uid": 1001,
+            "home_directory": "/home/pyrotest2"
+        }
+    ]
+}
+[ NOK ]: System state mismatch for (Dummy User Validation Test) (2 critical, 2 total issues)
+[ NOK ]: Found 2 critical issues, 2 total issues
+[ NOK ]: System state validation failed - run "configure" to apply changes
+```
+## 5. Check logging level is INFO
+```text
+root@1e1b62138bef:/app/Pyroform# cat /tmp/pyroform.log
+2025-12-05 00:55:10 - root - INFO - Logging to file: /tmp/pyroform.log
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - Parsing Pyro state file (dummy.pyro.yaml)...
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - State file data: {
+    "Label": "Dummy User Validation Test",
+    "Users": [
+        {
+            "label": "Big Guy",
+            "Name": "root",
+            "Password": "toor",
+            "Groups": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ]
+    }
+}
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - Scanning current machine state (users, groups, filesystem)...
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: root
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: daemon
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: bin
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: sys
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: sync
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: games
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: man
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: lp
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: mail
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: news
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: uucp
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: proxy
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: www-data
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: backup
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: list
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: irc
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: _apt
+2025-12-05 00:55:10 - pyroform.src.logging - WARNING - Excluding system user: nobody
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - Comparing current system state with Pyro file...
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - Validation discrepancies for Pyro config (Dummy User Validation Test):
+{
+    "extra_users": [
+        {
+            "username": "pyrotest1",
+            "uid": 1000,
+            "home_directory": "/home/pyrotest1"
+        },
+        {
+            "username": "pyrotest2",
+            "uid": 1001,
+            "home_directory": "/home/pyrotest2"
+        }
+    ]
+}
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - System state mismatch for (Dummy User Validation Test) (2 critical, 2 total issues)
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - Found 2 critical issues, 2 total issues
+2025-12-05 00:55:10 - pyroform.src.logging - INFO - System state validation failed - run "configure" to apply changes
+```
+
+## 6. Run Pyro validation command with development config file
+```text
+root@1e1b62138bef:/app/Pyroform# pyroform validate -i dummy.pyro.yaml --config-file pyroform_devel.conf.yaml
+
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/pyroflow.log
+[ INFO ]: State monitoring configured for inter-process control
+[ INFO ]: Parsing Pyro state file (dummy.pyro.yaml)...
+[ INFO ]: State file data: {
+    "Label": "Dummy User Validation Test",
+    "Users": [
+        {
+            "label": "Big Guy",
+            "Name": "root",
+            "Password": "toor",
+            "Groups": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ]
+    }
+}
+[ INFO ]: Scanning current machine state (users, groups, filesystem)...
+[ WARNING ]: Excluding system user: root
+[ WARNING ]: Excluding system user: daemon
+[ WARNING ]: Excluding system user: bin
+[ WARNING ]: Excluding system user: sys
+[ WARNING ]: Excluding system user: sync
+[ WARNING ]: Excluding system user: games
+[ WARNING ]: Excluding system user: man
+[ WARNING ]: Excluding system user: lp
+[ WARNING ]: Excluding system user: mail
+[ WARNING ]: Excluding system user: news
+[ WARNING ]: Excluding system user: uucp
+[ WARNING ]: Excluding system user: proxy
+[ WARNING ]: Excluding system user: www-data
+[ WARNING ]: Excluding system user: backup
+[ WARNING ]: Excluding system user: list
+[ WARNING ]: Excluding system user: irc
+[ WARNING ]: Excluding system user: _apt
+[ WARNING ]: Excluding system user: nobody
+[ INFO ]: Comparing current system state with Pyro file...
+[ NOK ]: Validation discrepancies for Pyro config (Dummy User Validation Test):
+{
+    "extra_users": [
+        {
+            "username": "intruder",
+            "uid": 1001,
+            "home_directory": "/home/intruder"
+        }
+    ]
+}
+[ NOK ]: System state mismatch for (Dummy User Validation Test) (1 critical, 1 total issues)
+[ NOK ]: Found 1 critical issues, 1 total issues
+[ NOK ]: System state validation failed - run "configure" to apply changes
+[ REPORT ]: {
+    "action": "validate",
+    "timestamp": "2025-12-07T05:46:49.775847",
+    "start_time": "2025-12-07T05:46:49.763635",
+    "end_time": "2025-12-07T05:46:49.775847",
+    "duration": "00:00:00.012",
+    "duration_seconds": 0.012212,
+    "config_files": [
+        "pyroform_devel.conf.yaml",
+        "dummy.pyro.yaml"
+    ],
+    "is_valid": false,
+    "system_state": {
+        "users": [
+            {
+                "username": "intruder",
+                "uid": 1001,
+                "gid": 1001,
+                "home_directory": "/home/intruder",
+                "shell": "/bin/bash",
+                "gecos": ",,,",
+                "groups": [
+                    "intruder",
+                    "users"
+                ]
+            }
+        ],
+        "groups": [],
+        "mounted_devices": []
+    },
+    "discrepancies": [
+        {
+            "Dummy User Validation Test": {
+                "extra_users": [
+                    {
+                        "username": "intruder",
+                        "uid": 1001,
+                        "home_directory": "/home/intruder"
+                    }
+                ]
+            }
+        }
+    ],
+    "summary": {
+        "total_issues": 1,
+        "critical_issues": 1
+    },
+    "errors": [],
+    "details": {
+        "input_path": "dummy.pyro.yaml",
+        "metadata": {}
+    }
+}
+```
+## 7. Check logging level is DEBUG
+```text
+root@1e1b62138bef:/app/Pyroform# cat pyroform.log
+2025-12-07 05:51:50 - root - INFO - Logging to file: pyroform.log
+2025-12-07 05:51:50 - root - DEBUG - Logging configured successfully
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - PyroformEngine conf: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'DEBUG', 'log_timestamp': False, 'log_file': 'pyroform.log', 'auto_confirm': True, 'd
+ry_run': True, 'debug': False, 'cleanup': False, 'report': True}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - SketchGenerator conf: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'DEBUG', 'log_timestamp': False, 'log_file': 'pyroform.log', 'auto_confirm': True, '
+dry_run': True, 'debug': False, 'cleanup': False, 'report': True}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - CommandGenerator conf: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'DEBUG', 'log_timestamp': False, 'log_file': 'pyroform.log', 'auto_confirm': True,
+'dry_run': True, 'debug': False, 'cleanup': False, 'report': True}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - ExclusionChecker conf: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'DEBUG', 'log_timestamp': False, 'log_file': 'pyroform.log', 'auto_confirm': True,
+'dry_run': True, 'debug': False, 'cleanup': False, 'report': True}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - ExclusionChecker conf: {}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - PyroflowEngine Pyroform conf: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'DEBUG', 'log_timestamp': False, 'log_file': 'pyroform.log', 'auto_confirm':
+ True, 'dry_run': True, 'debug': False, 'cleanup': False, 'report': True}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - PyroflowEngine FlowCTRL conf: {'project_dir': '/usr/local/lib/python3.13/dist-packages', 'log_dir': '.', 'conf_dir': '.', 'state_file': '.pyroflow.state', 'report_file': 'pyroflow.repor
+t', 'log_file': 'pyroflow.log', 'log_name': 'PyroFlowCTRL', 'silence': False, 'debug': False, 'log_format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', 'timestamp_format': '%Y-%m-%d %H:%M:%S'}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Config {'project_dir': '/usr/local/lib/python3.13/dist-packages', 'log_dir': '.', 'conf_dir': '.', 'state_file': '.pyroflow.state', 'report_file': 'pyroflow.report', 'log_file': 'pyrofl
+ow.log', 'log_name': 'PyroFlowCTRL', 'silence': False, 'debug': False, 'log_format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', 'timestamp_format': '%Y-%m-%d %H:%M:%S'}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - flow_config - FlowConfig(project_dir='/usr/local/lib/python3.13/dist-packages', log_dir='.', conf_dir='.', state_file='.pyroflow.state', report_file='pyroflow.report', log_file='pyroflo
+w.log', log_name='PyroFlowCTRL', silence=False, debug=False, log_format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', timestamp_format='%Y-%m-%d %H:%M:%S')
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - flow_config.__dict__ - {'project_dir': '/usr/local/lib/python3.13/dist-packages', 'log_dir': '.', 'conf_dir': '.', 'state_file': '.pyroflow.state', 'report_file': 'pyroflow.report', 'lo
+g_file': 'pyroflow.log', 'log_name': 'PyroFlowCTRL', 'silence': False, 'debug': False, 'log_format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', 'timestamp_format': '%Y-%m-%d %H:%M:%S'}
+2025-12-07 05:51:50 - flow_ctrl.src.utils.state_monitor - DEBUG - Registered callback for action: pause
+2025-12-07 05:51:50 - flow_ctrl.src.utils.state_monitor - DEBUG - Registered callback for action: resume
+2025-12-07 05:51:50 - flow_ctrl.src.utils.state_monitor - DEBUG - Registered callback for action: stop
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - flow_engine - <flow_ctrl.src.core.engine.FlowEngine object at 0x7f009d3af0e0>
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - ExclusionChecker conf: {}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - ExclusionChecker conf: {}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Reporter conf: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'DEBUG', 'log_timestamp': False, 'log_file': 'pyroform.log', 'auto_confirm': True, 'dry_run
+': True, 'debug': False, 'cleanup': False, 'report': True}
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - Parsing Pyro state file (dummy.pyro.yaml)...
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - State file data: {
+    "Label": "Dummy User Validation Test",
+    "Users": [
+        {
+            "label": "Big Guy",
+            "Name": "root",
+            "Password": "toor",
+            "Groups": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ]
+    }
+}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Validating 1 configuration(s)
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - Scanning current machine state (users, groups, filesystem)...
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Max directory depth: 100
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Include hidden files: True
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: root
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: daemon
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: bin
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: sys
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: sync
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: games
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: man
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: lp
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: mail
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: news
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: uucp
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: proxy
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: www-data
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: backup
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: list
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: irc
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: _apt
+2025-12-07 05:51:50 - pyroform.src.logging - WARNING - Excluding system user: nobody
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - System State: {'users': [{'username': 'intruder', 'uid': 1001, 'gid': 1001, 'home_directory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}],
+'groups': [], 'mounted_devices': []}
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - Comparing current system state with Pyro file...
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Differences: {
+    "extra_users": [
+        {
+            "username": "intruder",
+            "uid": 1001,
+            "home_directory": "/home/intruder"
+        }
+    ]
+}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Differences: {'extra_users': [{'username': 'intruder', 'uid': 1001, 'home_directory': '/home/intruder'}]}
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Summary: {
+    "total_issues": 1,
+    "critical_issues": 1
+}
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - Validation discrepancies for Pyro config (Dummy User Validation Test):
+{
+    "extra_users": [
+        {
+            "username": "intruder",
+            "uid": 1001,
+            "home_directory": "/home/intruder"
+        }
+    ]
+}
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - System state mismatch for (Dummy User Validation Test) (1 critical, 1 total issues)
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - Found 1 critical issues, 1 total issues
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - System state validation failed - run "configure" to apply changes
+2025-12-07 05:51:50 - pyroform.src.logging - DEBUG - Base Report Structure: {'action': 'validate', 'timestamp': '2025-12-07T05:51:50.010363', 'start_time': '2025-12-07T05:51:50.004611', 'end_time': '2025-12-07T05:51:50.010363', 'duration'
+: '00:00:00.006', 'duration_seconds': 0.005752, 'config_files': ['pyroform_devel.conf.yaml', 'dummy.pyro.yaml'], 'is_valid': False, 'success': True, 'system_state': {'users': [{'username': 'intruder', 'uid': 1001, 'gid': 1001, 'home_direc
+tory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}], 'groups': [], 'mounted_devices': []}, 'discrepancies': [{'Dummy User Validation Test': {'extra_users': [{'username': 'intruder', 'uid': 1001
+, 'home_directory': '/home/intruder'}]}}], 'summary': {'total_issues': 1, 'critical_issues': 1}, 'errors': [], 'details': {'input_path': 'dummy.pyro.yaml', 'metadata': {}}}
+2025-12-07 05:51:50 - pyroform.src.logging - INFO - {
+    "action": "validate",
+    "timestamp": "2025-12-07T05:51:50.010363",
+    "start_time": "2025-12-07T05:51:50.004611",
+    "end_time": "2025-12-07T05:51:50.010363",
+    "duration": "00:00:00.006",
+    "duration_seconds": 0.005752,
+    "config_files": [
+        "pyroform_devel.conf.yaml",
+        "dummy.pyro.yaml"
+    ],
+    "is_valid": false,
+    "success": true,
+    "system_state": {
+        "users": [
+            {
+                "username": "intruder",
+                "uid": 1001,
+                "gid": 1001,
+                "home_directory": "/home/intruder",
+                "shell": "/bin/bash",
+                "gecos": ",,,",
+                "groups": [
+                    "intruder",
+                    "users"
+                ]
+            }
+        ],
+        "groups": [],
+        "mounted_devices": []
+    },
+    "discrepancies": [
+        {
+            "Dummy User Validation Test": {
+                "extra_users": [
+                    {
+                        "username": "intruder",
+                        "uid": 1001,
+                        "home_directory": "/home/intruder"
+                    }
+                ]
+            }
+        }
+    ],
+    "summary": {
+        "total_issues": 1,
+        "critical_issues": 1
+    },
+    "errors": [],
+    "details": {
+        "input_path": "dummy.pyro.yaml",
+        "metadata": {}
+    }
+}
+```
+
+## 8. Run Pyro scorch dry-run command with development config file (no --dry-run CLI option)
+```text
+root@1e1b62138bef:/app/Pyroform# pyroform scorch -i dummy.pyro.yaml --config-file pyroform_devel.conf.yaml
+
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/pyroflow.log
+[ INFO ]: State monitoring configured for inter-process control
+[ INFO ]: Parsing Pyro state file (dummy.pyro.yaml)...
+[ INFO ]: State file data: {
+    "Label": "Dummy User Validation Test",
+    "Users": [
+        {
+            "label": "Big Guy",
+            "Name": "root",
+            "Password": "toor",
+            "Groups": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ]
+    }
+}
+[ INFO ]: DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.
+[ INFO ]: Scanning current machine state (users, groups, filesystem)...
+[ WARNING ]: Excluding system user: root
+[ WARNING ]: Excluding system user: daemon
+[ WARNING ]: Excluding system user: bin
+[ WARNING ]: Excluding system user: sys
+[ WARNING ]: Excluding system user: sync
+[ WARNING ]: Excluding system user: games
+[ WARNING ]: Excluding system user: man
+[ WARNING ]: Excluding system user: lp
+[ WARNING ]: Excluding system user: mail
+[ WARNING ]: Excluding system user: news
+[ WARNING ]: Excluding system user: uucp
+[ WARNING ]: Excluding system user: proxy
+[ WARNING ]: Excluding system user: www-data
+[ WARNING ]: Excluding system user: backup
+[ WARNING ]: Excluding system user: list
+[ WARNING ]: Excluding system user: irc
+[ WARNING ]: Excluding system user: _apt
+[ WARNING ]: Excluding system user: nobody
+[ INFO ]: Comparing current system state with Pyro file...
+[ INFO ]: Purging all state and report data
+[ OK ]: All data purged
+[ INFO ]: Loading sketch file: pyroflow.sketch.json
+[ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Dummy User Validation Test
+[ INFO ]: Starting procedure execution with state monitoring
+[ INFO ]: Procedure state set to STARTED
+[ INFO ]: State monitoring active - process can be controlled externally
+[ INFO ]: Beginning controlled procedure execution...
+[ INFO ]: Processing stage: Cleanup
+[ INFO ]: Processing action: Cleanup extra users
+[ INFO ]: Executing Procedure Stage Action: Cleanup extra users
+CMD> # for user in intruder; do userdel -f -r $user; done
+
+
+CMD> echo 'Eliminated: intruder'
+Eliminated: intruder
+
+[ OK ]: Action completed: Cleanup extra users
+[ OK ]: Stage completed: Cleanup
+[ OK ]: Procedure completed: SUCCESS
+[ REPORT ]: {
+    "action": "scorch",
+    "timestamp": "2025-12-07T05:53:15.950724",
+    "start_time": "2025-12-07T05:53:15.441528",
+    "end_time": "2025-12-07T05:53:15.950724",
+    "duration": "00:00:00.509",
+    "duration_seconds": 0.509196,
+    "config_files": [
+        "pyroform_devel.conf.yaml",
+        "dummy.pyro.yaml"
+    ],
+    "dry_run": true,
+    "errors": [],
+    "success": true,
+    "details": {
+        "input_path": "dummy.pyro.yaml",
+        "metadata": {},
+        "processed_configs": [
+            "Dummy User Validation Test"
+        ],
+        "system_state": {
+            "users": [
+                {
+                    "username": "intruder",
+                    "uid": 1001,
+                    "gid": 1001,
+                    "home_directory": "/home/intruder",
+                    "shell": "/bin/bash",
+                    "gecos": ",,,",
+                    "groups": [
+                        "intruder",
+                        "users"
+                    ]
+                }
+            ],
+            "groups": [],
+            "mounted_devices": []
+        },
+        "results": [
+            {
+                "success": true,
+                "config_label": "Dummy User Validation Test",
+                "system_state": {
+                    "users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "gid": 1001,
+                            "home_directory": "/home/intruder",
+                            "shell": "/bin/bash",
+                            "gecos": ",,,",
+                            "groups": [
+                                "intruder",
+                                "users"
+                            ]
+                        }
+                    ],
+                    "groups": [],
+                    "mounted_devices": []
+                },
+                "comparison": {
+                    "extra_users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "home_directory": "/home/intruder"
+                        }
+                    ]
+                },
+                "sketch": {
+                    "name": "Pyroform Auto-Generated Sketch Dummy User Validation Test",
+                    "Cleanup": [
+                        {
+                            "name": "Cleanup extra users",
+                            "cmd": "# for user in intruder; do userdel -f -r $user; done",
+                            "setup-cmd": "",
+                            "on-ok-cmd": "echo 'Eliminated: intruder'",
+                            "on-nok-cmd": "echo 'Could not scorch extra system users! Details: intruder'",
+                            "fatal-nok": false
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+```
+## 9. Check auto_confirm without passing (--yes) option
+```text
+...
+[ INFO ]: Comparing current system state with Pyro file...
+[ INFO ]: Purging all state and report data
+[ OK ]: All data purged
+[ INFO ]: Loading sketch file: pyroflow.sketch.json
+[ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Dummy User Validation Test
+[ INFO ]: Starting procedure execution with state monitoring
+[ INFO ]: Procedure state set to STARTED
+...
+```
+## 10. Check dry_run without passing (--dry-run) option
+```text
+...
+[ INFO ]: DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.
+...
+[ INFO ]: Executing Procedure Stage Action: Cleanup extra users
+CMD> # for user in intruder; do userdel -f -r $user; done
+...
+```
+## 11. Check report generated without passing (--dump-report) option
+```text
+...
+[ REPORT ]: {
+    "action": "scorch",
+    "timestamp": "2025-12-07T05:53:15.950724",
+    "start_time": "2025-12-07T05:53:15.441528",
+    "end_time": "2025-12-07T05:53:15.950724",
+    "duration": "00:00:00.509",
+    "duration_seconds": 0.509196,
+    "config_files": [
+        "pyroform_devel.conf.yaml",
+        "dummy.pyro.yaml"
+    ],
+    "dry_run": true,
+    "errors": [],
+    "success": true,
+    "details": {
+        "input_path": "dummy.pyro.yaml",
+        "metadata": {},
+        "processed_configs": [
+            "Dummy User Validation Test"
+        ],
+        "system_state": {
+            "users": [
+                {
+                    "username": "intruder",
+                    "uid": 1001,
+                    "gid": 1001,
+                    "home_directory": "/home/intruder",
+                    "shell": "/bin/bash",
+                    "gecos": ",,,",
+                    "groups": [
+                        "intruder",
+                        "users"
+                    ]
+                }
+            ],
+            "groups": [],
+            "mounted_devices": []
+        },
+        "results": [
+            {
+                "success": true,
+                "config_label": "Dummy User Validation Test",
+                "system_state": {
+                    "users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "gid": 1001,
+                            "home_directory": "/home/intruder",
+                            "shell": "/bin/bash",
+                            "gecos": ",,,",
+                            "groups": [
+                                "intruder",
+                                "users"
+                            ]
+                        }
+                    ],
+                    "groups": [],
+                    "mounted_devices": []
+                },
+                "comparison": {
+                    "extra_users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "home_directory": "/home/intruder"
+                        }
+                    ]
+                },
+                "sketch": {
+                    "name": "Pyroform Auto-Generated Sketch Dummy User Validation Test",
+                    "Cleanup": [
+                        {
+                            "name": "Cleanup extra users",
+                            "cmd": "# for user in intruder; do userdel -f -r $user; done",
+                            "setup-cmd": "",
+                            "on-ok-cmd": "echo 'Eliminated: intruder'",
+                            "on-nok-cmd": "echo 'Could not scorch extra system users! Details: intruder'",
+                            "fatal-nok": false
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+```
+## 12. Check log file location dictated by config file without passing (--log-file) option
+```text
+root@1e1b62138bef:/app/Pyroform# cat pyroform.log
+2025-12-07 05:51:50 - root - INFO - Logging to file: pyroform.log
+2025-12-07 05:51:50 - root - DEBUG - Logging configured successfully
+...
+```
+
+## 13. Run Pyro scorch dry-run command with CLI options overriding config file settings
+```text
+root@1e1b62138bef:/app/Pyroform# pyroform scorch -i dummy.pyro.yaml --config-file pyroform.conf.yaml --dry-run --yes --log-file test_pyroform.log --debug --dump-report
+
+    ___________________________________________________________________________
+
+      *                          *   Pyroform   *                           *
+    ___________________________________________________________________________
+                    Regards, the Alveare Solutions #!/Society -x
+
+
+[ DEBUG ]: Exec start timestamp: 2025-12-07T06:35:29.834036
+[ DEBUG ]: Pyroform kwargs - {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'debug': True, 'silent': False, 'report': True}
+[ DEBUG ]: Default config: {'input_path': PosixPath('dummy.pyro.yaml'), 'output_path': None, 'log_level': 'INFO', 'log_timestamp': False, 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'debug': True, 'c
+leanup': False, 'report': True}
+[ DEBUG ]: Config loaded from file: {'log_level': 'INFO', 'log_file': '/tmp/pyroform.log', 'auto_confirm': False, 'dry_run': False, 'report': False, 'cleanup': True}
+[ DEBUG ]: Config merged with CLI args: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, '
+silent': False}
+[ DEBUG ]: Pyroform conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, 'silent': False
+}
+[ DEBUG ]: PyroformEngine conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, 'silent':
+ False}
+[ DEBUG ]: SketchGenerator conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, 'silent'
+: False}
+[ DEBUG ]: CommandGenerator conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, 'silent
+': False}
+[ DEBUG ]: ExclusionChecker conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, 'silent
+': False}
+[ DEBUG ]: PyroflowEngine Pyroform conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True,
+'silent': False}
+[ DEBUG ]: PyroflowEngine FlowCTRL conf: {'project_dir': '/usr/local/lib/python3.13/dist-packages', 'log_dir': '.', 'conf_dir': '.', 'state_file': '.pyroflow.state', 'report_file': 'pyroflow.report', 'log_file': 'pyroflow.log', 'log_name'
+: 'PyroFlowCTRL', 'silence': False, 'debug': False, 'log_format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', 'timestamp_format': '%Y-%m-%d %H:%M:%S'}
+[ DEBUG ]: Config {'project_dir': '/usr/local/lib/python3.13/dist-packages', 'log_dir': '.', 'conf_dir': '.', 'state_file': '.pyroflow.state', 'report_file': 'pyroflow.report', 'log_file': 'pyroflow.log', 'log_name': 'PyroFlowCTRL', 'sile
+nce': False, 'debug': False, 'log_format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', 'timestamp_format': '%Y-%m-%d %H:%M:%S'}
+[ DEBUG ]: flow_config - FlowConfig(project_dir='/usr/local/lib/python3.13/dist-packages', log_dir='.', conf_dir='.', state_file='.pyroflow.state', report_file='pyroflow.report', log_file='pyroflow.log', log_name='PyroFlowCTRL', silence=F
+alse, debug=False, log_format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', timestamp_format='%Y-%m-%d %H:%M:%S')
+[ DEBUG ]: flow_config.__dict__ - {'project_dir': '/usr/local/lib/python3.13/dist-packages', 'log_dir': '.', 'conf_dir': '.', 'state_file': '.pyroflow.state', 'report_file': 'pyroflow.report', 'log_file': 'pyroflow.log', 'log_name': 'Pyro
+FlowCTRL', 'silence': False, 'debug': False, 'log_format': '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s', 'timestamp_format': '%Y-%m-%d %H:%M:%S'}
+[ INFO ]: Logging configured: /usr/local/lib/python3.13/dist-packages/pyroflow.log
+[ INFO ]: State monitoring configured for inter-process control
+[ DEBUG ]: flow_engine - <flow_ctrl.src.core.engine.FlowEngine object at 0x7f9eafb730e0>
+[ DEBUG ]: Reporter conf: {'log_level': 'INFO', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('dummy.pyro.yaml'), 'debug': True, 'silent': False
+}
+[ INFO ]: Parsing Pyro state file (dummy.pyro.yaml)...
+[ INFO ]: State file data: {
+    "Label": "Dummy User Validation Test",
+    "Users": [
+        {
+            "label": "Big Guy",
+            "Name": "root",
+            "Password": "toor",
+            "Groups": []
+        }
+    ],
+    "Excludes": {
+        "Users": [
+            "root",
+            "daemon",
+            "bin",
+            "sys",
+            "sync",
+            "games",
+            "man",
+            "lp",
+            "mail",
+            "news",
+            "uucp",
+            "proxy",
+            "www-data",
+            "backup",
+            "list",
+            "irc",
+            "_apt",
+            "nobody"
+        ]
+    }
+}
+[ INFO ]: DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.
+[ INFO ]: Scanning current machine state (users, groups, filesystem)...
+[ DEBUG ]: Max directory depth: 100
+[ DEBUG ]: Include hidden files: True
+[ WARNING ]: Excluding system user: root
+[ WARNING ]: Excluding system user: daemon
+[ WARNING ]: Excluding system user: bin
+[ WARNING ]: Excluding system user: sys
+[ WARNING ]: Excluding system user: sync
+[ WARNING ]: Excluding system user: games
+[ WARNING ]: Excluding system user: man
+[ WARNING ]: Excluding system user: lp
+[ WARNING ]: Excluding system user: mail
+[ WARNING ]: Excluding system user: news
+[ WARNING ]: Excluding system user: uucp
+[ WARNING ]: Excluding system user: proxy
+[ WARNING ]: Excluding system user: www-data
+[ WARNING ]: Excluding system user: backup
+[ WARNING ]: Excluding system user: list
+[ WARNING ]: Excluding system user: irc
+[ WARNING ]: Excluding system user: _apt
+[ WARNING ]: Excluding system user: nobody
+[ DEBUG ]: System State: {'users': [{'username': 'intruder', 'uid': 1001, 'gid': 1001, 'home_directory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}], 'groups': [], 'mounted_devices': []}
+[ INFO ]: Comparing current system state with Pyro file...
+[ DEBUG ]: Differences: {
+    "extra_users": [
+        {
+            "username": "intruder",
+            "uid": 1001,
+            "home_directory": "/home/intruder"
+        }
+    ]
+}
+[ DEBUG ]: temp_sketch_path - pyroflow.sketch.json
+[ INFO ]: Purging all state and report data
+[ OK ]: All data purged
+[ INFO ]: Loading sketch file: pyroflow.sketch.json
+[ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Dummy User Validation Test
+[ INFO ]: Starting procedure execution with state monitoring
+[ INFO ]: Procedure state set to STARTED
+[ INFO ]: State monitoring active - process can be controlled externally
+[ INFO ]: Beginning controlled procedure execution...
+[ INFO ]: Processing stage: Cleanup
+[ INFO ]: Processing action: Cleanup extra users
+[ INFO ]: Executing Procedure Stage Action: Cleanup extra users
+CMD> # for user in intruder; do userdel -f -r $user; done
+
+
+CMD> echo 'Eliminated: intruder'
+Eliminated: intruder
+
+[ OK ]: Action completed: Cleanup extra users
+[ OK ]: Stage completed: Cleanup
+[ OK ]: Procedure completed: SUCCESS
+[ DEBUG ]: Last result: ScorchResult(dry_run=True, errors=[], success=True, details={'input_path': 'dummy.pyro.yaml', 'metadata': {}, 'processed_configs': ['Dummy User Validation Test'], 'system_state': {'users': [{'username': 'intruder',
+ 'uid': 1001, 'gid': 1001, 'home_directory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}], 'groups': [], 'mounted_devices': []}, 'results': [{'success': True, 'config_label': 'Dummy User Valida
+tion Test', 'system_state': {'users': [{'username': 'intruder', 'uid': 1001, 'gid': 1001, 'home_directory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}], 'groups': [], 'mounted_devices': []}, '
+comparison': {'extra_users': [{'username': 'intruder', 'uid': 1001, 'home_directory': '/home/intruder'}]}, 'sketch': {'name': 'Pyroform Auto-Generated Sketch Dummy User Validation Test', 'Cleanup': [{'name': 'Cleanup extra users', 'cmd':
+'# for user in intruder; do userdel -f -r $user; done', 'setup-cmd': '', 'on-ok-cmd': "echo 'Eliminated: intruder'", 'on-nok-cmd': "echo 'Could not scorch extra system users! Details: intruder'", 'fatal-nok': False}]}}]})
+[ DEBUG ]: Base Report Structure: {'action': 'scorch', 'timestamp': '2025-12-07T06:35:30.348768', 'start_time': '2025-12-07T06:35:29.836567', 'end_time': '2025-12-07T06:35:30.348768', 'duration': '00:00:00.512', 'duration_seconds': 0.5122
+01, 'config_files': ['pyroform.conf.yaml', 'dummy.pyro.yaml'], 'dry_run': True, 'errors': [], 'success': True, 'details': {'input_path': 'dummy.pyro.yaml', 'metadata': {}, 'processed_configs': ['Dummy User Validation Test'], 'system_state
+': {'users': [{'username': 'intruder', 'uid': 1001, 'gid': 1001, 'home_directory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}], 'groups': [], 'mounted_devices': []}, 'results': [{'success': Tr
+ue, 'config_label': 'Dummy User Validation Test', 'system_state': {'users': [{'username': 'intruder', 'uid': 1001, 'gid': 1001, 'home_directory': '/home/intruder', 'shell': '/bin/bash', 'gecos': ',,,', 'groups': ['intruder', 'users']}], '
+groups': [], 'mounted_devices': []}, 'comparison': {'extra_users': [{'username': 'intruder', 'uid': 1001, 'home_directory': '/home/intruder'}]}, 'sketch': {'name': 'Pyroform Auto-Generated Sketch Dummy User Validation Test', 'Cleanup': [{
+'name': 'Cleanup extra users', 'cmd': '# for user in intruder; do userdel -f -r $user; done', 'setup-cmd': '', 'on-ok-cmd': "echo 'Eliminated: intruder'", 'on-nok-cmd': "echo 'Could not scorch extra system users! Details: intruder'", 'fat
+al-nok': False}]}}]}}
+[ REPORT ]: {
+    "action": "scorch",
+    "timestamp": "2025-12-07T06:35:30.348768",
+    "start_time": "2025-12-07T06:35:29.836567",
+    "end_time": "2025-12-07T06:35:30.348768",
+    "duration": "00:00:00.512",
+    "duration_seconds": 0.512201,
+    "config_files": [
+        "pyroform.conf.yaml",
+        "dummy.pyro.yaml"
+    ],
+    "dry_run": true,
+    "errors": [],
+    "success": true,
+    "details": {
+        "input_path": "dummy.pyro.yaml",
+        "metadata": {},
+        "processed_configs": [
+            "Dummy User Validation Test"
+        ],
+        "system_state": {
+            "users": [
+                {
+                    "username": "intruder",
+                    "uid": 1001,
+                    "gid": 1001,
+                    "home_directory": "/home/intruder",
+                    "shell": "/bin/bash",
+                    "gecos": ",,,",
+                    "groups": [
+                        "intruder",
+                        "users"
+                    ]
+                }
+            ],
+            "groups": [],
+            "mounted_devices": []
+        },
+        "results": [
+            {
+                "success": true,
+                "config_label": "Dummy User Validation Test",
+                "system_state": {
+                    "users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "gid": 1001,
+                            "home_directory": "/home/intruder",
+                            "shell": "/bin/bash",
+                            "gecos": ",,,",
+                            "groups": [
+                                "intruder",
+                                "users"
+                            ]
+                        }
+                    ],
+                    "groups": [],
+                    "mounted_devices": []
+                },
+                "comparison": {
+                    "extra_users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "home_directory": "/home/intruder"
+                        }
+                    ]
+                },
+                "sketch": {
+                    "name": "Pyroform Auto-Generated Sketch Dummy User Validation Test",
+                    "Cleanup": [
+                        {
+                            "name": "Cleanup extra users",
+                            "cmd": "# for user in intruder; do userdel -f -r $user; done",
+                            "setup-cmd": "",
+                            "on-ok-cmd": "echo 'Eliminated: intruder'",
+                            "on-nok-cmd": "echo 'Could not scorch extra system users! Details: intruder'",
+                            "fatal-nok": false
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+[ OK ]: Report saved to (pyroform_scorch.report.json) file!
+```
+## 14. Check auto_confirm flag set with CLI option --yes overriding config file
+```text
+...
+[ INFO ]: Comparing current system state with Pyro file...
+[ DEBUG ]: Differences: {
+    "extra_users": [
+        {
+            "username": "intruder",
+            "uid": 1001,
+            "home_directory": "/home/intruder"
+        }
+    ]
+}
+[ DEBUG ]: temp_sketch_path - pyroflow.sketch.json
+[ INFO ]: Purging all state and report data
+[ OK ]: All data purged
+[ INFO ]: Loading sketch file: pyroflow.sketch.json
+[ OK ]: Loaded procedure: Pyroform Auto-Generated Sketch Dummy User Validation Test
+[ INFO ]: Starting procedure execution with
+...
+```
+## 15. Check dry_run flag set with CLI option --dry-run overriding config file
+```text
+...
+[ INFO ]: DRY RUN: No changes will be made. FlowCTRL sketch main commands will be commented.
+...
+[ INFO ]: Executing Procedure Stage Action: Cleanup extra users
+CMD> # for user in intruder; do userdel -f -r $user; done
+...
+```
+## 16. Check report generation flag set with CLI option --dump-report overriding config file
+```text
+...
+[ REPORT ]: {
+    "action": "scorch",
+    "timestamp": "2025-12-07T06:35:30.348768",
+    "start_time": "2025-12-07T06:35:29.836567",
+    "end_time": "2025-12-07T06:35:30.348768",
+    "duration": "00:00:00.512",
+    "duration_seconds": 0.512201,
+    "config_files": [
+        "pyroform.conf.yaml",
+        "dummy.pyro.yaml"
+    ],
+    "dry_run": true,
+    "errors": [],
+    "success": true,
+    "details": {
+        "input_path": "dummy.pyro.yaml",
+        "metadata": {},
+        "processed_configs": [
+            "Dummy User Validation Test"
+        ],
+        "system_state": {
+            "users": [
+                {
+                    "username": "intruder",
+                    "uid": 1001,
+                    "gid": 1001,
+                    "home_directory": "/home/intruder",
+                    "shell": "/bin/bash",
+                    "gecos": ",,,",
+                    "groups": [
+                        "intruder",
+                        "users"
+                    ]
+                }
+            ],
+            "groups": [],
+            "mounted_devices": []
+        },
+        "results": [
+            {
+                "success": true,
+                "config_label": "Dummy User Validation Test",
+                "system_state": {
+                    "users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "gid": 1001,
+                            "home_directory": "/home/intruder",
+                            "shell": "/bin/bash",
+                            "gecos": ",,,",
+                            "groups": [
+                                "intruder",
+                                "users"
+                            ]
+                        }
+                    ],
+                    "groups": [],
+                    "mounted_devices": []
+                },
+                "comparison": {
+                    "extra_users": [
+                        {
+                            "username": "intruder",
+                            "uid": 1001,
+                            "home_directory": "/home/intruder"
+                        }
+                    ]
+                },
+                "sketch": {
+                    "name": "Pyroform Auto-Generated Sketch Dummy User Validation Test",
+                    "Cleanup": [
+                        {
+                            "name": "Cleanup extra users",
+                            "cmd": "# for user in intruder; do userdel -f -r $user; done",
+                            "setup-cmd": "",
+                            "on-ok-cmd": "echo 'Eliminated: intruder'",
+                            "on-nok-cmd": "echo 'Could not scorch extra system users! Details: intruder'",
+                            "fatal-nok": false
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+...
+```
+## 17. Check log file location dictated by CLI option --log-file overriding config file
+```text
+root@1e1b62138bef:/app/Pyroform# cat test_pyroform.log
+2025-12-07 06:43:27 - root - INFO - Logging to file: test_pyroform.log
+...
+```
+## 18. Check log level set to DEBUG by CLI option --debug overriding config file
+```text
+...
+2025-12-07 06:48:06 - pyroform.src.logging - DEBUG - PyroformEngine conf: {'log_level': 'DEBUG', 'log_file': PosixPath('test_pyroform.log'), 'auto_confirm': True, 'dry_run': True, 'report': True, 'cleanup': True, 'input_path': PosixPath('
+dummy.pyro.yaml'), 'debug': True, 'silent': False}
+...
+```
 
 
 --------------------------------------------------------------------------------
