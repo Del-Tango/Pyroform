@@ -3,21 +3,21 @@ name: "Basic System Configuration Workflow"
 description: "Validate, configure, and verify a system configuration"
 auto_confirm: true
 generate_report: true
-report_file: "pyroform_workflow_report.json"
+output_path: "pyroform_workflow_report.json"
 
 steps:
   - action: validate
-    input_path: "/path/to/configs/pyro_main.yaml"
+    input_path: "/path/to/configs/pyro_main.pyro.yaml"
     description: "Validate system configuration"
 
   - action: configure
-    input_path: "/path/to/configs/pyro_main.yaml"
+    input_path: "/path/to/configs/pyro_main.pyro.yaml"
     description: "Apply system configuration"
 
   - action: mount
-    input_path: "/path/to/configs/pyro_main.yaml"
+    input_path: "/path/to/configs/pyro_main.pyro.yaml"
     description: "Mount configured devices"
 
   - action: validate
-    input_path: "/path/to/configs/pyro_main.yaml"
+    input_path: "/path/to/configs/pyro_main.pyro.yaml"
     description: "Verify configuration was applied successfully"

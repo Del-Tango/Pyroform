@@ -2,40 +2,40 @@
   "name": "Advanced System Management Workflow",
   "description": "Complete system lifecycle management",
   "auto_confirm": false,
-  "config_file": "/etc/pyroform/config.yaml",
+  "config_file": "/etc/pyroform/pyroform.conf.yaml",
   "generate_report": true,
-  "report_file": "/var/log/pyroform/workflow_report.json",
+  "output_path": "/var/log/pyroform/workflow_report.json",
 
   "steps": [
     {
       "action": "validate",
-      "input_path": "/etc/pyroform/production.yaml",
+      "input_path": "/etc/pyroform/production.pyro.yaml",
       "description": "Validate production configuration"
     },
     {
       "action": "scorch",
-      "input_path": "/etc/pyroform/production.yaml",
+      "input_path": "/etc/pyroform/production.pyro.yaml",
       "dry_run": true,
       "description": "Dry-run cleanup of unused resources"
     },
     {
       "action": "scorch",
-      "input_path": "/etc/pyroform/production.yaml",
+      "input_path": "/etc/pyroform/production.pyro.yaml",
       "description": "Cleanup unused resources"
     },
     {
       "action": "configure",
-      "input_path": "/etc/pyroform/production.yaml",
+      "input_path": "/etc/pyroform/production.pyro.yaml",
       "description": "Apply production configuration"
     },
     {
       "action": "mount",
-      "input_path": "/etc/pyroform/production.yaml",
+      "input_path": "/etc/pyroform/production.pyro.yaml",
       "description": "Mount production devices"
     },
     {
       "action": "validate",
-      "input_path": "/etc/pyroform/production.yaml",
+      "input_path": "/etc/pyroform/production.pyro.yaml",
       "description": "Verify production state"
     }
   ]
