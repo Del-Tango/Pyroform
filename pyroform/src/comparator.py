@@ -1,5 +1,5 @@
 """
-
+Comares current system state with desired Pyro file
 """
 import json
 import os
@@ -7,8 +7,7 @@ import pwd
 import grp
 import stat
 import subprocess
-
-import pysnooper
+# import pysnooper
 
 from dataclasses import dataclass
 from pathlib import Path

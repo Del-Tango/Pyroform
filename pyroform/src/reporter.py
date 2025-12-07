@@ -3,7 +3,7 @@ Report Generation for Pyroform
 """
 import json
 import yaml
-import pysnooper
+# import pysnooper
 
 from datetime import datetime, timedelta
 from dataclasses import asdict

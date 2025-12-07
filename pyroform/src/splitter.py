@@ -1,5 +1,5 @@
 """
-
+Chuckyfier for processing system resources in batches for memory optimization
 """
 
 

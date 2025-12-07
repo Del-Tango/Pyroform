@@ -1,32 +1,46 @@
 """
 Pyroform Engine - Main Library Class
 
-A configuration management engine that coordinates system state operations
-including snapshotting, configuration, validation, and destructive operations.
+This module contains the core Pyroform engine that coordinates all system
+configuration operations including snapshotting, configuration application,
+resource management (scorch), mounting, and validation.
 """
 import json
 import yaml
-import pysnooper
+# import pysnooper
 
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Type
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type
 
+from .flow_engine import PyroflowEngine
+from .logging import STDOUTMsg
 from .models import (
-    ActionType, PyroConfig, ConfigureResult, ScorchResult, MountResult,
-    SnapshotResult, ValidationResult, ValidationSummary
+    ActionType,
+    ConfigureResult,
+    MountResult,
+    PyroConfig,
+    ScorchResult,
+    SnapshotResult,
+    ValidationResult,
 )
 from .parser import PyroParser
-from .sketch_generator import SketchGenerator
-from .flow_engine import PyroflowEngine
-from .validator import SystemValidator
-from .logging import STDOUTMsg
-from .scanner import SystemStateScanner
 from .reporter import ReportGenerator
+from .scanner import SystemStateScanner
+from .sketch_generator import SketchGenerator
+from .validator import SystemValidator
 
 
 class OperationResult(Enum):
-    """Result status for engine operations."""
+    """
+    Enumeration of possible result statuses for engine operations.
+
+    Attributes:
+        SUCCESS: Operation completed successfully
+        FAILURE: Operation failed
+        CANCELLED: Operation was cancelled by user
+        SKIPPED: Operation was skipped (no action required)
+    """
     SUCCESS = "success"
     FAILURE = "failure"
     CANCELLED = "cancelled"
@@ -37,31 +51,22 @@ class PyroformEngine:
     """
     Core engine that coordinates all Pyroform operations.
 
-    The engine manages the complete lifecycle of system configuration management:
-    - Parsing configuration files
-    - Generating execution plans (sketches)
-    - Validating system state
-    - Executing configuration changes
-    - Managing destructive operations
-
-    Attributes:
-        config: Engine configuration dictionary
-        stdout: Standard output messaging handler
-        parser: Configuration file parser
-        sketch_generator: Execution plan generator
-        flow_engine: Sketch execution engine
-        validator: System state validator
-        reporter: Report generation utility
+    This class serves as the central coordinator for all Pyroform functionality,
+    managing the interaction between parsers, validators, sketch generators,
+    and execution engines.
     """
 
     # @pysnooper.snoop()
-    def __init__(self, config: Optional[Dict[str, Any]] = None, stdout: STDOUTMsg | None = None, **kwargs) -> None:
+    def __init__(self, config: Optional[Dict[str, Any]] = None, stdout: STDOUTMsg | None = None, **kwargs: Any) -> None:
         """
         Initialize the Pyroform engine with configuration.
 
         Args:
             config: Optional configuration dictionary. If not provided,
                    default configuration will be used.
+            stdout: Optional STDOUTMsg instance for logging. If not provided,
+                   a default instance will be created.
+            **kwargs: Additional keyword arguments for configuration.
 
         Raises:
             ValueError: If required configuration values are invalid
@@ -71,9 +76,7 @@ class PyroformEngine:
             debug_mode=kwargs.get('debug', self.config.get('debug', False)),
             timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False)),
         )
-
         self.stdout.debug(f'PyroformEngine conf: {self.config}')
-
         # Initialize core components
         self.parser = PyroParser(config=self.config, stdout=self.stdout)
         self.sketch_generator = SketchGenerator(
@@ -86,12 +89,21 @@ class PyroformEngine:
         self.reporter = ReportGenerator(stdout=self.stdout, config=self.config)
 
     # @pysnooper.snoop()
-    def snapshot(self, output_path: Path, **kwargs) -> SnapshotResult:
+    def snapshot(self, output_path: Path, **kwargs: Any) -> SnapshotResult:
         """
         Create a snapshot of current system state as Pyro configuration.
 
         Captures the current system state and generates a YAML configuration
         file that can be used to reproduce this state.
+
+        Args:
+            output_path: Path where the snapshot configuration will be saved
+            **kwargs: Additional parameters:
+                - max_depth: Maximum recursion depth for scanning (default: 100)
+                - include_hidden: Whether to include hidden files/directories (default: True)
+
+        Returns:
+            SnapshotResult containing operation results and details
         """
         max_depth = kwargs.get('max_depth', 100)
         include_hidden = kwargs.get('include_hidden', True)
@@ -139,12 +151,20 @@ class PyroformEngine:
             })
 
     # @pysnooper.snoop()
-    def configure(self, input_path: Path, **kwargs) -> ConfigureResult:
+    def configure(self, input_path: Path, **kwargs: Any) -> ConfigureResult:
         """
         Apply configuration from Pyro files to the system.
 
         Parses configuration files and executes the necessary actions
         to bring the system to the desired state.
+
+        Args:
+            input_path: Path to Pyro configuration file or directory
+            **kwargs: Additional parameters:
+                - dry_run: If True, only simulate changes without applying them
+
+        Returns:
+            ConfigureResult containing operation results and details
         """
         details, errors = {'input_path': str(input_path), 'metadata': kwargs}, []
         dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
@@ -199,13 +219,22 @@ class PyroformEngine:
             })
 
     # @pysnooper.snoop()
-    def scorch(self, input_path: str, **kwargs) -> Dict[str, Any]:
+    def scorch(self, input_path: str, **kwargs: Any) -> ScorchResult:
         """
         Remove system resources not specified in Pyro configurations.
 
         This is a destructive operation that removes resources not defined
         in the provided configuration files. User confirmation is required
         unless auto_confirm is True.
+
+        Args:
+            input_path: Path to Pyro configuration file or directory
+            **kwargs: Additional parameters:
+                - dry_run: If True, only simulate changes without applying them
+                - auto_confirm: If True, skip confirmation prompts
+
+        Returns:
+            ScorchResult containing operation results and details
         """
         details = {'input_path': input_path, 'metadata': kwargs}
         processed_configs, all_comparisons, errors, results = [], [], [], []
@@ -260,9 +289,17 @@ class PyroformEngine:
 
 
     # @pysnooper.snoop()
-    def _execute_scorch_config(self, config: PyroConfig, errors: list | None = None, **kwargs) -> Dict[str, Any]:
+    def _execute_scorch_config(self, config: PyroConfig, errors: list | None = None, **kwargs: Any) -> Dict[str, Any]:
         """
         Execute scorch operation for a single configuration.
+
+        Args:
+            config: Pyro configuration to process
+            errors: Optional list to append error messages to
+            **kwargs: Additional parameters including auto_confirm
+
+        Returns:
+            Dictionary with scorch operation results for this configuration
         """
         try:
             sketch = self.sketch_generator.generate_scorch_sketch(config,  **kwargs)
@@ -310,12 +347,21 @@ class PyroformEngine:
             }
 
     # @pysnooper.snoop()
-    def mount(self, input_path: str, **kwargs) -> MountResult:
+    def mount(self, input_path: str, **kwargs: Any) -> MountResult:
         """
         Mount resources defined in Pyro configurations.
 
         Sets up mounts, volumes, and other mountable resources as defined
         in the configuration files.
+
+        Args:
+            input_path: Path to Pyro configuration file or directory
+            **kwargs: Additional parameters:
+                - dry_run: If True, only simulate changes without applying them
+                - auto_confirm: If True, skip confirmation prompts
+
+        Returns:
+            MountResult containing operation results and details
         """
         details, errors = {'input_path': str(input_path), 'metadata': kwargs}, []
         dry_run = kwargs.get('dry_run', self.config.get('dry_run', False))
@@ -370,12 +416,19 @@ class PyroformEngine:
             })
 
     # @pysnooper.snoop()
-    def validate(self, input_path: str, **kwargs) -> ValidationResult:
+    def validate(self, input_path: str, **kwargs: Any) -> ValidationResult:
         """
         Validate system state against Pyro configurations.
 
         Compares current system state with desired state defined in
         configuration files and reports discrepancies.
+
+        Args:
+            input_path: Path to Pyro configuration file or directory
+            **kwargs: Additional parameters for validation
+
+        Returns:
+            ValidationResult containing validation results and details
         """
         details = {'input_path': input_path, 'metadata': kwargs}
         processed_configs, all_comparisons, errors, results = [], [], [], []
@@ -448,16 +501,18 @@ class PyroformEngine:
             })
 
     # @pysnooper.snoop()
-    def _process_configuration(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
+    def _process_configuration(self, config: PyroConfig, action: ActionType, **kwargs: Any) -> Dict[str, Any]:
         """
         Process a single configuration for the given action.
 
         Args:
             config: Configuration to process
             action: Type of action to perform
+            **kwargs: Additional parameters for processing
 
         Returns:
-            Dictionary with processing results
+            Dictionary with processing results including success status,
+            configuration label, and any errors encountered
         """
         try:
             sketch = self.sketch_generator.generate_sketch(config, action)
@@ -510,12 +565,26 @@ class PyroformEngine:
         return response in ['y', 'yes']
 
     def _log_validation_discrepancies(self, config_label: str, discrepancies: List[Dict]) -> None:
-        """Log validation discrepancies in a structured format."""
+        """
+        Log validation discrepancies in a structured format.
+
+        Args:
+            config_label: Label of the configuration being validated
+            discrepancies: List of discrepancy dictionaries
+        """
         self.stdout.nok(f'Validation discrepancies for Pyro config ({config_label}):\n' + json.dumps(discrepancies, indent=4))
 
     def _log_validation_result(self, config_label: str, is_valid: bool,
                              critical_issues: int, total_issues: int) -> None:
-        """Log individual configuration validation result."""
+        """
+        Log individual configuration validation result.
+
+        Args:
+            config_label: Label of the configuration being validated
+            is_valid: Whether the configuration is valid
+            critical_issues: Number of critical issues found
+            total_issues: Total number of issues found
+        """
         if is_valid:
             self.stdout.ok(f'System state matches Pyro config: ({config_label})')
         else:
@@ -524,7 +593,14 @@ class PyroformEngine:
 
     def _log_validation_summary(self, all_valid: bool, critical_issues: int,
                               total_issues: int) -> None:
-        """Log overall validation summary."""
+        """
+        Log overall validation summary.
+
+        Args:
+            all_valid: Whether all configurations are valid
+            critical_issues: Total number of critical issues
+            total_issues: Total number of all issues
+        """
         if critical_issues > 0:
             self.stdout.nok(f'Found {critical_issues} critical issues, {total_issues} total issues')
         elif total_issues > 0:
@@ -554,7 +630,20 @@ class PyroformEngine:
             "cleanup": False,
         }
 
-    def _objectify_result(self, action_type: str, *args, **kwargs) -> Type:
+    def _objectify_result(self, action_type: str, *args: Any, **kwargs: Any) -> Type:
+        """
+        Convert result dictionary to appropriate result object type.
+
+        Args:
+            action_type: Type of action performed
+            **kwargs: Result data to pass to the result object constructor
+
+        Returns:
+            Appropriate result object (ConfigureResult, ScorchResult, etc.)
+
+        Raises:
+            ValueError: If action_type is not recognized
+        """
         result = None
         match action_type:
             case ActionType.CONFIGURE:
@@ -574,4 +663,29 @@ class PyroformEngine:
 
 
 # CODE DUMP
+
+#   """
+#   Pyroform Engine - Main Library Class
+#   """
+#   import json
+#   import yaml
+#   import pysnooper
+
+#   from pathlib import Path
+#   from typing import Dict, Any, Optional, List, Type
+#   from enum import Enum
+
+#   from .models import (
+#       ActionType, PyroConfig, ConfigureResult, ScorchResult, MountResult,
+#       SnapshotResult, ValidationResult, ValidationSummary
+#   )
+#   from .parser import PyroParser
+#   from .sketch_generator import SketchGenerator
+#   from .flow_engine import PyroflowEngine
+#   from .validator import SystemValidator
+#   from .logging import STDOUTMsg
+#   from .scanner import SystemStateScanner
+#   from .reporter import ReportGenerator
+
+
 

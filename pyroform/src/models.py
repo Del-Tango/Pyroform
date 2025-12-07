@@ -1,5 +1,5 @@
 """
-Pyroform Data Models
+Pyroform Data Models for pythonizing deserialized data
 """
 from dataclasses import dataclass
 from typing import List, Dict, Any, Set, Union, Optional

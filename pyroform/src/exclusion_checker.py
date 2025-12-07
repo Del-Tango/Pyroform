@@ -1,5 +1,5 @@
 """
-
+Verify what resources should be excluded from action datasets
 """
 import json
 import datetime

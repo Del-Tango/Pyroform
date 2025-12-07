@@ -6,7 +6,6 @@ Supports multiple action types including configuration, mounting, cleanup, and s
 """
 import json
 import datetime
-
 import pysnooper
 
 from pathlib import Path
@@ -38,13 +37,12 @@ class SketchGenerator:
         config: Optional[dict] = None,
         chunk_size: int = 500,
         **kwargs
-    ):
+    ) -> None:
         """
         Initialize SketchGenerator.
 
         Args:
             stdout: STDOUTMsg instance for logging
-            dry_run: Whether to generate dry-run commands
             config: Configuration dictionary
             chunk_size: Size for splitting large command lists
         """
@@ -62,10 +60,8 @@ class SketchGenerator:
         self.state_parser = StateEntryParser(config=self.config, stdout=self.stdout)
         self.list_splitter = ListSplitter(chunk_size=chunk_size)
         self.validator = SystemValidator(config=self.config, stdout=self.stdout)
-
         self.scanner = self.validator.scanner
         self.comparator = self.validator.comparator
-
         self._last_system_state = None
         self._last_comparison = None
 

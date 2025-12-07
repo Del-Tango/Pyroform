@@ -1,5 +1,5 @@
 """
-
+File System State Entry details for storage block device mountpoints
 """
 import json
 import datetime

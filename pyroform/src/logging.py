@@ -15,10 +15,6 @@ from typing import Optional, Any
 def setup_logging(log_file: Path = None, debug: bool = False, config: dict | None = None) -> None:
     """
     Configure comprehensive logging for Pyroform
-
-    Args:
-        log_file: Optional path to log file
-        debug: Whether to enable debug logging
     """
     log_file_path = log_file or Path('./pyroform.log')
 
@@ -58,7 +54,7 @@ def setup_logging(log_file: Path = None, debug: bool = False, config: dict | Non
 
 class STDOUTMsg:
     """
-    A class for standardized stdout messaging with color-coded prefixes.
+    A class for standardized STDOUT messaging with color-coded prefixes.
     """
 
     # ANSI color codes

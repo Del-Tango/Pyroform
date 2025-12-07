@@ -4,8 +4,7 @@ Pyro Configuration Parser
 import json
 import yaml
 import glob
-
-import pysnooper
+# import pysnooper
 
 from pathlib import Path
 from typing import List, Dict, Any
@@ -19,7 +18,7 @@ class PyroParser:
     Parser for Pyro configuration files (JSON and YAML)
     """
 
-    def __init__(self, config: dict | None = None, *args, stdout: STDOUTMsg | None = None, **kwargs):
+    def __init__(self, config: dict | None = None, *args, stdout: STDOUTMsg | None = None, **kwargs) -> None:
         self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
             debug_mode=kwargs.get('debug', self.config.get('debug', False)),

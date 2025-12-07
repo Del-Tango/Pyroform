@@ -10,8 +10,7 @@ import pwd
 import grp
 import stat
 import subprocess
-
-import pysnooper
+# import pysnooper
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -54,10 +53,7 @@ class SystemValidator:
 
     # @pysnooper.snoop()
     def validate_configuration(self, config: PyroConfig, **kwargs) -> ValidationResult:
-        """
-        Compare current system state with desired configuration.
-
-        """
+        """Compare current system state with desired configuration."""
         details = {'input_path': config, 'metadata': kwargs}
         current_state = self.scanner.scan_system_state(
             pyro_config=config, max_depth=100, include_hidden=True
@@ -93,7 +89,7 @@ class SystemValidator:
         Generate detailed validation report.
 
         Returns:
-            Comprehensive validation report with summary and discrepancies
+            Validation report with summary and discrepancies
         """
         if self._last_result is None:
             return self._create_empty_report()

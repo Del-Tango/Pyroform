@@ -3,8 +3,7 @@ Configuration management for Pyroform
 """
 import json
 import yaml
-
-import pysnooper
+# import pysnooper
 
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -37,7 +36,6 @@ class PyroformConfig:
         """
         # Default configuration
         default_config = {
-            "safety_checks": False,
             "log_level": "INFO",
             "log_timestamp": False,
             "auto_confirm": False,
