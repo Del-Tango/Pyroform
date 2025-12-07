@@ -9,8 +9,6 @@ resource management (scorch), mounting, and validation.
 import json
 import yaml
 
-# import pysnooper
-
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
@@ -31,6 +29,8 @@ from .reporter import ReportGenerator
 from .scanner import SystemStateScanner
 from .sketch_generator import SketchGenerator
 from .validator import SystemValidator
+
+# import pysnooper
 
 
 class OperationResult(Enum):
@@ -119,12 +119,11 @@ class PyroformEngine:
         include_hidden = kwargs.get("include_hidden", True)
         details, errors = {"output_path": str(output_path), "metadata": kwargs}, []
         try:
-
             details["system_state"] = self.scanner.scan_system_state(
                 max_depth=max_depth, include_hidden=include_hidden
             )
             self.stdout.debug(
-                f'Captured system state: {len(details["system_state"])} items'
+                f"Captured system state: {len(details['system_state'])} items"
             )
 
             # Generate configuration from system state

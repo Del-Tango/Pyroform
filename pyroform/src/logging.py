@@ -4,12 +4,9 @@ Logging configuration for Pyroform
 
 import logging
 import sys
-
-import pysnooper
-
-from pathlib import Path
 from datetime import datetime
-from typing import Optional, Any
+from pathlib import Path
+from typing import Optional
 
 
 # @pysnooper.snoop()

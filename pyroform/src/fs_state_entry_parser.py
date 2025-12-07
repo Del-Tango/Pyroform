@@ -2,16 +2,9 @@
 File System State Entry details for storage block device mountpoints
 """
 
-import json
-import datetime
+from typing import Dict, Optional
 
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
-
-from .models import PyroConfig, User, Group, Device, Exclude, ActionType
 from .logging import STDOUTMsg
-from .splitter import ListSplitter
-from .validator import SystemValidator
 
 
 class StateEntryParser:

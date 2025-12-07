@@ -2,20 +2,20 @@
 Pyroform CLI Interface
 """
 
-import click
 import json
+import click
 import yaml
-import sys
+
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+from .pyroform import Pyroform
+from .src.logging import STDOUTMsg
+from .src.models import ActionType
 
 # import pysnooper
 
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime
-
-from .src.models import ActionType
-from .src.logging import STDOUTMsg
-from .pyroform import Pyroform
 
 # GLOBAL
 
@@ -48,7 +48,6 @@ def display_banner():
 
 # @pysnooper.snoop()
 class BannerCommand(click.Command):
-
     # @pysnooper.snoop()
     def invoke(self, ctx):
         # Display banner for all commands unless help is being shown
@@ -74,7 +73,6 @@ class BannerCommand(click.Command):
 
 # @pysnooper.snoop()
 class BannerGroup(click.Group):
-
     # @pysnooper.snoop()
     def _display_banner(self, return_text=False):
         banner_text = format_banner()
@@ -674,7 +672,7 @@ def _execute_action(
         else:
             raise ValueError(f"Unsupported action type: {action_type}")
 
-    except Exception as e:
+    except Exception:
         import traceback
 
         stdout.debug(traceback.format_exc())

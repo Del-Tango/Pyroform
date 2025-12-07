@@ -3,32 +3,13 @@ Comares current system state with desired Pyro file
 """
 
 import json
-import os
-import pwd
-import grp
-import stat
-import subprocess
+
+from typing import Any, Dict, List, Optional, Set
+
+from .logging import STDOUTMsg
+from .models import Device, Exclude, Group, PyroConfig, User
 
 # import pysnooper
-
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Any, Set, Optional, Tuple
-
-from .models import (
-    PyroConfig,
-    User,
-    Group,
-    Device,
-    Exclude,
-    ValidationResult,
-    FileSystemEntry,
-    SystemUser,
-    SystemGroup,
-    MountedDevice,
-    ValidationSummary,
-)
-from .logging import STDOUTMsg
 
 
 class SystemStateComparator:

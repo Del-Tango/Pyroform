@@ -2,18 +2,12 @@
 FlowCTRL Sketch command generator
 """
 
-import json
-import datetime
+from typing import Any, Dict, Optional
+
+from .logging import STDOUTMsg
+from .models import Device, Group, User
 
 # import pysnooper
-
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
-
-from .models import PyroConfig, User, Group, Device, Exclude, ActionType
-from .logging import STDOUTMsg
-from .splitter import ListSplitter
-from .validator import SystemValidator
 
 
 class CommandGenerator:

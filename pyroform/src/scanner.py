@@ -2,34 +2,21 @@
 File system scanner for machine state comparison
 """
 
+import grp
 import json
 import os
 import pwd
-import grp
 import stat
 import subprocess
 
-# import pysnooper
-
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Any, Set, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .models import (
-    PyroConfig,
-    User,
-    Group,
-    Device,
-    Exclude,
-    ValidationResult,
-    FileSystemEntry,
-    SystemUser,
-    SystemGroup,
-    MountedDevice,
-    ValidationSummary,
-)
-from .logging import STDOUTMsg
 from .exclusion_checker import ExclusionChecker
+from .logging import STDOUTMsg
+from .models import FileSystemEntry, MountedDevice, PyroConfig, SystemGroup, SystemUser
+
+# import pysnooper
 
 
 class SystemStateScanner:

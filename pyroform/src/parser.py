@@ -2,17 +2,17 @@
 Pyro Configuration Parser
 """
 
+import glob
 import json
 import yaml
-import glob
-
-# import pysnooper
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from .models import PyroConfig, User, Group, Device, Exclude
 from .logging import STDOUTMsg
+from .models import Device, Exclude, Group, PyroConfig, User
+
+# import pysnooper
 
 
 class PyroParser:
@@ -171,7 +171,7 @@ class PyroParser:
                 self.stdout.err(msg)
                 raise ValueError(msg) from e
 
-        self.stdout.info(f"State file data: %s" % (str(json.dumps(data, indent=4))))
+        self.stdout.info("State file data: %s" % (str(json.dumps(data, indent=4))))
 
         return PyroConfig(
             label=label, users=users, groups=groups, devices=devices, excludes=excludes

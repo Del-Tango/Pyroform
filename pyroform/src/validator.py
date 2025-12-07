@@ -6,35 +6,15 @@ Validates users, groups, filesystem permissions, mount points, and device config
 """
 
 import json
-import os
-import pwd
-import grp
-import stat
-import subprocess
+
+from typing import Any, Dict, Optional
+
+from .comparator import SystemStateComparator
+from .logging import STDOUTMsg
+from .models import PyroConfig, ValidationResult
+from .scanner import SystemStateScanner
 
 # import pysnooper
-
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Any, Set, Optional, Tuple
-
-from .models import (
-    PyroConfig,
-    User,
-    Group,
-    Device,
-    Exclude,
-    ValidationResult,
-    FileSystemEntry,
-    SystemUser,
-    SystemGroup,
-    MountedDevice,
-    ValidationSummary,
-)
-from .scanner import SystemStateScanner
-from .comparator import SystemStateComparator
-from .exclusion_checker import ExclusionChecker
-from .logging import STDOUTMsg
 
 
 class SystemValidator:

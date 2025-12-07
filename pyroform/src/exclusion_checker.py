@@ -2,15 +2,10 @@
 Verify what resources should be excluded from action datasets
 """
 
-import json
-import datetime
-
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import List, Optional, Union
 
-from .models import PyroConfig, User, Group, Device, Exclude, ActionType
 from .logging import STDOUTMsg
-from .splitter import ListSplitter
 
 
 class ExclusionChecker:

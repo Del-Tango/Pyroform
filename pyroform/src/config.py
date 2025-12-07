@@ -5,10 +5,10 @@ Configuration management for Pyroform
 import json
 import yaml
 
-# import pysnooper
-
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+# import pysnooper
 
 
 class PyroformConfig:
