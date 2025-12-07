@@ -15,6 +15,7 @@ PACKAGE_VERSION='1.0.0'
 DEPENDENCIES=( 'python3' 'python3-pip' 'twine' )
 REQUIREMENTS_FILE='./requirements.txt'
 DISTRIBUTION_DIR='./dist'
+CARGO_DIR='./cargo'
 TEST_DIR="./${PACKAGE_NAME}/tst"
 CONF_DIR="./${PACKAGE_NAME}/conf"
 UNIT_TEST_DIR="${TEST_DIR}/unit"
@@ -26,6 +27,9 @@ FLAKE8_CONF_FILE="${CONF_DIR}/flake8.conf"
 MYPY_CONF_FILE="${CONF_DIR}/mypy.conf"
 BUILD_DIRS=(
     '_build/' "${DISTRIBUTION_DIR}" "${PACKAGE_NAME}.egg-info/"
+)
+CARGO_4_PIP=(
+    "${CARGO_DIR}/flow_ctrl-2.1.0-py3-none-any.whl"
 )
 
 # Hot parameters
@@ -49,11 +53,13 @@ function display_usage() {
 
         -h | --help                 Display this message.
 
-        -S | --setup                Install build dependencies.
+        -S | --setup                Install public build dependencies.
+
+        -B | --bootstrap            Install private build dependencies.
 
         -T | --test                 Run autotesters.
 
-        -c | --check                Check module type hints used properly.
+        -c | --check                Run source code linters, verifiers and formatters.
 
         -C | --cleanup              Cleanup project directory. Removes directories
            |                        created during the build process, removes
@@ -67,7 +73,7 @@ function display_usage() {
 
     [ Example ]: Install dependencies -
 
-        ~$ sudo $0 --setup
+        ~$ sudo $0 --setup --bootstrap
 
     [ Example ]: Run autotesters and check type hints in source files -
 
@@ -116,6 +122,20 @@ function test_module() {
     return $EXIT_CODE
 }
 
+function bootstrap_project() {
+    local FAILURES=0
+    echo "[ BOOTSTRAP ]: BizZare dependencies..."
+
+    for package in ${CARGO_4_PIP[@]}; do
+        pip3 install "${package}"
+        if [ $? -ne 0 ]; then
+            local FAILURES=$((FAILURES + 1))
+        fi
+    done
+
+    return $FAILURES
+}
+
 function setup_project() {
     local FAILURES=0
     echo "[ SETUP ]: System dependencies..."
@@ -150,6 +170,7 @@ function setup_project() {
     else
         pip3 install -r "${REQUIREMENTS_FILE}"
     fi
+
     if [ $? -ne 0 ]; then
         local FAILURES=$((FAILURES + 1))
     fi
@@ -255,6 +276,7 @@ function install() {
     return $?
 }
 
+# TODO - HaHA! But no, really
 function publish() {
     echo "[ PUBLISH ]: To PyPI..."
     echo "[ WARNING ]: Publishing currently disabled for this project."
@@ -324,6 +346,10 @@ EXIT_CODE=0
 
 for opt in ${@}; do
     case "$opt" in
+        -h|--help)
+            display_usage
+            exit 0
+            ;;
         -y|--yes)
             YES='on'
             ;;
@@ -335,13 +361,14 @@ done
 
 for opt in ${@}; do
     case "$opt" in
-        -h|--help)
-            display_usage
-            exit 0
-            ;;
         -S|--setup)
             MODE='SETUP'
             setup_project
+            EXIT_CODE=$((EXIT_CODE + $?))
+            ;;
+        -B|--bootstrap)
+            MODE='SETUP'
+            bootstrap_project
             EXIT_CODE=$((EXIT_CODE + $?))
             ;;
         -T|--test)
