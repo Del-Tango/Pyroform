@@ -1,9 +1,11 @@
 """
 Pyro Configuration Parser
 """
+
 import json
 import yaml
 import glob
+
 # import pysnooper
 
 from pathlib import Path
@@ -18,11 +20,19 @@ class PyroParser:
     Parser for Pyro configuration files (JSON and YAML)
     """
 
-    def __init__(self, config: dict | None = None, *args, stdout: STDOUTMsg | None = None, **kwargs) -> None:
+    def __init__(
+        self,
+        config: dict | None = None,
+        *args,
+        stdout: STDOUTMsg | None = None,
+        **kwargs,
+    ) -> None:
         self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.config.get("log_timestamp", False)
+            ),
         )
 
     # @pysnooper.snoop()
@@ -68,7 +78,7 @@ class PyroParser:
         Raises:
             ValueError: If file format is invalid or unsupported
         """
-        self.stdout.info(f'Parsing Pyro state file ({file_path})...')
+        self.stdout.info(f"Parsing Pyro state file ({file_path})...")
         if file_path.suffix.lower() in [".json"]:
             with open(file_path, "r") as f:
                 data = json.load(f)
@@ -149,22 +159,23 @@ class PyroParser:
         if exclude_data:
             try:
                 excludes = Exclude(
-                    users=exclude_data.get('Users', []),
-                    groups=exclude_data.get('Groups', []),
-                    devices=exclude_data.get('Devices', []),
-                    directories=exclude_data.get('Directories', []),
-                    files=exclude_data.get('Files', []),
-                    links=exclude_data.get('Links', []),
+                    users=exclude_data.get("Users", []),
+                    groups=exclude_data.get("Groups", []),
+                    devices=exclude_data.get("Devices", []),
+                    directories=exclude_data.get("Directories", []),
+                    files=exclude_data.get("Files", []),
+                    links=exclude_data.get("Links", []),
                 )
             except (KeyError, TypeError) as e:
                 msg = f"Invalid exclude data: {exclude_data}"
                 self.stdout.err(msg)
                 raise ValueError(msg) from e
 
+        self.stdout.info(f"State file data: %s" % (str(json.dumps(data, indent=4))))
 
-        self.stdout.info(f'State file data: %s' % (str(json.dumps(data, indent=4))))
-
-        return PyroConfig(label=label, users=users, groups=groups, devices=devices, excludes=excludes)
+        return PyroConfig(
+            label=label, users=users, groups=groups, devices=devices, excludes=excludes
+        )
 
     # @pysnooper.snoop()
     def _parse_directory(self, directory_path: Path) -> List[PyroConfig]:
@@ -177,7 +188,9 @@ class PyroParser:
         Returns:
             List of PyroConfig objects
         """
-        self.stdout.info('Input path is a directory. Scanning for Pyro state file patterns...')
+        self.stdout.info(
+            "Input path is a directory. Scanning for Pyro state file patterns..."
+        )
         configs = []
 
         # Look for JSON files with pyro_ prefix
@@ -208,9 +221,13 @@ class PyroParser:
         all_files = sorted(set(all_files))
 
         if all_files:
-            self.stdout.ok('Identified state files: %s' % str(json.dumps(all_files, indent=4)))
+            self.stdout.ok(
+                "Identified state files: %s" % str(json.dumps(all_files, indent=4))
+            )
         else:
-            self.stdout.nok(f'No state files found at specified location! Details: {directory_path}')
+            self.stdout.nok(
+                f"No state files found at specified location! Details: {directory_path}"
+            )
 
         # Parse each file
         for file_path in all_files:
@@ -223,10 +240,9 @@ class PyroParser:
                     self.stdout.err(msg)
                     raise ValueError(msg) from e
             else:
-                self.stdout.warn(f'{file_path} not a regular file! Skipping')
+                self.stdout.warn(f"{file_path} not a regular file! Skipping")
 
         return configs
 
 
 # CODE DUMP
-

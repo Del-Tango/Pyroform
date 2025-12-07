@@ -4,12 +4,14 @@ System Validation Module for Pyroform
 Provides comprehensive system state validation against Pyro configuration files.
 Validates users, groups, filesystem permissions, mount points, and device configurations.
 """
+
 import json
 import os
 import pwd
 import grp
 import stat
 import subprocess
+
 # import pysnooper
 
 from dataclasses import dataclass
@@ -17,8 +19,17 @@ from pathlib import Path
 from typing import Dict, List, Any, Set, Optional, Tuple
 
 from .models import (
-    PyroConfig, User, Group, Device, Exclude, ValidationResult, FileSystemEntry,
-    SystemUser, SystemGroup, MountedDevice, ValidationSummary
+    PyroConfig,
+    User,
+    Group,
+    Device,
+    Exclude,
+    ValidationResult,
+    FileSystemEntry,
+    SystemUser,
+    SystemGroup,
+    MountedDevice,
+    ValidationSummary,
 )
 from .scanner import SystemStateScanner
 from .comparator import SystemStateComparator
@@ -34,7 +45,9 @@ class SystemValidator:
     current system state against desired Pyro configuration.
     """
 
-    def __init__(self, stdout: STDOUTMsg | None = None, config: dict | None = None, **kwargs) -> None:
+    def __init__(
+        self, stdout: STDOUTMsg | None = None, config: dict | None = None, **kwargs
+    ) -> None:
         """
         Initialize SystemValidator.
 
@@ -44,33 +57,41 @@ class SystemValidator:
         """
         self.config: dict = config or {}
         self.stdout: STDOUTMsg = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.config.get("log_timestamp", False)
+            ),
         )
-        self.scanner: SystemStateScanner = SystemStateScanner(config=self.config, stdout=self.stdout)
-        self.comparator: SystemStateComparator = SystemStateComparator(config=self.config, stdout=self.stdout)
+        self.scanner: SystemStateScanner = SystemStateScanner(
+            config=self.config, stdout=self.stdout
+        )
+        self.comparator: SystemStateComparator = SystemStateComparator(
+            config=self.config, stdout=self.stdout
+        )
         self._last_result: Optional[ValidationResult] = None
 
     # @pysnooper.snoop()
     def validate_configuration(self, config: PyroConfig, **kwargs) -> ValidationResult:
         """Compare current system state with desired configuration."""
-        details = {'input_path': config, 'metadata': kwargs}
+        details = {"input_path": config, "metadata": kwargs}
         current_state = self.scanner.scan_system_state(
             pyro_config=config, max_depth=100, include_hidden=True
         )
 
         differences = self.comparator.compare_states(current_state, config)
-        self.stdout.debug(f'Differences: {differences}')
+        self.stdout.debug(f"Differences: {differences}")
 
-        critical_issues = sum([len(v) for k, v in differences.items() if 'mismatch' not in str(k).lower()])
-        total_issues = sum([len(v) for k, v in differences.items() ])
+        critical_issues = sum(
+            [len(v) for k, v in differences.items() if "mismatch" not in str(k).lower()]
+        )
+        total_issues = sum([len(v) for k, v in differences.items()])
 
         summary = {
             "total_issues": total_issues,
             "critical_issues": critical_issues,
         }
 
-        self.stdout.debug(f'Summary: {json.dumps(summary, indent=4)}')
+        self.stdout.debug(f"Summary: {json.dumps(summary, indent=4)}")
 
         self._last_result = ValidationResult(
             is_valid=total_issues == 0,
@@ -106,7 +127,7 @@ class SystemValidator:
                 "warnings": 0,
                 "total_issues": 0,
                 "critical_issues": 0,
-                "is_valid": True
+                "is_valid": True,
             },
             "discrepancies": [],
             "timestamp": self._get_timestamp(),
@@ -139,8 +160,8 @@ class SystemValidator:
     def _get_timestamp(self) -> str:
         """Get current timestamp for reports."""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
 
 # CODE DUMP
-

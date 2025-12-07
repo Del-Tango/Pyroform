@@ -1,6 +1,7 @@
 """
 Logging configuration for Pyroform
 """
+
 import logging
 import sys
 
@@ -12,14 +13,20 @@ from typing import Optional, Any
 
 
 # @pysnooper.snoop()
-def setup_logging(log_file: Path = None, debug: bool = False, config: dict | None = None) -> None:
+def setup_logging(
+    log_file: Path = None, debug: bool = False, config: dict | None = None
+) -> None:
     """
     Configure comprehensive logging for Pyroform
     """
-    log_file_path = log_file or Path('./pyroform.log')
+    log_file_path = log_file or Path("./pyroform.log")
 
     # Determine log level
-    log_level = logging.DEBUG if debug else getattr(logging, config.get('log_level'), logging.INFO)
+    log_level = (
+        logging.DEBUG
+        if debug
+        else getattr(logging, config.get("log_level"), logging.INFO)
+    )
 
     # Configure root logger
     logger = logging.getLogger()
@@ -31,8 +38,8 @@ def setup_logging(log_file: Path = None, debug: bool = False, config: dict | Non
 
     # Create formatter
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # File handler
@@ -59,12 +66,12 @@ class STDOUTMsg:
 
     # ANSI color codes
     COLORS = {
-        'green': '\033[92m',
-        'red': '\033[91m',
-        'orange': '\033[93m',
-        'yellow': '\033[93m',
-        'reset': '\033[0m',
-        'bold': '\033[1m'
+        "green": "\033[92m",
+        "red": "\033[91m",
+        "orange": "\033[93m",
+        "yellow": "\033[93m",
+        "reset": "\033[0m",
+        "bold": "\033[1m",
     }
 
     def __init__(self, debug_mode: bool = False, timestamp: bool = False):
@@ -85,7 +92,9 @@ class STDOUTMsg:
             return f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] "
         return ""
 
-    def _format_message(self, tag: str, message: str, color: Optional[str] = None) -> str:
+    def _format_message(
+        self, tag: str, message: str, color: Optional[str] = None
+    ) -> str:
         """Format message with tag prefix and optional color."""
         timestamp = self._get_timestamp()
         if color and color in self.COLORS:
@@ -171,7 +180,9 @@ class STDOUTMsg:
             formatted = self._format_message("DEBUG", message)
             self._print(formatted, **kwargs)
 
-    def custom(self, tag: str, message: str, color: Optional[str] = None, **kwargs) -> None:
+    def custom(
+        self, tag: str, message: str, color: Optional[str] = None, **kwargs
+    ) -> None:
         """
         Print custom message with [ <tag> ] prefix and optional color.
 
@@ -195,4 +206,3 @@ class STDOUTMsg:
 
 
 # CODE DUMP
-

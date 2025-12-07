@@ -1,8 +1,10 @@
 """
 Report Generation for Pyroform
 """
+
 import json
 import yaml
+
 # import pysnooper
 
 from datetime import datetime, timedelta
@@ -19,14 +21,21 @@ class ReportGenerator:
     Generates comprehensive reports for Pyroform actions
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None, stdout: STDOUTMsg | None = None, **kwargs) -> None:
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        stdout: STDOUTMsg | None = None,
+        **kwargs,
+    ) -> None:
         self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False)),
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.config.get("log_timestamp", False)
+            ),
         )
 
-        self.stdout.debug(f'Reporter conf: {self.config}')
+        self.stdout.debug(f"Reporter conf: {self.config}")
 
     # @pysnooper.snoop()
     def generate_action_report(
@@ -55,13 +64,15 @@ class ReportGenerator:
             "timestamp": end_time,
             "start_time": start_time,
             "end_time": end_time,
-            "duration": self.seconds_to_hms_timedelta(str(duration_seconds)),  # Add duration field for test compatibility
+            "duration": self.seconds_to_hms_timedelta(
+                str(duration_seconds)
+            ),  # Add duration field for test compatibility
             "duration_seconds": duration_seconds,
             "config_files": config_files,
         }
         report.update(asdict(result))
 
-        self.stdout.debug(f'Base Report Structure: {report}')
+        self.stdout.debug(f"Base Report Structure: {report}")
 
         return report
 
@@ -103,5 +114,5 @@ class ReportGenerator:
         except ValueError:
             return "Invalid input"
 
-# CODE DUMP
 
+# CODE DUMP

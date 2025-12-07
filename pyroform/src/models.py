@@ -1,6 +1,7 @@
 """
 Pyroform Data Models for pythonizing deserialized data
 """
+
 from dataclasses import dataclass
 from typing import List, Dict, Any, Set, Union, Optional
 from enum import Enum
@@ -80,6 +81,7 @@ class FileInfo:
 @dataclass
 class FileSystemEntry:
     """Represents a filesystem entry (file, directory, or symlink)."""
+
     path: str
     type: str  # 'file', 'directory', or 'symlink'
     owner: str
@@ -92,6 +94,7 @@ class FileSystemEntry:
 @dataclass
 class SystemUser:
     """Represents a system user."""
+
     username: str
     uid: int
     gid: int
@@ -104,6 +107,7 @@ class SystemUser:
 @dataclass
 class SystemGroup:
     """Represents a system group."""
+
     groupname: str
     gid: int
     members: List[str]
@@ -112,6 +116,7 @@ class SystemGroup:
 @dataclass
 class MountedDevice:
     """Represents a mounted device."""
+
     device_path: str
     mountpoint: str
     filesystem_type: str
@@ -161,6 +166,7 @@ class MountResult:
     success: bool
     details: Dict[str, Any]
 
+
 @dataclass
 class ValidationResult:
     """Result of system validation"""
@@ -177,6 +183,7 @@ class ValidationResult:
 @dataclass
 class ValidationSummary:
     """Summary of validation results."""
+
     total_checks: int
     passed: int
     failed: int
@@ -186,6 +193,4 @@ class ValidationSummary:
     is_valid: bool
 
 
-
 # CODE DUMP
-

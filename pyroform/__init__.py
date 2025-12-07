@@ -49,4 +49,3 @@ __all__ = [
 # from .src.scorch_engine import ScorchEngine, ScorchResult
 #   "ScorchEngine",
 #   "ScorchResult",
-

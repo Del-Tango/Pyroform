@@ -36,5 +36,4 @@ __all__ = [
 # CODE DUMP
 #   "ScorchEngine",
 #   "ScorchResult",
-#from .scorch_engine import ScorchEngine, ScorchResult
-
+# from .scorch_engine import ScorchEngine, ScorchResult

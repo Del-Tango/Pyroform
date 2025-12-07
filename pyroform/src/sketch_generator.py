@@ -4,6 +4,7 @@ FlowCTRL Sketch Generator for Pyroform
 Generates executable FlowCTRL sketch files from Pyro configuration objects.
 Supports multiple action types including configuration, mounting, cleanup, and snapshot generation.
 """
+
 import json
 import datetime
 import pysnooper
@@ -36,7 +37,7 @@ class SketchGenerator:
         stdout: Optional[STDOUTMsg] = None,
         config: Optional[dict] = None,
         chunk_size: int = 500,
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Initialize SketchGenerator.
@@ -49,14 +50,18 @@ class SketchGenerator:
         self.config = config or {}
         self.chunk_size = chunk_size
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('debug', False)),
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get("log_timestamp", self.config.get("debug", False)),
         )
-        self.stdout.debug(f'SketchGenerator conf: {self.config}')
+        self.stdout.debug(f"SketchGenerator conf: {self.config}")
 
         # Initialize components
-        self.command_generator = CommandGenerator(config=self.config, stdout=self.stdout)
-        self.exclusion_checker = ExclusionChecker(config=self.config, stdout=self.stdout)
+        self.command_generator = CommandGenerator(
+            config=self.config, stdout=self.stdout
+        )
+        self.exclusion_checker = ExclusionChecker(
+            config=self.config, stdout=self.stdout
+        )
         self.state_parser = StateEntryParser(config=self.config, stdout=self.stdout)
         self.list_splitter = ListSplitter(chunk_size=chunk_size)
         self.validator = SystemValidator(config=self.config, stdout=self.stdout)
@@ -65,7 +70,9 @@ class SketchGenerator:
         self._last_system_state = None
         self._last_comparison = None
 
-    def generate_sketch(self, config: PyroConfig, action: ActionType, **kwargs) -> Dict[str, Any]:
+    def generate_sketch(
+        self, config: PyroConfig, action: ActionType, **kwargs
+    ) -> Dict[str, Any]:
         """
         Generate FlowCTRL sketch based on action type.
 
@@ -95,7 +102,9 @@ class SketchGenerator:
         return action_handlers[action](config, **kwargs)
 
     # @pysnooper.snoop()
-    def generate_snapshot_pyro_config(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
+    def generate_snapshot_pyro_config(
+        self, config: PyroConfig, **kwargs
+    ) -> Dict[str, Any]:
         """
         Generate snapshot configuration from current system state.
 
@@ -106,64 +115,71 @@ class SketchGenerator:
             Snapshot configuration dictionary
         """
         system_state = kwargs.get(
-            'system_state', self.scanner.scan_system_state(
+            "system_state",
+            self.scanner.scan_system_state(
                 pyro_config=config, max_depth=100, include_hidden=True
-            )
+            ),
         )
 
         timestamp = datetime.datetime.now()
         snapshot = {
-            'Label': f'Pyroform Snapshot {timestamp}',
-            'Users': self._build_user_snapshot(system_state),
-            'Groups': self._build_group_snapshot(system_state),
-            'Devices': self._build_device_snapshot(system_state),
+            "Label": f"Pyroform Snapshot {timestamp}",
+            "Users": self._build_user_snapshot(system_state),
+            "Groups": self._build_group_snapshot(system_state),
+            "Devices": self._build_device_snapshot(system_state),
         }
 
         return snapshot
 
     # @pysnooper.snoop()
-    def _build_user_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _build_user_snapshot(
+        self, system_state: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Build user snapshot from system state."""
         users_snapshot = []
 
-        for user in system_state.get('users', []):
+        for user in system_state.get("users", []):
             user_record = {
-                'label': 'Snapshot of ' + user.get('username', ''),
-                'Name': user.get('username', ''),
-                'Password': '',  # Passwords are not stored in snapshots
-                'Groups': user.get('groups', []),
+                "label": "Snapshot of " + user.get("username", ""),
+                "Name": user.get("username", ""),
+                "Password": "",  # Passwords are not stored in snapshots
+                "Groups": user.get("groups", []),
             }
             users_snapshot.append(user_record)
 
         return users_snapshot
 
     # @pysnooper.snoop()
-    def _build_group_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _build_group_snapshot(
+        self, system_state: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Build group snapshot from system state."""
         groups_snapshot = []
 
-        for group in system_state.get('groups', []):
+        for group in system_state.get("groups", []):
             group_record = {
-                'label': 'Snapshot of ' + group.get('groupname', ''),
-                'Name': group.get('groupname', ''),
-                'Users': group.get('members', []),
+                "label": "Snapshot of " + group.get("groupname", ""),
+                "Name": group.get("groupname", ""),
+                "Users": group.get("members", []),
             }
             groups_snapshot.append(group_record)
 
         return groups_snapshot
 
     # @pysnooper.snoop()
-    def _build_device_snapshot(self, system_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _build_device_snapshot(
+        self, system_state: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Build device snapshot from system state."""
         devices_snapshot = []
 
-        for device in system_state.get('mounted_devices', []):
+        for device in system_state.get("mounted_devices", []):
             device_record = {
-                'label': 'Snapshot of ' + device.get('device_path', ''),
-                'Path': device.get('device_path', ''),
-                'Partition': device.get('partition', ''),
-                'Mountpoint': device.get('mountpoint', ''),
-                'State': self._build_device_state_snapshot(device)
+                "label": "Snapshot of " + device.get("device_path", ""),
+                "Path": device.get("device_path", ""),
+                "Partition": device.get("partition", ""),
+                "Mountpoint": device.get("mountpoint", ""),
+                "State": self._build_device_state_snapshot(device),
             }
             devices_snapshot.append(device_record)
 
@@ -175,27 +191,30 @@ class SketchGenerator:
         state_entries = []
 
         # Add directories
-        for directory in device.get('directories', []):
-            dir_record = ','.join([
-                'dir', directory.path, directory.owner,
-                directory.group, directory.permissions
-            ])
+        for directory in device.get("directories", []):
+            dir_record = ",".join(
+                [
+                    "dir",
+                    directory.path,
+                    directory.owner,
+                    directory.group,
+                    directory.permissions,
+                ]
+            )
             state_entries.append(dir_record)
 
         # Add files
-        for file in device.get('files', []):
-            file_record = ','.join([
-                'fl', file.path, file.owner,
-                file.group, file.permissions
-            ])
+        for file in device.get("files", []):
+            file_record = ",".join(
+                ["fl", file.path, file.owner, file.group, file.permissions]
+            )
             state_entries.append(file_record)
 
         # Add symlinks
-        for link in device.get('symlinks', []):
-            link_record = ','.join([
-                'ln', link.path, link.owner, link.group,
-                link.permissions, link.target
-            ])
+        for link in device.get("symlinks", []):
+            link_record = ",".join(
+                ["ln", link.path, link.owner, link.group, link.permissions, link.target]
+            )
             state_entries.append(link_record)
 
         return state_entries
@@ -227,7 +246,9 @@ class SketchGenerator:
         # Remove empty sections
         return {k: v for k, v in sketch.items() if v}
 
-    def _generate_cleanup_commands(self, config: PyroConfig, compared: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_cleanup_commands(
+        self, config: PyroConfig, compared: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """
         Generate cleanup commands for scorch action.
 
@@ -254,51 +275,75 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_user_cleanup_commands(self, config: PyroConfig, compared: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_user_cleanup_commands(
+        self, config: PyroConfig, compared: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate user cleanup commands."""
         extra_usernames = [
-            user['username'] for user in compared.get('extra_users', [])
-            if user.get('username')
-            and not self.exclusion_checker.should_exclude_user(user['username'], config.excludes.users)
+            user["username"]
+            for user in compared.get("extra_users", [])
+            if user.get("username")
+            and not self.exclusion_checker.should_exclude_user(
+                user["username"], config.excludes.users
+            )
         ]
 
         if not extra_usernames:
             return []
 
-        username_chunks = self.list_splitter.split(extra_usernames) if len(extra_usernames) > self.chunk_size else [extra_usernames]
+        username_chunks = (
+            self.list_splitter.split(extra_usernames)
+            if len(extra_usernames) > self.chunk_size
+            else [extra_usernames]
+        )
         commands = []
 
         for chunk in username_chunks:
             usernames_str = " ".join(chunk)
             if usernames_str.strip():
-                command = self.command_generator.generate_cleanup_user_command(usernames_str)
+                command = self.command_generator.generate_cleanup_user_command(
+                    usernames_str
+                )
                 commands.append(command)
 
         return commands
 
-    def _generate_group_cleanup_commands(self, config: PyroConfig, compared: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_group_cleanup_commands(
+        self, config: PyroConfig, compared: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate group cleanup commands."""
         extra_groups = [
-            group['groupname'] for group in compared.get('extra_groups', [])
-            if group.get('groupname')
-            and not self.exclusion_checker.should_exclude_group(group['groupname'], config.excludes.groups)
+            group["groupname"]
+            for group in compared.get("extra_groups", [])
+            if group.get("groupname")
+            and not self.exclusion_checker.should_exclude_group(
+                group["groupname"], config.excludes.groups
+            )
         ]
 
         if not extra_groups:
             return []
 
-        group_chunks = self.list_splitter.split(extra_groups) if len(extra_groups) > self.chunk_size else [extra_groups]
+        group_chunks = (
+            self.list_splitter.split(extra_groups)
+            if len(extra_groups) > self.chunk_size
+            else [extra_groups]
+        )
         commands = []
 
         for chunk in group_chunks:
             groups_str = " ".join(chunk)
             if groups_str.strip():
-                command = self.command_generator.generate_cleanup_group_command(groups_str)
+                command = self.command_generator.generate_cleanup_group_command(
+                    groups_str
+                )
                 commands.append(command)
 
         return commands
 
-    def _generate_filesystem_cleanup_commands(self, config: PyroConfig, compared: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_filesystem_cleanup_commands(
+        self, config: PyroConfig, compared: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate filesystem cleanup commands."""
         commands = []
 
@@ -312,53 +357,84 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_directory_cleanup_commands(self, config: PyroConfig, compared: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_directory_cleanup_commands(
+        self, config: PyroConfig, compared: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate directory cleanup commands."""
         extra_directories = [
-            directory['path'] for directory in compared.get('extra_directories', [])
-            if directory.get('path')
-            and not self.exclusion_checker.should_exclude_path(directory['path'], config.excludes.directories)
-            and not self.exclusion_checker.has_excluded_parent(directory['path'], config.excludes.directories)
+            directory["path"]
+            for directory in compared.get("extra_directories", [])
+            if directory.get("path")
+            and not self.exclusion_checker.should_exclude_path(
+                directory["path"], config.excludes.directories
+            )
+            and not self.exclusion_checker.has_excluded_parent(
+                directory["path"], config.excludes.directories
+            )
         ]
 
         if not extra_directories:
             return []
 
-        dir_chunks = self.list_splitter.split(extra_directories) if len(extra_directories) > self.chunk_size else [extra_directories]
+        dir_chunks = (
+            self.list_splitter.split(extra_directories)
+            if len(extra_directories) > self.chunk_size
+            else [extra_directories]
+        )
         commands = []
 
         for chunk in dir_chunks:
             directories_str = " ".join(chunk)
             if directories_str.strip():
-                command = self.command_generator.generate_cleanup_directories_command(directories_str)
+                command = self.command_generator.generate_cleanup_directories_command(
+                    directories_str
+                )
                 commands.append(command)
 
         return commands
 
-    def _generate_file_cleanup_commands(self, config: PyroConfig, compared: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_file_cleanup_commands(
+        self, config: PyroConfig, compared: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate file and symlink cleanup commands."""
         extra_files_and_links = [
-            file['path'] for file in compared.get('extra_files', [])
-            if file.get('path')
-            and not self.exclusion_checker.should_exclude_path(file['path'], config.excludes.files)
-            and not self.exclusion_checker.has_excluded_parent(file['path'], config.excludes.directories)
+            file["path"]
+            for file in compared.get("extra_files", [])
+            if file.get("path")
+            and not self.exclusion_checker.should_exclude_path(
+                file["path"], config.excludes.files
+            )
+            and not self.exclusion_checker.has_excluded_parent(
+                file["path"], config.excludes.directories
+            )
         ] + [
-            link['path'] for link in compared.get('extra_symlinks', [])
-            if link.get('path')
-            and not self.exclusion_checker.should_exclude_path(link['path'], config.excludes.links)
-            and not self.exclusion_checker.has_excluded_parent(link['path'], config.excludes.directories)
+            link["path"]
+            for link in compared.get("extra_symlinks", [])
+            if link.get("path")
+            and not self.exclusion_checker.should_exclude_path(
+                link["path"], config.excludes.links
+            )
+            and not self.exclusion_checker.has_excluded_parent(
+                link["path"], config.excludes.directories
+            )
         ]
 
         if not extra_files_and_links:
             return []
 
-        file_chunks = self.list_splitter.split(extra_files_and_links) if len(extra_files_and_links) > self.chunk_size else [extra_files_and_links]
+        file_chunks = (
+            self.list_splitter.split(extra_files_and_links)
+            if len(extra_files_and_links) > self.chunk_size
+            else [extra_files_and_links]
+        )
         commands = []
 
         for chunk in file_chunks:
             files_str = " ".join(chunk)
             if files_str.strip():
-                command = self.command_generator.generate_cleanup_files_command(files_str)
+                command = self.command_generator.generate_cleanup_files_command(
+                    files_str
+                )
                 commands.append(command)
 
         return commands
@@ -376,13 +452,15 @@ class SketchGenerator:
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
             "Users": self._generate_user_commands(config.users, config.excludes.users),
-            "Groups": self._generate_group_commands(config.groups, config.excludes.groups),
+            "Groups": self._generate_group_commands(
+                config.groups, config.excludes.groups
+            ),
             "Devices": self._generate_device_commands(config.devices, config.excludes),
         }
 
         # Remove empty sections
         sketch = {k: v for k, v in sketch.items() if v}
-        self.stdout.info(f'FlowCTRL Sketch: {json.dumps(sketch, indent=4)}')
+        self.stdout.info(f"FlowCTRL Sketch: {json.dumps(sketch, indent=4)}")
         return sketch
 
     def generate_mount_sketch(self, config: PyroConfig, **kwargs) -> Dict[str, Any]:
@@ -397,12 +475,16 @@ class SketchGenerator:
         """
         sketch = {
             "name": f"Pyroform Auto-Generated Sketch {config.label}",
-            "Devices": self._generate_mount_commands(config.devices, config.excludes.devices),
+            "Devices": self._generate_mount_commands(
+                config.devices, config.excludes.devices
+            ),
         }
 
         return {k: v for k, v in sketch.items() if v}
 
-    def _generate_user_commands(self, users: List[User], excludes: List[str]) -> List[Dict[str, Any]]:
+    def _generate_user_commands(
+        self, users: List[User], excludes: List[str]
+    ) -> List[Dict[str, Any]]:
         """Generate user management commands."""
         commands = []
 
@@ -415,7 +497,9 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_group_commands(self, groups: List[Group], excludes: List[str]) -> List[Dict[str, Any]]:
+    def _generate_group_commands(
+        self, groups: List[Group], excludes: List[str]
+    ) -> List[Dict[str, Any]]:
         """Generate group management commands."""
         commands = []
 
@@ -428,7 +512,9 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_mount_commands(self, devices: List[Device], excludes: List[str]) -> List[Dict[str, Any]]:
+    def _generate_mount_commands(
+        self, devices: List[Device], excludes: List[str]
+    ) -> List[Dict[str, Any]]:
         """
         Generate device mounting commands only.
 
@@ -443,7 +529,9 @@ class SketchGenerator:
 
             # Create mountpoint directory
             if device.mountpoint:
-                mountpoint_cmd = self.command_generator.generate_mountpoint_command(device)
+                mountpoint_cmd = self.command_generator.generate_mountpoint_command(
+                    device
+                )
                 commands.append(mountpoint_cmd)
 
             # Mount device
@@ -453,7 +541,9 @@ class SketchGenerator:
 
         return commands
 
-    def _generate_device_commands(self, devices: List[Device], excludes: Exclude) -> List[Dict[str, Any]]:
+    def _generate_device_commands(
+        self, devices: List[Device], excludes: Exclude
+    ) -> List[Dict[str, Any]]:
         """
         Generate complete device commands including directory structure.
 
@@ -462,7 +552,9 @@ class SketchGenerator:
         commands = []
 
         for device in devices:
-            if self.exclusion_checker.should_exclude_device(device.path, excludes.devices):
+            if self.exclusion_checker.should_exclude_device(
+                device.path, excludes.devices
+            ):
                 continue
 
             # Generate mount-related commands
@@ -471,23 +563,31 @@ class SketchGenerator:
 
             # Generate filesystem structure commands
             if device.state:
-                structure_commands = self._generate_filesystem_structure_commands(device, excludes)
+                structure_commands = self._generate_filesystem_structure_commands(
+                    device, excludes
+                )
                 commands.extend(structure_commands)
 
         return commands
 
-    def _generate_filesystem_structure_commands(self, device: Device, excludes: Exclude) -> List[Dict[str, Any]]:
+    def _generate_filesystem_structure_commands(
+        self, device: Device, excludes: Exclude
+    ) -> List[Dict[str, Any]]:
         """Generate filesystem structure creation commands."""
         commands = []
 
         for state_entry in device.state:
             parsed_entry = self.state_parser.parse_state_entry(state_entry)
-            if not parsed_entry or not self.state_parser.is_valid_state_entry(parsed_entry):
-                self.stdout.err(f'Invalid file state entry for device {device.label}! Details: {state_entry}')
+            if not parsed_entry or not self.state_parser.is_valid_state_entry(
+                parsed_entry
+            ):
+                self.stdout.err(
+                    f"Invalid file state entry for device {device.label}! Details: {state_entry}"
+                )
                 continue
 
-            path = parsed_entry['path']
-            obj_type = parsed_entry['type']
+            path = parsed_entry["path"]
+            obj_type = parsed_entry["type"]
 
             # Check exclusions
             if self._should_exclude_filesystem_entry(path, obj_type, excludes):
@@ -500,18 +600,23 @@ class SketchGenerator:
 
             # Generate permission command
             perm_command = self.command_generator.generate_permission_command(
-                path, parsed_entry['owner'], parsed_entry['group'], parsed_entry['permissions']
+                path,
+                parsed_entry["owner"],
+                parsed_entry["group"],
+                parsed_entry["permissions"],
             )
             commands.append(perm_command)
 
         return commands
 
-    def _should_exclude_filesystem_entry(self, path: str, obj_type: str, excludes: Exclude) -> bool:
+    def _should_exclude_filesystem_entry(
+        self, path: str, obj_type: str, excludes: Exclude
+    ) -> bool:
         """Check if a filesystem entry should be excluded."""
         exclusion_mapping = {
-            'directory': excludes.directories,
-            'file': excludes.files,
-            'symlink': excludes.links
+            "directory": excludes.directories,
+            "file": excludes.files,
+            "symlink": excludes.links,
         }
 
         entry_category = self.state_parser.get_entry_type_category(obj_type)
@@ -522,17 +627,19 @@ class SketchGenerator:
 
         return self.exclusion_checker.has_excluded_parent(path, excludes.directories)
 
-    def _generate_creation_command(self, parsed_entry: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    def _generate_creation_command(
+        self, parsed_entry: Dict[str, str]
+    ) -> Optional[Dict[str, Any]]:
         """Generate appropriate creation command based on entry type."""
-        path = parsed_entry['path']
-        obj_type = parsed_entry['type']
+        path = parsed_entry["path"]
+        obj_type = parsed_entry["type"]
 
-        if obj_type in ('d', 'dir', 'directory'):
+        if obj_type in ("d", "dir", "directory"):
             return self.command_generator.generate_directory_command(path)
-        elif obj_type in ('f', 'fl', 'file'):
+        elif obj_type in ("f", "fl", "file"):
             return self.command_generator.generate_file_command(path)
-        elif obj_type in ('l', 'ln', 'link'):
-            target = parsed_entry.get('target', '')
+        elif obj_type in ("l", "ln", "link"):
+            target = parsed_entry.get("target", "")
             return self.command_generator.generate_symlink_command(path, target)
 
         return None
@@ -549,7 +656,7 @@ class SketchGenerator:
             True if successful, False otherwise
         """
         try:
-            self.stdout.info(f'Saving FlowCTRL Sketch file to {output_path}...')
+            self.stdout.info(f"Saving FlowCTRL Sketch file to {output_path}...")
 
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -557,12 +664,12 @@ class SketchGenerator:
             with open(output_path, "w") as f:
                 json.dump(sketch, f, indent=4)
 
-            self.stdout.info(f'Successfully saved sketch to {output_path}')
+            self.stdout.info(f"Successfully saved sketch to {output_path}")
             return True
 
         except (IOError, TypeError, OSError) as e:
             self.stdout.err(f"Error saving sketch to {output_path}: {e}")
             return False
 
-# CODE DUMP
 
+# CODE DUMP

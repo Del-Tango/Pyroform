@@ -1,7 +1,9 @@
 """
 FlowCTRL Engine Integration for Pyroform
 """
+
 import json
+
 # import pysnooper
 
 from pathlib import Path
@@ -21,7 +23,13 @@ class PyroflowEngine:
     """
 
     # @pysnooper.snoop()
-    def __init__(self, pyro_config: dict | None = None, stdout: STDOUTMsg | None = None, config_path: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        pyro_config: dict | None = None,
+        stdout: STDOUTMsg | None = None,
+        config_path: Optional[str] = None,
+        **kwargs,
+    ):
         """
         Initialize PyroflowEngine
 
@@ -31,16 +39,18 @@ class PyroflowEngine:
         self.pyro_config = pyro_config or {}
         self.config = self._load_config(config_path)
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.pyro_config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.pyro_config.get('log_timestamp', False)),
+            debug_mode=kwargs.get("debug", self.pyro_config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.pyro_config.get("log_timestamp", False)
+            ),
         )
-        self.stdout.debug(f'PyroflowEngine Pyroform conf: {self.pyro_config}')
-        self.stdout.debug(f'PyroflowEngine FlowCTRL conf: {self.config}')
+        self.stdout.debug(f"PyroflowEngine Pyroform conf: {self.pyro_config}")
+        self.stdout.debug(f"PyroflowEngine FlowCTRL conf: {self.config}")
         flow_config = self._create_flow_config()
-        self.stdout.debug(f'flow_config - {flow_config}')
-        self.stdout.debug(f'flow_config.__dict__ - {flow_config.__dict__}')
+        self.stdout.debug(f"flow_config - {flow_config}")
+        self.stdout.debug(f"flow_config.__dict__ - {flow_config.__dict__}")
         self.flow_engine = FlowEngine(flow_config)
-        self.stdout.debug(f'flow_engine - {self.flow_engine}')
+        self.stdout.debug(f"flow_engine - {self.flow_engine}")
         self._current_sketch: Optional[Dict[str, Any]] = None
 
     # @pysnooper.snoop()
@@ -51,9 +61,8 @@ class PyroflowEngine:
         Returns:
             Config object with required attributes
         """
-        self.stdout.debug(f'Config {self.config}')
+        self.stdout.debug(f"Config {self.config}")
         return FlowConfig(**self.config)
-
 
     # @pysnooper.snoop()
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
@@ -82,7 +91,13 @@ class PyroflowEngine:
         return self._default_config()
 
     # @pysnooper.snoop()
-    def execute_sketch(self, sketch: Dict[str, Any], action: ActionType, errors: list | None = None, **kwargs) -> bool:
+    def execute_sketch(
+        self,
+        sketch: Dict[str, Any],
+        action: ActionType,
+        errors: list | None = None,
+        **kwargs,
+    ) -> bool:
         """
         Execute generated sketch through FlowCTRL
 
@@ -96,10 +111,10 @@ class PyroflowEngine:
         try:
             # Save sketch to temporary file
             temp_sketch_path = Path(
-                kwargs.get('output_path', self.pyro_config.get('output_path'))
-                or 'pyroflow.sketch.json'
+                kwargs.get("output_path", self.pyro_config.get("output_path"))
+                or "pyroflow.sketch.json"
             )
-            self.stdout.debug(f'temp_sketch_path - {temp_sketch_path}')
+            self.stdout.debug(f"temp_sketch_path - {temp_sketch_path}")
 
             with open(temp_sketch_path, "w") as f:
                 json.dump(sketch, f, indent=4)
@@ -121,11 +136,11 @@ class PyroflowEngine:
             result = self.flow_engine.start_procedure()
 
             # Clean up temporary file
-            if self.config.get('cleanup'):
+            if self.config.get("cleanup"):
                 try:
                     temp_sketch_path.unlink()
                 except OSError as e:
-                    msg = f'OSError: {e}'
+                    msg = f"OSError: {e}"
                     self.stdout.debug(msg)
                     if errors and isinstance(errors, list):
                         errors.append(msg)
@@ -231,10 +246,9 @@ class PyroflowEngine:
             "silence": False,
             "debug": False,
             "log_format": "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-            "timestamp_format": "%Y-%m-%d %H:%M:%S"
+            "timestamp_format": "%Y-%m-%d %H:%M:%S",
         }
         return flow_ctrl_config
-
 
     @property
     def current_sketch(self) -> Optional[Dict[str, Any]]:
@@ -243,4 +257,3 @@ class PyroflowEngine:
 
 
 # CODE DUMP
-

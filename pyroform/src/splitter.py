@@ -11,12 +11,14 @@ class ListSplitter:
 
     def split(self, lst):
         """Split list into chunks of specified size."""
-        return [lst[i:i + self.chunk_size] for i in range(0, len(lst), self.chunk_size)]
+        return [
+            lst[i : i + self.chunk_size] for i in range(0, len(lst), self.chunk_size)
+        ]
 
     def split_generator(self, lst):
         """Generator that yields chunks of the list (memory efficient)."""
         for i in range(0, len(lst), chunk_size):
-            yield lst[i:i + chunk_size]
+            yield lst[i : i + chunk_size]
 
     def split_with_remainder(self, lst):
         """Split list and return remainder separately."""
@@ -39,11 +41,11 @@ class ListSplitter:
         full_chunks = len(lst) // self.chunk_size
         partial_chunk_size = len(lst) % self.chunk_size
         return {
-            'total_chunks': total_chunks,
-            'full_chunks': full_chunks,
-            'partial_chunk_size': partial_chunk_size,
-            'total_items': len(lst)
+            "total_chunks": total_chunks,
+            "full_chunks": full_chunks,
+            "partial_chunk_size": partial_chunk_size,
+            "total_items": len(lst),
         }
 
-# CODE DUMP
 
+# CODE DUMP

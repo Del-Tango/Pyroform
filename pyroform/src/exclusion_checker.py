@@ -1,6 +1,7 @@
 """
 Verify what resources should be excluded from action datasets
 """
+
 import json
 import datetime
 
@@ -20,43 +21,49 @@ class ExclusionChecker:
     based on configuration exclusions.
     """
 
-    def __init__(self, config: dict | None = None, stdout: Optional[STDOUTMsg] = None, **kwargs):
+    def __init__(
+        self, config: dict | None = None, stdout: Optional[STDOUTMsg] = None, **kwargs
+    ):
         self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.config.get("log_timestamp", False)
+            ),
         )
-        self.stdout.debug(f'ExclusionChecker conf: {self.config}')
+        self.stdout.debug(f"ExclusionChecker conf: {self.config}")
 
     def should_exclude_user(self, username: str, excludes: List[str]) -> bool:
         """Check if a user should be excluded."""
         if excludes and username in excludes:
-            self.stdout.warn(f'Excluding system user: {username}')
+            self.stdout.warn(f"Excluding system user: {username}")
             return True
         return False
 
     def should_exclude_group(self, groupname: str, excludes: List[str]) -> bool:
         """Check if a group should be excluded."""
         if excludes and groupname in excludes:
-            self.stdout.warn(f'Excluding system group: {groupname}')
+            self.stdout.warn(f"Excluding system group: {groupname}")
             return True
         return False
 
     def should_exclude_device(self, device_path: str, excludes: List[str]) -> bool:
         """Check if a device should be excluded."""
         if excludes and device_path in excludes:
-            self.stdout.warn(f'Excluding block storage device: {device_path}')
+            self.stdout.warn(f"Excluding block storage device: {device_path}")
             return True
         return False
 
     def should_exclude_path(self, path: str, excludes: List[str]) -> bool:
         """Check if a filesystem path should be excluded."""
         if excludes and path in excludes:
-            self.stdout.warn(f'Excluding path: {path}')
+            self.stdout.warn(f"Excluding path: {path}")
             return True
         return False
 
-    def has_excluded_parent(self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]) -> bool:
+    def has_excluded_parent(
+        self, path: Union[str, Path], excluded_paths: List[Union[str, Path]]
+    ) -> bool:
         """
         Check if a path has any excluded path as its parent directory.
 
@@ -74,10 +81,9 @@ class ExclusionChecker:
             try:
                 # If path starts with excluded path, excluded is a parent
                 path_obj.relative_to(excluded_obj)
-                self.stdout.debug(f'Excluding: {path}')
+                self.stdout.debug(f"Excluding: {path}")
                 return True
             except ValueError:
                 # excluded is not a parent of path
                 continue
         return False
-

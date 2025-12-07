@@ -1,8 +1,10 @@
 """
 FlowCTRL Sketch command generator
 """
+
 import json
 import datetime
+
 # import pysnooper
 
 from pathlib import Path
@@ -21,25 +23,31 @@ class CommandGenerator:
     """
 
     # @pysnooper.snoop()
-    def __init__(self, config: dict | None = None, stdout: Optional[STDOUTMsg] = None, **kwargs):
+    def __init__(
+        self, config: dict | None = None, stdout: Optional[STDOUTMsg] = None, **kwargs
+    ):
         self.config = config or {}
-        self.cmd_prefix = '' if not kwargs.get('dry_run', self.config.get('dry_run', False)) else '# '
-        self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
+        self.cmd_prefix = (
+            "" if not kwargs.get("dry_run", self.config.get("dry_run", False)) else "# "
         )
-        self.stdout.debug(f'CommandGenerator conf: {self.config}')
+        self.stdout = stdout or STDOUTMsg(
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.config.get("log_timestamp", False)
+            ),
+        )
+        self.stdout.debug(f"CommandGenerator conf: {self.config}")
 
     def generate_user_command(self, user: User) -> Dict[str, Any]:
         """Generate user creation command."""
         group_membership = [str(grp) for grp in user.groups]
-        csv_groups = ','.join(group_membership)
+        csv_groups = ",".join(group_membership)
         groups = " ".join(group_membership)
 
         return {
             "name": f"Creating System User {user.name}",
             "cmd": f"{self.cmd_prefix}for group in {groups}; do groupadd -f $group; done && "
-                   f"useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}' || exit 0",
+            f"useradd -m -p '{user.password}' -G '{csv_groups}' '{user.name}' || exit 0",
             "setup-cmd": f"id {user.name} && echo 'User {user.name} already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": f"echo 'User {user.name} exists or created successfully'",
@@ -55,8 +63,8 @@ class CommandGenerator:
         return {
             "name": f"Creating System Group {group.name}",
             "cmd": f"{self.cmd_prefix}groupadd -f '{group.name}' && "
-                   f"for user in {users}; do id $user || useradd -m $user; "
-                   f"usermod -a -G '{group.name}' $user; done",
+            f"for user in {users}; do id $user || useradd -m $user; "
+            f"usermod -a -G '{group.name}' $user; done",
             "setup-cmd": f"getent group {group.name} && echo 'Group {group.name} already exists' || exit 0",
             "teardown-cmd": "",
             "on-ok-cmd": f"echo 'Group {group.name} exists'",
@@ -126,7 +134,9 @@ class CommandGenerator:
             "fatal-nok": True,
         }
 
-    def generate_permission_command(self, path: str, owner: str, group: str, permissions: str) -> Dict[str, Any]:
+    def generate_permission_command(
+        self, path: str, owner: str, group: str, permissions: str
+    ) -> Dict[str, Any]:
         """Generate permission setting command."""
         return {
             "name": f"Setting Permissions For {path}",
@@ -181,4 +191,3 @@ class CommandGenerator:
             "on-nok-cmd": f"echo 'Could not scorch extra files and links! Details: {files}'",
             "fatal-nok": False,
         }
-

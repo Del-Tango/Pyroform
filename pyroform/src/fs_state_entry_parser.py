@@ -1,6 +1,7 @@
 """
 File System State Entry details for storage block device mountpoints
 """
+
 import json
 import datetime
 
@@ -16,11 +17,13 @@ from .validator import SystemValidator
 class StateEntryParser:
     """Parses and validates state entries from device configuration."""
 
-    def __init__(self, config: dict | None = None, stdout: STDOUTMsg | None = None, **kwargs) -> None:
+    def __init__(
+        self, config: dict | None = None, stdout: STDOUTMsg | None = None, **kwargs
+    ) -> None:
         self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('debug', False)),
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get("log_timestamp", self.config.get("debug", False)),
         )
 
     @staticmethod
@@ -45,32 +48,37 @@ class StateEntryParser:
         permissions = parts[4]
 
         result = {
-            'type': obj_type,
-            'path': path,
-            'owner': owner,
-            'group': group,
-            'permissions': permissions
+            "type": obj_type,
+            "path": path,
+            "owner": owner,
+            "group": group,
+            "permissions": permissions,
         }
 
         # Handle symlink target
-        if obj_type in ('l', 'ln', 'link') and len(parts) >= 6:
-            result['target'] = parts[5]
+        if obj_type in ("l", "ln", "link") and len(parts) >= 6:
+            result["target"] = parts[5]
 
         return result
 
     @staticmethod
     def is_valid_state_entry(parsed_entry: Dict[str, str]) -> bool:
         """Validate parsed state entry."""
-        required_fields = ['type', 'path', 'owner', 'group', 'permissions']
+        required_fields = ["type", "path", "owner", "group", "permissions"]
         return all(field in parsed_entry for field in required_fields)
 
     @staticmethod
     def get_entry_type_category(obj_type: str) -> str:
         """Categorize state entry type."""
         type_mapping = {
-            'd': 'directory', 'dir': 'directory', 'directory': 'directory',
-            'f': 'file', 'fl': 'file', 'file': 'file',
-            'l': 'symlink', 'ln': 'symlink', 'link': 'symlink'
+            "d": "directory",
+            "dir": "directory",
+            "directory": "directory",
+            "f": "file",
+            "fl": "file",
+            "file": "file",
+            "l": "symlink",
+            "ln": "symlink",
+            "link": "symlink",
         }
-        return type_mapping.get(obj_type, 'unknown')
-
+        return type_mapping.get(obj_type, "unknown")

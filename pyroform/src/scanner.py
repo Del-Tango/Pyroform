@@ -1,12 +1,14 @@
 """
 File system scanner for machine state comparison
 """
+
 import json
 import os
 import pwd
 import grp
 import stat
 import subprocess
+
 # import pysnooper
 
 from dataclasses import dataclass
@@ -14,8 +16,17 @@ from pathlib import Path
 from typing import Dict, List, Any, Set, Optional, Tuple, Union
 
 from .models import (
-    PyroConfig, User, Group, Device, Exclude, ValidationResult, FileSystemEntry,
-    SystemUser, SystemGroup, MountedDevice, ValidationSummary
+    PyroConfig,
+    User,
+    Group,
+    Device,
+    Exclude,
+    ValidationResult,
+    FileSystemEntry,
+    SystemUser,
+    SystemGroup,
+    MountedDevice,
+    ValidationSummary,
 )
 from .logging import STDOUTMsg
 from .exclusion_checker import ExclusionChecker
@@ -29,11 +40,15 @@ class SystemStateScanner:
     and filesystem entries from the live system.
     """
 
-    def __init__(self, stdout: STDOUTMsg | None = None, config: dict | None = None, **kwargs) -> None:
+    def __init__(
+        self, stdout: STDOUTMsg | None = None, config: dict | None = None, **kwargs
+    ) -> None:
         self.config = config or {}
         self.stdout = stdout or STDOUTMsg(
-            debug_mode=kwargs.get('debug', self.config.get('debug', False)),
-            timestamp=kwargs.get('log_timestamp', self.config.get('log_timestamp', False))
+            debug_mode=kwargs.get("debug", self.config.get("debug", False)),
+            timestamp=kwargs.get(
+                "log_timestamp", self.config.get("log_timestamp", False)
+            ),
         )
         self.exclusion_checker = ExclusionChecker()
 
@@ -42,7 +57,7 @@ class SystemStateScanner:
         self,
         pyro_config: Optional[PyroConfig] = None,
         max_depth: int = 10,
-        include_hidden: bool = True
+        include_hidden: bool = True,
     ) -> Dict[str, Any]:
         """
         Scan and collect comprehensive system state information.
@@ -55,19 +70,21 @@ class SystemStateScanner:
         Returns:
             Dictionary containing system state organized by category
         """
-        self.stdout.info('Scanning current machine state (users, groups, filesystem)...')
-        self.stdout.debug(f'Max directory depth: {max_depth}')
-        self.stdout.debug(f'Include hidden files: {include_hidden}')
+        self.stdout.info(
+            "Scanning current machine state (users, groups, filesystem)..."
+        )
+        self.stdout.debug(f"Max directory depth: {max_depth}")
+        self.stdout.debug(f"Include hidden files: {include_hidden}")
 
         system_state = {
-            'users': self._scan_users(pyro_config),
-            'groups': self._scan_groups(pyro_config),
-            'mounted_devices': self._scan_mounted_devices(
+            "users": self._scan_users(pyro_config),
+            "groups": self._scan_groups(pyro_config),
+            "mounted_devices": self._scan_mounted_devices(
                 pyro_config, max_depth, include_hidden
-            )
+            ),
         }
 
-        self.stdout.debug(f'System State: {system_state}')
+        self.stdout.debug(f"System State: {system_state}")
         return system_state
 
     def _scan_users(self, pyro_config: Optional[PyroConfig]) -> List[Dict[str, Any]]:
@@ -83,15 +100,17 @@ class SystemStateScanner:
 
                 try:
                     groups = self._get_user_groups(user.pw_name)
-                    users.append(SystemUser(
-                        username=user.pw_name,
-                        uid=user.pw_uid,
-                        gid=user.pw_gid,
-                        home_directory=user.pw_dir,
-                        shell=user.pw_shell,
-                        gecos=user.pw_gecos,
-                        groups=groups
-                    ).__dict__)
+                    users.append(
+                        SystemUser(
+                            username=user.pw_name,
+                            uid=user.pw_uid,
+                            gid=user.pw_gid,
+                            home_directory=user.pw_dir,
+                            shell=user.pw_shell,
+                            gecos=user.pw_gecos,
+                            groups=groups,
+                        ).__dict__
+                    )
                 except Exception as e:
                     self.stdout.err(f"Error processing user {user.pw_name}: {e}")
 
@@ -112,11 +131,13 @@ class SystemStateScanner:
                     continue
 
                 try:
-                    groups.append(SystemGroup(
-                        groupname=group.gr_name,
-                        gid=group.gr_gid,
-                        members=group.gr_mem
-                    ).__dict__)
+                    groups.append(
+                        SystemGroup(
+                            groupname=group.gr_name,
+                            gid=group.gr_gid,
+                            members=group.gr_mem,
+                        ).__dict__
+                    )
                 except Exception as e:
                     self.stdout.err(f"Error processing group {group.gr_name}: {e}")
 
@@ -125,12 +146,9 @@ class SystemStateScanner:
 
         return groups
 
-#   @pysnooper.snoop()
+    #   @pysnooper.snoop()
     def _scan_mounted_devices(
-        self,
-        pyro_config: Optional[PyroConfig],
-        max_depth: int,
-        include_hidden: bool
+        self, pyro_config: Optional[PyroConfig], max_depth: int, include_hidden: bool
     ) -> List[Dict[str, Any]]:
         """Scan mounted devices and their contents."""
         mounted_devices = []
@@ -143,9 +161,13 @@ class SystemStateScanner:
             processed_mountpoints = set()
 
             for mount in mounts:
-                device_info = self._parse_mount_entry(mount, processed_mountpoints, pyro_config)
+                device_info = self._parse_mount_entry(
+                    mount, processed_mountpoints, pyro_config
+                )
                 if device_info:
-                    self._scan_device_contents(device_info, max_depth, include_hidden, pyro_config)
+                    self._scan_device_contents(
+                        device_info, max_depth, include_hidden, pyro_config
+                    )
                     mounted_devices.append(device_info.__dict__)
 
         except Exception as e:
@@ -158,25 +180,29 @@ class SystemStateScanner:
         mounts = []
 
         # Method 1: /proc/mounts
-        if os.path.exists('/proc/mounts'):
-            with open('/proc/mounts', 'r') as f:
+        if os.path.exists("/proc/mounts"):
+            with open("/proc/mounts", "r") as f:
                 mounts.extend(f.readlines())
 
         # Method 2: df command
         try:
             result = subprocess.run(
-                ['df', '-h', '-x', 'tmpfs', '-x', 'devtmpfs'],
-                capture_output=True, text=True, check=True
+                ["df", "-h", "-x", "tmpfs", "-x", "devtmpfs"],
+                capture_output=True,
+                text=True,
+                check=True,
             )
-            df_lines = result.stdout.strip().split('\n')[1:]  # Skip header
+            df_lines = result.stdout.strip().split("\n")[1:]  # Skip header
             mounts.extend(df_lines)
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 
         # Method 3: mount command
         try:
-            result = subprocess.run(['mount'], capture_output=True, text=True, check=True)
-            mounts.extend(result.stdout.strip().split('\n'))
+            result = subprocess.run(
+                ["mount"], capture_output=True, text=True, check=True
+            )
+            mounts.extend(result.stdout.strip().split("\n"))
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 
@@ -186,7 +212,7 @@ class SystemStateScanner:
         self,
         mount: str,
         processed_mountpoints: Set[str],
-        pyro_config: Optional[PyroConfig]
+        pyro_config: Optional[PyroConfig],
     ) -> Optional[MountedDevice]:
         """Parse a single mount entry."""
         parts = mount.strip().split()
@@ -207,30 +233,39 @@ class SystemStateScanner:
         return MountedDevice(
             device_path=device,
             mountpoint=mountpoint,
-            filesystem_type=fstype or 'unknown',
+            filesystem_type=fstype or "unknown",
             mount_options="",
             partition=mounted_partition,
             partitions=partitions,
             files=[],
             directories=[],
-            symlinks=[]
+            symlinks=[],
         )
 
-    def _extract_mount_info(self, parts: List[str], mount: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    def _extract_mount_info(
+        self, parts: List[str], mount: str
+    ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
         """Extract device, mountpoint, and filesystem type from mount entry."""
         # /proc/mounts format: device mountpoint fstype options dump pass
-        if len(parts) >= 6 and parts[0] != 'Filesystem':
+        if len(parts) >= 6 and parts[0] != "Filesystem":
             return parts[0], parts[1], parts[2]
 
         # mount command format: device on mountpoint type fstype (options)
-        if ' on ' in mount:
+        if " on " in mount:
             try:
-                device_index = parts.index('on') - 1
-                mountpoint_index = parts.index('on') + 1
-                type_index = parts.index('type') + 1
+                device_index = parts.index("on") - 1
+                mountpoint_index = parts.index("on") + 1
+                type_index = parts.index("type") + 1
 
-                if all(0 <= i < len(parts) for i in [device_index, mountpoint_index, type_index]):
-                    return parts[device_index], parts[mountpoint_index], parts[type_index]
+                if all(
+                    0 <= i < len(parts)
+                    for i in [device_index, mountpoint_index, type_index]
+                ):
+                    return (
+                        parts[device_index],
+                        parts[mountpoint_index],
+                        parts[type_index],
+                    )
             except ValueError:
                 pass
 
@@ -246,7 +281,7 @@ class SystemStateScanner:
         device_info: MountedDevice,
         max_depth: int,
         include_hidden: bool,
-        pyro_config: Optional[PyroConfig]
+        pyro_config: Optional[PyroConfig],
     ) -> None:
         """Scan filesystem contents of a mounted device."""
         mountpoint = device_info.mountpoint
@@ -263,7 +298,7 @@ class SystemStateScanner:
                 max_depth,
                 include_hidden,
                 current_depth=0,
-                pyro_config=pyro_config
+                pyro_config=pyro_config,
             )
 
             self.stdout.debug(
@@ -274,7 +309,7 @@ class SystemStateScanner:
         except Exception as e:
             self.stdout.err(f"Error scanning {mountpoint}: {e}")
 
-#   @pysnooper.snoop()
+    #   @pysnooper.snoop()
     def _scan_filesystem_recursive(
         self,
         path: str,
@@ -282,7 +317,7 @@ class SystemStateScanner:
         max_depth: int,
         include_hidden: bool,
         current_depth: int,
-        pyro_config: Optional[PyroConfig]
+        pyro_config: Optional[PyroConfig],
     ) -> None:
         """Recursively scan filesystem directory."""
         if current_depth > max_depth:
@@ -292,18 +327,22 @@ class SystemStateScanner:
             for entry in os.listdir(path):
                 full_path = os.path.join(path, entry)
 
-                if not include_hidden and entry.startswith('.'):
+                if not include_hidden and entry.startswith("."):
                     continue
 
                 self._process_filesystem_entry(
-                    full_path, device_info, max_depth, include_hidden,
-                    current_depth, pyro_config
+                    full_path,
+                    device_info,
+                    max_depth,
+                    include_hidden,
+                    current_depth,
+                    pyro_config,
                 )
 
         except (OSError, PermissionError):
             pass  # Skip directories we can't access
 
-#   @pysnooper.snoop()
+    #   @pysnooper.snoop()
     def _process_filesystem_entry(
         self,
         full_path: str,
@@ -311,7 +350,7 @@ class SystemStateScanner:
         max_depth: int,
         include_hidden: bool,
         current_depth: int,
-        pyro_config: Optional[PyroConfig]
+        pyro_config: Optional[PyroConfig],
     ) -> None:
         """Process a single filesystem entry."""
         try:
@@ -320,27 +359,33 @@ class SystemStateScanner:
             group = self._get_groupname(stat_info.st_gid)
             permissions = self._get_numeric_permissions(stat_info.st_mode)
             file_info = {
-                'path': full_path,
-                'owner': owner,
-                'group': group,
-                'permissions': permissions,
-                'mountpoint': device_info.mountpoint,
+                "path": full_path,
+                "owner": owner,
+                "group": group,
+                "permissions": permissions,
+                "mountpoint": device_info.mountpoint,
             }
 
             if stat.S_ISREG(stat_info.st_mode):
                 if not self._should_exclude_file(full_path, pyro_config):
-                    device_info.files.append(FileSystemEntry(type='file', **file_info))
+                    device_info.files.append(FileSystemEntry(type="file", **file_info))
             elif stat.S_ISDIR(stat_info.st_mode):
                 if not self._should_exclude_directory(full_path, pyro_config):
-                    device_info.directories.append(FileSystemEntry(type='directory', **file_info))
+                    device_info.directories.append(
+                        FileSystemEntry(type="directory", **file_info)
+                    )
                     if current_depth < max_depth:
                         self._scan_filesystem_recursive(
-                            full_path, device_info, max_depth, include_hidden,
-                            current_depth + 1, pyro_config
+                            full_path,
+                            device_info,
+                            max_depth,
+                            include_hidden,
+                            current_depth + 1,
+                            pyro_config,
                         )
             elif stat.S_ISLNK(stat_info.st_mode):
                 if not self._should_exclude_link(full_path, pyro_config):
-                    file_info_obj = FileSystemEntry(type='symlink', **file_info)
+                    file_info_obj = FileSystemEntry(type="symlink", **file_info)
                     file_info_obj.target = self._read_symlink_target(full_path)
                     device_info.symlinks.append(file_info_obj)
 
@@ -351,9 +396,9 @@ class SystemStateScanner:
         """Get all groups a user belongs to."""
         try:
             result = subprocess.run(
-                ['groups', username], capture_output=True, text=True, check=True
+                ["groups", username], capture_output=True, text=True, check=True
             )
-            return result.stdout.strip().split(': ')[1].split()
+            return result.stdout.strip().split(": ")[1].split()
         except (subprocess.CalledProcessError, IndexError, FileNotFoundError):
             return []
 
@@ -361,11 +406,16 @@ class SystemStateScanner:
         """Get partition information for a device."""
         try:
             result = subprocess.run(
-                ['lsblk', '-J', device], capture_output=True, text=True, check=True
+                ["lsblk", "-J", device], capture_output=True, text=True, check=True
             )
             lsblk_data = json.loads(result.stdout)
             return self._extract_partitions_from_lsblk(lsblk_data)
-        except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError, FileNotFoundError):
+        except (
+            subprocess.CalledProcessError,
+            json.JSONDecodeError,
+            KeyError,
+            FileNotFoundError,
+        ):
             return self._fallback_partition_detection(device)
 
     def _extract_partitions_from_lsblk(self, lsblk_data: Dict) -> List[Dict[str, str]]:
@@ -373,15 +423,17 @@ class SystemStateScanner:
         partitions = []
 
         def _recurse_devices(devices):
-            for device in devices.get('blockdevices', []):
-                if 'children' in device:
-                    for child in device['children']:
-                        partitions.append({
-                            'name': child['name'],
-                            'size': child.get('size', ''),
-                            'mountpoint': child.get('mountpoint', ''),
-                            'fstype': child.get('fstype', '')
-                        })
+            for device in devices.get("blockdevices", []):
+                if "children" in device:
+                    for child in device["children"]:
+                        partitions.append(
+                            {
+                                "name": child["name"],
+                                "size": child.get("size", ""),
+                                "mountpoint": child.get("mountpoint", ""),
+                                "fstype": child.get("fstype", ""),
+                            }
+                        )
 
         _recurse_devices(lsblk_data)
         return partitions
@@ -391,9 +443,9 @@ class SystemStateScanner:
         partitions = []
         try:
             device_name = Path(device).name
-            for entry in os.listdir('/dev'):
+            for entry in os.listdir("/dev"):
                 if entry.startswith(device_name) and entry != device_name:
-                    partitions.append({'name': entry, 'size': 'unknown'})
+                    partitions.append({"name": entry, "size": "unknown"})
         except OSError:
             pass
         return partitions
@@ -422,46 +474,74 @@ class SystemStateScanner:
         try:
             return os.readlink(path)
         except OSError:
-            return 'broken'
+            return "broken"
 
-    def _find_mounted_partition(self, partitions: List[Dict[str, str]], mountpoint: str) -> str:
+    def _find_mounted_partition(
+        self, partitions: List[Dict[str, str]], mountpoint: str
+    ) -> str:
         """Find partition name for a mountpoint."""
         for part in partitions:
-            if part.get('mountpoint') == mountpoint:
-                return part['name']
-        return ''
+            if part.get("mountpoint") == mountpoint:
+                return part["name"]
+        return ""
 
     # Exclusion check - prettifying wrappers
-    def _should_exclude_user(self, username: str, pyro_config: Optional[PyroConfig]) -> bool:
+    def _should_exclude_user(
+        self, username: str, pyro_config: Optional[PyroConfig]
+    ) -> bool:
         if not pyro_config:
             return False
-        return self.exclusion_checker.should_exclude_user(username, pyro_config.excludes.users)
+        return self.exclusion_checker.should_exclude_user(
+            username, pyro_config.excludes.users
+        )
 
-    def _should_exclude_group(self, groupname: str, pyro_config: Optional[PyroConfig]) -> bool:
+    def _should_exclude_group(
+        self, groupname: str, pyro_config: Optional[PyroConfig]
+    ) -> bool:
         if not pyro_config:
             return False
-        return self.exclusion_checker.should_exclude_group(groupname, pyro_config.excludes.groups)
+        return self.exclusion_checker.should_exclude_group(
+            groupname, pyro_config.excludes.groups
+        )
 
-    def _should_exclude_device(self, device: str, pyro_config: Optional[PyroConfig]) -> bool:
+    def _should_exclude_device(
+        self, device: str, pyro_config: Optional[PyroConfig]
+    ) -> bool:
         if not pyro_config:
             return False
-        return self.exclusion_checker.should_exclude_device(device, pyro_config.excludes.devices)
+        return self.exclusion_checker.should_exclude_device(
+            device, pyro_config.excludes.devices
+        )
 
-    def _should_exclude_file(self, filepath: str, pyro_config: Optional[PyroConfig]) -> bool:
+    def _should_exclude_file(
+        self, filepath: str, pyro_config: Optional[PyroConfig]
+    ) -> bool:
         if not pyro_config:
             return False
-        return self.exclusion_checker.should_exclude_path(filepath, pyro_config.excludes.files) \
-            or self.exclusion_checker.has_excluded_parent(filepath, pyro_config.excludes.directories)
+        return self.exclusion_checker.should_exclude_path(
+            filepath, pyro_config.excludes.files
+        ) or self.exclusion_checker.has_excluded_parent(
+            filepath, pyro_config.excludes.directories
+        )
 
-    def _should_exclude_directory(self, dirpath: str, pyro_config: Optional[PyroConfig]) -> bool:
+    def _should_exclude_directory(
+        self, dirpath: str, pyro_config: Optional[PyroConfig]
+    ) -> bool:
         if not pyro_config:
             return False
-        return self.exclusion_checker.should_exclude_path(dirpath, pyro_config.excludes.directories) \
-            or self.exclusion_checker.has_excluded_parent(dirpath, pyro_config.excludes.directories)
+        return self.exclusion_checker.should_exclude_path(
+            dirpath, pyro_config.excludes.directories
+        ) or self.exclusion_checker.has_excluded_parent(
+            dirpath, pyro_config.excludes.directories
+        )
 
-    def _should_exclude_link(self, linkpath: str, pyro_config: Optional[PyroConfig]) -> bool:
+    def _should_exclude_link(
+        self, linkpath: str, pyro_config: Optional[PyroConfig]
+    ) -> bool:
         if not pyro_config:
             return False
-        return self.exclusion_checker.should_exclude_path(linkpath, pyro_config.excludes.links) \
-            or self.exclusion_checker.has_excluded_parent(linkpath, pyro_config.excludes.directories)
-
+        return self.exclusion_checker.should_exclude_path(
+            linkpath, pyro_config.excludes.links
+        ) or self.exclusion_checker.has_excluded_parent(
+            linkpath, pyro_config.excludes.directories
+        )

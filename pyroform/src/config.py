@@ -1,8 +1,10 @@
 """
 Configuration management for Pyroform
 """
+
 import json
 import yaml
+
 # import pysnooper
 
 from pathlib import Path
@@ -53,14 +55,16 @@ class PyroformConfig:
 
         try:
             # Load configuration from file based on extension
-            if config_path.suffix.lower() in ['.yaml', '.yml']:
-                with open(config_path, 'r') as f:
+            if config_path.suffix.lower() in [".yaml", ".yml"]:
+                with open(config_path, "r") as f:
                     file_config = yaml.safe_load(f) or {}
-            elif config_path.suffix.lower() == '.json':
-                with open(config_path, 'r') as f:
+            elif config_path.suffix.lower() == ".json":
+                with open(config_path, "r") as f:
                     file_config = json.load(f) or {}
             else:
-                raise ValueError(f"Unsupported configuration file format: {config_path.suffix}")
+                raise ValueError(
+                    f"Unsupported configuration file format: {config_path.suffix}"
+                )
 
             # Deep merge file configuration with defaults
             merged_config = self._deep_merge(default_config, file_config)
@@ -71,7 +75,9 @@ class PyroformConfig:
         except Exception as e:
             raise ValueError(f"Error loading configuration file {config_file}: {e}")
 
-    def _deep_merge(self, base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
+    def _deep_merge(
+        self, base: Dict[str, Any], update: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Deep merge two dictionaries
 
@@ -85,9 +91,11 @@ class PyroformConfig:
         result = base.copy()
 
         for key, value in update.items():
-            if (key in result and
-                isinstance(result[key], dict) and
-                isinstance(value, dict)):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 # Recursively merge dictionaries
                 result[key] = self._deep_merge(result[key], value)
             else:
@@ -107,7 +115,7 @@ class PyroformConfig:
         Returns:
             Configuration value or default
         """
-        keys = key.split('.')
+        keys = key.split(".")
         value = self.settings
 
         try:
@@ -125,7 +133,7 @@ class PyroformConfig:
             key: Configuration key (can be dot-separated for nested keys)
             value: Value to set
         """
-        keys = key.split('.')
+        keys = key.split(".")
         config = self.settings
 
         # Navigate to the parent of the final key
@@ -151,14 +159,16 @@ class PyroformConfig:
             config_path = Path(config_file)
             config_path.parent.mkdir(parents=True, exist_ok=True)
 
-            if config_path.suffix.lower() in ['.yaml', '.yml']:
-                with open(config_path, 'w') as f:
+            if config_path.suffix.lower() in [".yaml", ".yml"]:
+                with open(config_path, "w") as f:
                     yaml.dump(self.settings, f, default_flow_style=False)
-            elif config_path.suffix.lower() == '.json':
-                with open(config_path, 'w') as f:
+            elif config_path.suffix.lower() == ".json":
+                with open(config_path, "w") as f:
                     json.dump(self.settings, f, indent=2)
             else:
-                raise ValueError(f"Unsupported configuration file format: {config_path.suffix}")
+                raise ValueError(
+                    f"Unsupported configuration file format: {config_path.suffix}"
+                )
 
             return True
 
@@ -166,5 +176,5 @@ class PyroformConfig:
             print(f"Error saving configuration to {config_file}: {e}")
             return False
 
-# CODE DUMP
 
+# CODE DUMP
