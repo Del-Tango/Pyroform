@@ -613,35 +613,6 @@ def _execute_action(
         else:
             raise ValueError(f"Unsupported action type: {action_type}")
 
-#       # Store result for reporting
-#       pf._last_action = action_type
-#       pf._last_result = result
-
-#       # Generate report if requested
-#       if dump_report:
-#           end_time = datetime.now().isoformat()
-#           stdout.debug(f'Exec end timestamp: {end_time}')
-
-#           if output_path:
-#               if output_path.is_dir():
-#                   report_file = (
-#                       output_path / f"pyroform_{action_type.value}.report.json"
-#                   )
-#               else:
-#                   report_file = output_path
-#           else:
-#               report_file = Path(f"pyroform_{action_type.value}.report.json")
-
-#           stdout.debug(f'Report file path: {report_file}')
-
-#           report_success = pf.generate_report(str(report_file))
-
-#           if not silent:
-#               if report_success:
-#                   stdout.ok(f"Report saved to ({report_file}) file!")
-#               else:
-#                   stdout.nok(f"Failed to save report to ({report_file}) file!")
-
     except Exception as e:
         import traceback
         stdout.debug(traceback.format_exc())
