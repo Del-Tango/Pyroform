@@ -112,7 +112,7 @@
 
 ## Configuration File Setup
 
-Create a configuration file (pyroform_config.yaml):
+Create a configuration file (pyroform.conf.yaml):
 ```yaml
 log_level: "INFO"
 log_file: "./pyroform.log"
