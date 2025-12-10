@@ -1,0 +1,43 @@
+@startuml
+title Action Flow Comparison
+
+start
+
+:User Input (CLI/API);
+if (Action Type?) then (SNAPSHOT)
+  :Scan System State;
+  :Generate Pyro Config;
+  :Save to File;
+else if (CONFIGURE)
+  :Parse Pyro Config;
+  :Generate FlowCTRL Sketch;
+  :Execute Commands;
+else if (SCORCH)
+  :Parse Pyro Config;
+  :Compare System State;
+  if (Auto-confirm?) then (yes)
+    :Generate Cleanup Sketch;
+  else (no)
+    :User Confirmation;
+    if (Confirmed?) then (yes)
+      :Generate Cleanup Sketch;
+    else (no)
+      :Operation Cancelled;
+      stop
+    endif
+  endif
+  :Execute Cleanup;
+else if (VALIDATE)
+  :Parse Pyro Config;
+  :Compare System State;
+  :Generate Validation Report;
+else if (MOUNT)
+  :Parse Pyro Config;
+  :Generate Mount Sketch;
+  :Execute Mount Commands;
+endif
+
+:Generate Report;
+stop
+
+@enduml

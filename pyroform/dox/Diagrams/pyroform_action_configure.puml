@@ -1,0 +1,34 @@
+@startuml
+title Configure Action Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+participant PyroParser
+participant SketchGenerator
+participant PyroflowEngine
+participant FlowEngine
+
+User -> CLI: configure -i config.yaml
+CLI -> Pyroform: configure(input_path)
+Pyroform -> PyroformEngine: configure(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser -> PyroParser: _parse_single_file()/_parse_directory()
+PyroParser --> PyroformEngine: List[PyroConfig]
+loop for each config
+  PyroformEngine -> SketchGenerator: generate_configure_sketch(config)
+  SketchGenerator -> CommandGenerator: generate_user_command()
+  SketchGenerator -> CommandGenerator: generate_group_command()
+  SketchGenerator -> CommandGenerator: generate_device_commands()
+  SketchGenerator --> PyroformEngine: FlowCTRL sketch
+  PyroformEngine -> PyroflowEngine: execute_sketch(sketch)
+  PyroflowEngine -> FlowEngine: load_procedure()
+  PyroflowEngine -> FlowEngine: start_procedure()
+  FlowEngine --> PyroflowEngine: execution_result
+  PyroflowEngine --> PyroformEngine: success/failure
+end
+PyroformEngine --> Pyroform: ConfigureResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
+@enduml

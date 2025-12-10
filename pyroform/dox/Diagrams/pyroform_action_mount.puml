@@ -1,0 +1,30 @@
+@startuml
+title Mount Action Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+participant PyroParser
+participant SketchGenerator
+participant PyroflowEngine
+
+User -> CLI: mount -i config.yaml
+CLI -> Pyroform: mount(input_path)
+Pyroform -> PyroformEngine: mount(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser --> PyroformEngine: List[PyroConfig]
+
+loop for each config
+  PyroformEngine -> SketchGenerator: generate_mount_sketch(config)
+  SketchGenerator -> CommandGenerator: generate_mountpoint_command()
+  SketchGenerator -> CommandGenerator: generate_mount_command()
+  SketchGenerator --> PyroformEngine: mount_sketch
+  PyroformEngine -> PyroflowEngine: execute_sketch(mount_sketch)
+  PyroflowEngine --> PyroformEngine: mount_result
+end
+
+PyroformEngine --> Pyroform: MountResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
+@enduml

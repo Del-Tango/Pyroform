@@ -1,0 +1,27 @@
+Label: "User Validation Test"
+Users:
+  - label: "Big Guy"
+    Name: "root"
+    Password: "toor"
+    Groups: []
+Excludes:
+  Users:
+    - root
+    - daemon
+    - bin
+    - sys
+    - sync
+    - games
+    - man
+    - lp
+    - mail
+    - news
+    - uucp
+    - proxy
+    - www-data
+    - backup
+    - list
+    - irc
+    - _apt
+    - nobody
+

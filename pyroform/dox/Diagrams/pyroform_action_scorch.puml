@@ -1,0 +1,45 @@
+@startuml
+title Scorch Action Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+participant PyroParser
+participant SystemStateScanner
+participant SystemStateComparator
+participant SketchGenerator
+participant PyroflowEngine
+
+User -> CLI: scorch -i config.yaml
+CLI -> Pyroform: scorch(input_path)
+Pyroform -> PyroformEngine: scorch(input_path)
+PyroformEngine -> PyroParser: parse(input_path)
+PyroParser --> PyroformEngine: List[PyroConfig]
+
+loop for each config
+  PyroformEngine -> SystemStateScanner: scan_system_state(config)
+  SystemStateScanner --> PyroformEngine: current_state
+  PyroformEngine -> SystemStateComparator: compare_states(current_state, config)
+  SystemStateComparator --> PyroformEngine: differences
+
+  alt has differences
+    PyroformEngine -> SketchGenerator: generate_scorch_sketch(config)
+    SketchGenerator -> SketchGenerator: _generate_cleanup_commands()
+    SketchGenerator --> PyroformEngine: cleanup_sketch
+
+    alt auto_confirm or user confirms
+      PyroformEngine -> PyroflowEngine: execute_sketch(cleanup_sketch)
+      PyroflowEngine --> PyroformEngine: cleanup_result
+    else user cancels
+      PyroformEngine --> PyroformEngine: operation cancelled
+    end
+  else no differences
+    PyroformEngine --> PyroformEngine: nothing to scorch
+  end
+end
+
+PyroformEngine --> Pyroform: ScorchResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
+@enduml

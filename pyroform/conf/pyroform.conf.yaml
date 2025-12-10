@@ -1,0 +1,7 @@
+# Pyroform Configuration File
+log_level: 'INFO'
+log_file: '/tmp/pyroform.log'
+auto_confirm: false
+dry_run: false
+debug: false
+report: false

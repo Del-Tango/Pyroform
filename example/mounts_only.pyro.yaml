@@ -1,0 +1,21 @@
+# Pyro Input File - Mount Operations Only
+Label: "Storage Mount Configuration"
+
+Devices:
+  - label: "web_storage"
+    Path: "/dev/vdb1"
+    Partition: 1
+    Mountpoint: "/srv/web"
+    State: []  # No file/dir creation, just mount
+
+  - label: "database_storage"
+    Path: "/dev/vdc1"
+    Partition: 1
+    Mountpoint: "/srv/db"
+    State: []
+
+  - label: "backup_storage"
+    Path: "/dev/vdd1"
+    Partition: 1
+    Mountpoint: "/srv/backups"
+    State: []

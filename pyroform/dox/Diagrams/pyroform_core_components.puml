@@ -1,0 +1,33 @@
+@startuml
+package "Pyroform" {
+  [Pyroform (Main Class)] --> [PyroformEngine]
+  [PyroformEngine] --> [PyroParser]
+  [PyroformEngine] --> [SketchGenerator]
+  [PyroformEngine] --> [PyroflowEngine]
+  [PyroformEngine] --> [SystemValidator]
+  [PyroformEngine] --> [ReportGenerator]
+  [PyroformEngine] --> [SystemStateScanner]
+
+  [SketchGenerator] --> [CommandGenerator]
+  [SketchGenerator] --> [ExclusionChecker]
+  [SketchGenerator] --> [StateEntryParser]
+  [SketchGenerator] --> [SystemValidator]
+
+  [SystemValidator] --> [SystemStateComparator]
+  [SystemValidator] --> [SystemStateScanner]
+
+  [PyroflowEngine] --> [FlowEngine (External)]
+}
+
+package "Data Models" {
+  [PyroConfig] --> [User]
+  [PyroConfig] --> [Group]
+  [PyroConfig] --> [Device]
+  [PyroConfig] --> [Exclude]
+}
+
+package "Support Components" {
+  [STDOUTMsg]
+  [ListSplitter]
+}
+@enduml

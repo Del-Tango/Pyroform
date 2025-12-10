@@ -1,0 +1,28 @@
+@startuml
+title Snapshot Action Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+participant SystemStateScanner
+participant SketchGenerator
+
+User -> CLI: snapshot -i input -o output
+CLI -> Pyroform: snapshot(input_path, output_path)
+Pyroform -> PyroformEngine: snapshot(output_path)
+PyroformEngine -> SystemStateScanner: scan_system_state()
+SystemStateScanner -> SystemStateScanner: _scan_users()
+SystemStateScanner -> SystemStateScanner: _scan_groups()
+SystemStateScanner -> SystemStateScanner: _scan_mounted_devices()
+SystemStateScanner --> PyroformEngine: system_state
+PyroformEngine -> SketchGenerator: generate_snapshot_pyro_config()
+SketchGenerator -> SketchGenerator: _build_user_snapshot()
+SketchGenerator -> SketchGenerator: _build_group_snapshot()
+SketchGenerator -> SketchGenerator: _build_device_snapshot()
+SketchGenerator --> PyroformEngine: pyro_config
+PyroformEngine -> PyroformEngine: save to YAML file
+PyroformEngine --> Pyroform: SnapshotResult
+Pyroform --> CLI: Result
+CLI --> User: Success/Failure
+@enduml

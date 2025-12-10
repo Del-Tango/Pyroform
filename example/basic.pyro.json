@@ -1,0 +1,35 @@
+{
+  "Label": "Basic Server Setup",
+  "Users": [
+    {
+      "label": "app_user",
+      "Name": "appuser",
+      "Password": "securepassword123",
+      "Groups": ["appgroup", "users"]
+    },
+    {
+      "label": "data_user",
+      "Name": "datauser",
+      "Password": "datapassword456",
+      "Groups": ["datagroup", "users"]
+    }
+  ],
+  "Groups": [
+    {
+      "label": "app_group",
+      "Name": "appgroup",
+      "Users": ["appuser"]
+    },
+    {
+      "label": "data_group",
+      "Name": "datagroup",
+      "Users": ["datauser"]
+    },
+    {
+      "label": "users_group",
+      "Name": "users",
+      "Users": ["appuser", "datauser"]
+    }
+  ],
+  "Devices": []
+}

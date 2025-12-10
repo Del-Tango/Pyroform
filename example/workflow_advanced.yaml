@@ -1,0 +1,24 @@
+name: "Full Server Deployment"
+description: "Complete server setup and validation workflow"
+auto_confirm: true
+config_file: "/etc/pyroform/pyroform.conf.yaml"
+generate_report: true
+output_path: "/var/log/pyroform/server_deployment.json"
+
+steps:
+  - action: "validate"
+    input_path: "/etc/pyroform/production_config.pyro.yaml"
+    description: "Validate current system state"
+
+  - action: "configure"
+    input_path: "/etc/pyroform/production_config.pyro.yaml"
+    description: "Configure users and groups"
+    dry_run: false
+
+  - action: "mount"
+    input_path: "/etc/pyroform/production_config.pyro.yaml"
+    description: "Mount storage devices"
+
+  - action: "validate"
+    input_path: "/etc/pyroform/production_config.pyro.yaml"
+    description: "Verify final system state"

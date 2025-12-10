@@ -1,0 +1,27 @@
+Label: "Complex Application File Structure"
+
+Devices:
+  - label: "app_filesystem"
+    Path: "/dev/mapper/appvg-applv"
+    Partition: 0
+    Mountpoint: "/app"
+    State:
+      # Directory structure
+      - "dir,/app,root,root,755"
+      - "dir,/app/bin,root,root,755"
+      - "dir,/app/config,appuser,app,750"
+      - "dir,/app/data,appuser,app,775"
+      - "dir,/app/logs,appuser,app,755"
+      - "dir,/app/temp,appuser,app,777"
+      - "dir,/app/backup,backup,backup,750"
+
+      # Application files
+      - "fl,/app/bin/startup.sh,root,root,755"
+      - "fl,/app/bin/shutdown.sh,root,root,755"
+      - "fl,/app/config/app.conf,appuser,app,640"
+      - "fl,/app/config/database.conf,appuser,app,600"
+      - "fl,/app/data/initialized,appuser,app,644"
+
+      # Log files (will be created as needed)
+      - "fl,/app/logs/app.log,appuser,app,644"
+      - "fl,/app/logs/error.log,appuser,app,644"

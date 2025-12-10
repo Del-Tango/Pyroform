@@ -1,0 +1,542 @@
+"""
+Pyroform Library Interface Class
+
+This module provides the main interface for the Pyroform system configuration
+management tool, allowing programmatic control over system configuration,
+validation, and resource management operations.
+"""
+
+import json
+import yaml
+
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type
+
+from .src.logging import STDOUTMsg, setup_logging
+from .src.models import (
+    ActionType,
+    ConfigureResult,
+    MountResult,
+    ScorchResult,
+    SnapshotResult,
+    ValidationResult,
+)
+from .src.pyroform_engine import PyroformEngine
+
+
+class Pyroform:
+    """
+    Main Pyroform library class for programmatic usage.
+
+    This class provides a high-level interface for all Pyroform operations,
+    including configuration management, validation, snapshotting, and workflow
+    execution.
+    """
+
+    # @pysnooper.snoop()
+    def __init__(self, config_file: Optional[Path] = None, **kwargs) -> None:
+        """
+        Initialize Pyroform instance with optional configuration.
+
+        Args:
+            config_file: Optional path to configuration file (YAML or JSON format)
+            **kwargs: Additional configuration parameters that override config file:
+                - debug: Enable debug mode (default: False)
+                - log_timestamp: Include timestamps in logs (default: False)
+                - input_path: Default input path for operations
+                - output_path: Default output path for operations
+                - log_level: Logging level (default: INFO, or DEBUG if debug=True)
+                - log_file: Path to log file (default: ./pyroform.log)
+                - auto_confirm: Auto-confirm destructive operations (default: False)
+                - dry_run: Perform dry run without making changes (default: False)
+                - cleanup: Enable cleanup mode (default: False)
+                - report: Generate reports after actions (default: False)
+        """
+        self.stdout: STDOUTMsg = STDOUTMsg(
+            debug_mode=kwargs.get("debug", False),
+            timestamp=kwargs.get("log_timestamp", False),
+        )
+        self.config: dict = self._load_config(config_file, **kwargs)
+        self.stdout.debug(f"Pyroform conf: {self.config}")
+        self.reinit_logger(**self.config)
+        self.engine: PyroformEngine = PyroformEngine(
+            config=self.config, stdout=self.stdout
+        )
+        self._config_file: str = str(config_file)
+        self._pyro_files: list = []
+        self._last_action: str = None
+        self._last_result: Type = None
+
+    @property
+    def version(self) -> str:
+        """Get Pyroform version string"""
+        from . import __version__
+
+        self.stdout.debug("Pyroform version: {__version__}")
+        return __version__
+
+    def get_config(self) -> Dict[str, Any]:
+        """Get a copy of the current configuration dictionary."""
+        return self.config.copy()
+
+    def set_config(self, **kwargs) -> None:
+        """
+        Update configuration with new values.
+
+        Args:
+            **kwargs: Configuration key-value pairs to update
+        """
+        self.config.update(kwargs)
+
+    # ACTIONS
+
+    # @pysnooper.snoop()
+    def snapshot(
+        self, input_path: str | None = None, output_path: str | None = None, **kwargs
+    ) -> SnapshotResult:
+        """
+        Create a snapshot of the current system state.
+
+        Args:
+            input_path: Optional path for input (tracked internally)
+            output_path: Optional path for output file
+            **kwargs: Additional arguments passed to the snapshot engine
+
+        Returns:
+            SnapshotResult containing snapshot operation results
+        """
+        start_time = datetime.now().isoformat()
+        self._pyro_files.append(input_path)
+        self._last_action = ActionType.SNAPSHOT
+        self._last_result = self.engine.snapshot(
+            output_path or self.config.get("output_path"), **kwargs
+        )
+        self.stdout.debug(f"Last result: {self._last_result}")
+        end_time = datetime.now().isoformat()
+        if self.config.get("report"):
+            self.generate_report(
+                kwargs.get(
+                    "output_path",
+                    "report_"
+                    + str(
+                        self.config.get(
+                            "output_path", str(ActionType.SNAPSHOT) + ".json"
+                        )
+                    ),
+                ),
+                start_time=start_time,
+                end_time=end_time,
+            )
+        return self._last_result
+
+    # @pysnooper.snoop()
+    def configure(self, input_path: str, **kwargs) -> ConfigureResult:
+        """
+        Configure system according to Pyro file(s).
+
+        Args:
+            input_path: Path to Pyro file or directory
+            **kwargs: Additional arguments (dry_run, verbose, output_dir, etc.)
+
+        Returns:
+            ConfigureResult containing configuration operation results
+        """
+        start_time = datetime.now().isoformat()
+        self._pyro_files.append(input_path)
+        self._last_action = ActionType.CONFIGURE
+        self._last_result = self.engine.configure(input_path, **kwargs)
+        self.stdout.debug(f"Last result: {self._last_result}")
+        end_time = datetime.now().isoformat()
+        if self.config.get("report"):
+            self.generate_report(
+                kwargs.get(
+                    "output_path",
+                    "report_"
+                    + str(
+                        self.config.get(
+                            "output_path", str(ActionType.CONFIGURE) + ".json"
+                        )
+                    ),
+                ),
+                start_time=start_time,
+                end_time=end_time,
+            )
+        return self._last_result
+
+    # @pysnooper.snoop()
+    def scorch(self, input_path: str, **kwargs) -> ScorchResult:
+        """
+        Remove system resources not specified in Pyro file(s).
+
+        Args:
+            input_path: Path to Pyro file or directory
+            **kwargs: Additional arguments (dry_run, verbose, output_dir, etc.)
+
+        Returns:
+            ScorchResult containing scorch operation results
+        """
+        start_time = datetime.now().isoformat()
+        self._pyro_files.append(input_path)
+        self._last_action = ActionType.SCORCH
+        self._last_result = self.engine.scorch(input_path, **kwargs)
+        self.stdout.debug(f"Last result: {self._last_result}")
+        end_time = datetime.now().isoformat()
+        if self.config.get("report"):
+            self.generate_report(
+                kwargs.get(
+                    "output_path",
+                    "report_"
+                    + str(
+                        self.config.get("output_path", str(ActionType.SCORCH) + ".json")
+                    ),
+                ),
+                start_time=start_time,
+                end_time=end_time,
+            )
+        return self._last_result
+
+    # @pysnooper.snoop()
+    def mount(self, input_path: str, **kwargs) -> MountResult:
+        """
+        Mount devices according to Pyro file(s).
+
+        Args:
+            input_path: Path to Pyro file or directory
+            **kwargs: Additional arguments (dry_run, verbose, output_dir, etc.)
+
+        Returns:
+            MountResult containing mount operation results
+        """
+        start_time = datetime.now().isoformat()
+        self._pyro_files.append(input_path)
+        self._last_action = ActionType.MOUNT
+        self._last_result = self.engine.mount(input_path, **kwargs)
+        self.stdout.debug(f"Last result: {self._last_result}")
+        end_time = datetime.now().isoformat()
+        if self.config.get("report"):
+            self.generate_report(
+                kwargs.get(
+                    "output_path",
+                    "report_"
+                    + str(
+                        self.config.get("output_path", str(ActionType.MOUNT) + ".json")
+                    ),
+                ),
+                start_time=start_time,
+                end_time=end_time,
+            )
+        return self._last_result
+
+    # @pysnooper.snoop()
+    def validate(self, input_path: str, **kwargs) -> ValidationResult:
+        """
+        Validate system against Pyro file(s).
+
+        Args:
+            input_path: Path to Pyro file or directory
+            **kwargs: Additional arguments (verbose, output_dir, etc.)
+
+        Returns:
+            ValidationResult containing validation operation results
+        """
+        start_time = datetime.now().isoformat()
+        self._pyro_files.append(input_path)
+        self._last_action = ActionType.VALIDATE
+        self._last_result = self.engine.validate(input_path, **kwargs)
+        self.stdout.debug(f"Last result: {self._last_result}")
+        end_time = datetime.now().isoformat()
+        if self.config.get("report"):
+            self.generate_report(
+                kwargs.get(
+                    "output_path",
+                    "report_"
+                    + str(
+                        self.config.get(
+                            "output_path", str(ActionType.VALIDATE) + ".json"
+                        )
+                    ),
+                ),
+                start_time=start_time,
+                end_time=end_time,
+            )
+        return self._last_result
+
+    # UTILS
+
+    # @pysnooper.snoop()
+    def generate_report(self, output_path: Optional[str] = None, **kwargs) -> bool:
+        """
+        Generate report for the last action.
+
+        Args:
+            output_path: Optional path to save report file
+            **kwargs: Additional arguments including start_time and end_time
+
+        Returns:
+            True if report was generated successfully, False otherwise
+        """
+        if self._last_action is None or self._last_result is None:
+            self.stdout.warn("No action has been executed yet")
+            return False
+
+        try:
+            report = self.engine.reporter.generate_action_report(
+                action=self._last_action.value,
+                result=self._last_result,
+                config=self.config,
+                config_files=[self._config_file]
+                + self._pyro_files,  # Would need to track this
+                start_time=kwargs.get("start_time", datetime.now().isoformat()),
+                end_time=kwargs.get("end_time", datetime.now().isoformat()),
+            )
+
+            self.stdout.custom("REPORT", json.dumps(report, indent=4))
+
+            if output_path:
+                return self.engine.reporter.save_report(report, Path(output_path))
+
+            return True
+
+        except Exception as e:
+            self.stdout.err(f"Failed to generate report! Details: {e}")
+            return False
+
+    # @pysnooper.snoop()
+    def generate_workflow_report(
+        self, workflow_results: List[Dict[str, Any]], output_path: str
+    ) -> bool:
+        """
+        Generate a comprehensive workflow report.
+
+        Args:
+            workflow_results: Results from workflow execution
+            output_path: Path to save the report file
+
+        Returns:
+            True if report was generated successfully, False otherwise
+        """
+        try:
+            workflow_report = {
+                "type": "workflow",
+                "timestamp": datetime.now().isoformat(),
+                "total_steps": len(workflow_results),
+                "successful_steps": len([r for r in workflow_results if r["success"]]),
+                "failed_steps": len([r for r in workflow_results if not r["success"]]),
+                "steps": workflow_results,
+                "summary": self._generate_workflow_summary(workflow_results),
+            }
+
+            return self.engine.reporter.save_report(workflow_report, Path(output_path))
+
+        except Exception as e:
+            self.stdout.err(f"Failed to generate workflow report: {e}")
+            return False
+
+    # @pysnooper.snoop()
+    def _generate_workflow_summary(
+        self, workflow_results: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Generate summary for workflow report.
+
+        Args:
+            workflow_results: Results from workflow execution
+
+        Returns:
+            Summary dictionary with workflow statistics
+        """
+        total_duration = 0  # Would need to track actual durations
+        actions_performed = [r["action"] for r in workflow_results]
+
+        return {
+            "total_duration_seconds": total_duration,
+            "actions_performed": actions_performed,
+            "overall_success": all(r["success"] for r in workflow_results),
+        }
+
+    # @pysnooper.snoop()
+    def execute_workflow(self, workflow_steps: List[Dict[str, Any]]) -> bool:
+        """
+        Execute a complete workflow with multiple steps.
+
+        Args:
+            workflow_steps: List of workflow steps, each containing:
+                - action: Action to perform (validate, configure, mount, scorch, snapshot)
+                - input_path: Path to input file/directory
+                - output_path: Optional output path for snapshot
+                - dry_run: Optional dry run flag
+                - auto_confirm: Optional auto-confirm flag
+
+        Returns:
+            True if all steps completed successfully, False otherwise
+        """
+        workflow_results = []
+
+        for step in workflow_steps:
+            action = step.get("action")
+            input_path = step.get("input_path")
+            output_path = step.get("output_path")
+            dry_run = step.get("dry_run", False)
+            auto_confirm = step.get("auto_confirm") or self.config.get("auto_confirm")
+
+            if not action or not input_path:
+                self.stdout.err(f"Invalid workflow step: {step}")
+                return False
+
+            self.stdout.info(f"Executing workflow step: {action} with {input_path}")
+
+            try:
+                if action == "validate":
+                    result = self.validate(input_path, dry_run=dry_run)
+                    success = result.is_valid
+                elif action == "configure":
+                    result = self.configure(input_path, dry_run=dry_run)
+                    success = result.get("success", False)
+                elif action == "mount":
+                    result = self.mount(input_path, dry_run=dry_run)
+                    success = result.get("success", False)
+                elif action == "scorch":
+                    result = self.scorch(input_path, dry_run=dry_run)
+                    success = result.get("success", False)
+                elif action == "snapshot":
+                    result = self.snapshot(input_path, output_path)
+                    success = result.get("success", False)
+                else:
+                    self.stdout.err(f"Unknown action in workflow: {action}")
+                    return False
+
+                workflow_results.append(
+                    {
+                        "action": action,
+                        "input_path": input_path,
+                        "success": success,
+                        "result": result,
+                    }
+                )
+                if not success:
+                    if auto_confirm:
+                        continue
+                    self.stdout.warn("Previous step execution was not successful!")
+                    print()
+                    response = (
+                        input("Continue with next workflow step? [Y/N]> ")
+                        .strip()
+                        .lower()
+                    )
+                    print()
+                    if response.lower() not in (
+                        "n",
+                        "no",
+                        "nope",
+                        "fuck no",
+                        "fuck that",
+                    ):
+                        continue
+                    return False
+
+            except Exception as e:
+                self.stdout.err(f"Error in workflow step {action}: {e}")
+                return False
+
+        # Store workflow results
+        self._workflow_results = workflow_results
+
+        # Generate workflow report
+        if self.config.get("report", False):
+            if os.path.isdir(output_path):
+                report_file = output_path + "/report_pyroform_workflow.json"
+            else:
+                report_file = output_path
+            self.generate_workflow_report(workflow_results, report_file)
+
+        self.stdout.ok("Workflow completed successfully")
+        return True
+
+    # @pysnooper.snoop()
+    def _load_config(self, config_file: Optional[str], **kwargs) -> Dict[str, Any]:
+        """
+        Load configuration from file or use defaults.
+
+        Args:
+            config_file: Optional path to configuration file
+            **kwargs: Additional configuration parameters
+
+        Returns:
+            Configuration dictionary
+        """
+        default_config = {
+            "input_path": kwargs.get("input_path"),
+            "output_path": kwargs.get("output_path"),
+            "log_level": (
+                "DEBUG" if kwargs.get("debug") else kwargs.get("log_level", "INFO")
+            ),
+            "log_timestamp": kwargs.get("log_timestamp", False),
+            "log_file": kwargs.get("log_file", "./pyroform.log"),
+            "auto_confirm": kwargs.get("auto_confirm", False),
+            "dry_run": kwargs.get("dry_run", False),
+            "debug": kwargs.get("debug", False),
+            "cleanup": kwargs.get("cleanup", False),
+            "report": kwargs.get("report", False),
+        }
+        self.stdout.debug(f"Default config: {default_config}")
+
+        if not config_file:
+            self.stdout.debug("No config file specified. Using defaults.")
+            return default_config
+
+        config_path = Path(config_file)
+        if not config_path.exists():
+            self.stdout.warn(f"Config file ({config_file}) not found!  Using defaults.")
+            return default_config
+
+        try:
+            if config_path.suffix.lower() in [".yaml", ".yml"]:
+                with open(config_path, "r") as f:
+                    file_config = yaml.safe_load(f)
+            elif config_path.suffix.lower() == ".json":
+                with open(config_path, "r") as f:
+                    file_config = json.load(f)
+            else:
+                self.stdout.warn(
+                    f"Unsupported config file format! Details: {config_path.suffix}"
+                )
+                return default_config
+
+            self.stdout.debug(f"Config loaded from file: {file_config}")
+            # Merge with defaults
+            file_config.update(kwargs)
+            if kwargs.get("debug"):
+                file_config["log_level"] = "DEBUG"
+            self.stdout.debug(f"Config merged with CLI args: {file_config}")
+            return file_config
+
+        except Exception as e:
+            self.stdout.err(f"Error loading config file {config_file}! Details: {e}")
+            self.stdout.warn("Using defaults.")
+            return default_config
+
+    # @pysnooper.snoop()
+    def reinit_logger(self, **kwargs) -> STDOUTMsg:
+        """
+        Reinitialize the logger with current configuration.
+
+        Args:
+            **kwargs: Logger configuration parameters
+
+        Returns:
+            Reinitialized STDOUTMsg instance
+        """
+        setup_logging(
+            log_file=Path(self.config.get("log_file") or "./pyroform.log"),
+            debug=self.config.get("debug", False),
+            config=self.config,
+        )
+        self.stdout = STDOUTMsg(
+            debug_mode=kwargs.get("debug", False),
+            timestamp=kwargs.get("log_timestamp", False),
+        )
+        return self.stdout
+
+
+# CODE DUMP

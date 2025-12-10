@@ -1,0 +1,41 @@
+@startuml
+title Workflow Execution Sequence
+
+actor User
+participant CLI
+participant Pyroform
+participant PyroformEngine
+
+User -> CLI: workflow -w workflow.yaml
+CLI -> Pyroform: execute_workflow(workflow_config)
+
+loop for each step in workflow
+  alt step.action == "validate"
+    Pyroform -> Pyroform: validate(step.input_path)
+  else step.action == "configure"
+    Pyroform -> Pyroform: configure(step.input_path)
+  else step.action == "mount"
+    Pyroform -> Pyroform: mount(step.input_path)
+  else step.action == "scorch"
+    Pyroform -> Pyroform: scorch(step.input_path)
+  else step.action == "snapshot"
+    Pyroform -> Pyroform: snapshot(step.input_path, step.output_path)
+  end
+
+  Pyroform -> PyroformEngine: execute action
+  PyroformEngine --> Pyroform: action result
+
+  alt not success and not auto_confirm
+    Pyroform -> CLI: prompt user to continue
+    CLI -> User: Continue? [Y/N]
+    User -> CLI: response
+    alt user cancels
+      break workflow
+    end
+  end
+end
+
+Pyroform -> Pyroform: generate_workflow_report()
+Pyroform --> CLI: workflow_result
+CLI --> User: Workflow Completion Status
+@enduml

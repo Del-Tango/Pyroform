@@ -1,0 +1,7 @@
+# Development and Testing Configuration
+log_level: "DEBUG"
+log_file: './pyroform.log'
+auto_confirm: true
+dry_run: true
+report: true
+debug: true
